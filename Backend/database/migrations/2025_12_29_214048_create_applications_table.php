@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('applications', function (Blueprint $table) {
             $table->id();
-            $table->integer('user_id')->unique();
+            $table->foreignId('user_id')->constrained();
             $table->string('company_name');
-            $table->url('job_link');
+            $table->string('job_link');
             $table->string('job_title');
             $table->string('job_description');
             $table->text('notes');

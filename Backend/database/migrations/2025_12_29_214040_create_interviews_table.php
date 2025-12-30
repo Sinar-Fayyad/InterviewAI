@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('interviews', function (Blueprint $table) {
             $table->id();
-            $table->integer('user_id')->unique();
+            $table->foreignId('user_id')->constrained();
             $table->string('job_title');
             $table->string('job_description');
             $table->string('company_name');
-            $table->url('recording_url');
+            $table->string('recording_url');
             $table->integer('duration_minutes');
             $table->text('questions');
             $table->text('feedback');
