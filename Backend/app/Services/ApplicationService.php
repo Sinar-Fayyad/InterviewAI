@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+use App\Models\Application;
 
 class ApplicationService
 {
