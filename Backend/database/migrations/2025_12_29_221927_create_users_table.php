@@ -16,7 +16,15 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->string('email')->unique();
-            $table->string('password');
+            $table->string('password')->nullable();
+
+            // Unique IDs from providers
+            $table->string('google_id')->nullable()->unique();
+            $table->string('linkedin_id')->nullable()->unique();
+    
+            // Tokens for API access
+            $table->text('google_token')->nullable();
+            $table->text('linkedin_token')->nullable();
             $table->timestamps();
         });
     }
