@@ -29,7 +29,8 @@ class AuthService{
 
     static function register(Request $request){
         $request->validate([
-            'username' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
         ]);
