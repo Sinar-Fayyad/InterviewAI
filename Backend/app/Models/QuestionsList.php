@@ -5,18 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Question extends Model
+class QuestionsList extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'questions_list_id',
-        'question',
-        'answer',
+        'user_id',
+        'company_name',
+        'job_title',
     ];
 
-    public function questionsList()
+    public function user()
     {
-        return $this->belongsTo(QuestionsList::class);
+        return $this->belongsTo(User::class);
     }
+
 }

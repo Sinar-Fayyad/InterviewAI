@@ -5,23 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Application extends Model
+class Certification extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'user_id',
-        'job_title',
-        'company_name',
-        'location',
-        'salary_range',
-        'job_url',
-        'job_description',
-        'status',
-        'applied_at',
-        'notes',
-        'contact_name',
-        'contact_email',
+        'certification_name',
+        'organization_name',
+        'date_obtained',
     ];
 
     public function user()

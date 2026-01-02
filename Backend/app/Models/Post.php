@@ -5,18 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Question extends Model
+class Post extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'questions_list_id',
-        'question',
-        'answer',
+        'user_id',
+        'title',
+        'body',
+        'media',
+        'scheduled_at',
     ];
 
-    public function questionsList()
+    public function user()
     {
-        return $this->belongsTo(QuestionsList::class);
+        return $this->belongsTo(User::class);
     }
 }

@@ -22,10 +22,11 @@ class User extends Authenticatable
         'last_name',
         'email',
         'password',
+        'theme',
         'google_id',
         'linkedin_id',
         'google_token',
-        'linkedin_token'
+        'linkedin_token',
     ];
 
     /**
