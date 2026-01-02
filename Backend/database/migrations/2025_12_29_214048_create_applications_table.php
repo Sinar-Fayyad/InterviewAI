@@ -13,18 +13,18 @@ return new class extends Migration
     {
         Schema::create('applications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained();
-            $table->string('company_name');
-            $table->string('job_link');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('job_title');
-            $table->string('job_description');
-            $table->text('notes');
-            $table->date('applied_at');
+            $table->string('company_name');
             $table->string('location');
+            $table->integer('salary_range');
+            $table->string('job_url');
+            $table->string('job_description');
             $table->string('contact_name');
             $table->string('contact_email');
-            $table->integer('salary_range');
-            $table->string('status')->default('applied');
+            $table->date('applied_at');
+            $table->text('notes');
+            $table->enum('status', ['saved', 'applied', 'interviewing', 'offered', 'rejected'])->default('applied');
             $table->timestamps();
         });
     }

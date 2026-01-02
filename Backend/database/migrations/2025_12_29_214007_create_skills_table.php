@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('skills', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('name');
-            $table->string('category');
-            $table->string('proficiency_level');
+            $table->enum('category', ['technical','soft skills','tools','languages','others'])->default('technical'); 
+            $table->unsignedTinyInteger('proficiency')->default(2);
             $table->timestamps();
         });
     }

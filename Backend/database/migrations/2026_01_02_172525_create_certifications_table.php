@@ -11,15 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('interviews', function (Blueprint $table) {
+        Schema::create('certifications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('interview_title');
-            $table->string('company_name');
-            $table->string('job_title');
-            $table->string('video_path');
-            $table->text('feedback');
-            $table->text('transcript');
+            $table->string('certification_name');
+            $table->string('organization_name')->nullable();
+            $table->date('date_obtained')->nullable();
             $table->timestamps();
         });
     }
@@ -29,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('interviews');
+        Schema::dropIfExists('certifications');
     }
 };

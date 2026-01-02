@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('last_name');
             $table->string('email')->unique();
             $table->string('password')->nullable();
+            $table->string('phone')->nullable();
+            $table->text('location')->nullable();
+            $table->text('summary')->nullable();
+            $table->string('theme')->default("dark")->nullable();
 
             // Unique IDs from providers
             $table->string('google_id')->nullable()->unique();
