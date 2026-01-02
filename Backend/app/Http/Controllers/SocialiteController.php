@@ -17,8 +17,8 @@ class SocialiteController extends Controller
     {
         $result = SocialiteService::callback($provider);
 
-        if (isset($result['error'])) {
-            return $this->responseJSON(null, $result['error'], $result['status'] ?? 400);
+        if (isset($result->error)) {
+            return $this->responseJSON(null, $result->error, $result->status ?? 400);
         }
 
         return $this->responseJSON($result);
