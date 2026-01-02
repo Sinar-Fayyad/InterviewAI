@@ -1,15 +1,15 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\Application;
-use App\Services\ApplicationsService;
 
 use Illuminate\Http\Request;
+use App\Models\Application;
+use App\Http\Controllers\Controller;
+use App\Services\ApplicationsService;
 
 class ApplicationController extends Controller
 {
     function addApplication(Request $request){
-
         $application = new Application;
         $application = ApplicationsService::addApplication($application, $request);
         return $this->responseJSON($application);

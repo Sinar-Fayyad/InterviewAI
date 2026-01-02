@@ -4,36 +4,31 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Skill;
-use App\Services\SkillsService;
+use App\Services\SkillService;
+use App\Http\Controllers\Controller;
 
 class SkillsController extends Controller
 {
     function addSkill(Request $request){
 
         $skill = new Skill;
-        $skill = SkillsService::addSkill($skill, $request);
+        $skill = SkillService::addSkill($skill, $request);
         return $this->responseJSON($skill);
     }
 
     function updateSkill(Request $request, $id){
-        $skill = SkillsService::updateSkill($id, $request);
+        $skill = SkillService::updateSkill($id, $request);
         return $this->responseJSON($skill);
     }
 
-    function getSkills(){
-        $skills = SkillsService::getSkills();
+    function getSkills($user_id){
+        $skills = SkillService::getSkills($user_id);
         return $skills?  $this->responseJSON($skills):
-                        $this ->responseJSON (null , "Not found", 404);
-    }
-
-    function getSkill($id){
-        $skill = SkillsService::getSkillById($id);
-        return $skill?  $this->responseJSON($skill):
                         $this ->responseJSON (null , "Not found", 404);
     }   
 
     function deleteSkill ($id){
-        $skill = SkillsService::deleteSkill($id);
+        $skill = SkillService::deleteSkill($id);
         return $this->responseJSON($skill);
     }
 }
