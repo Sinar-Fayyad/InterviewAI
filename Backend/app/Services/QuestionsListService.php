@@ -15,7 +15,7 @@ class QuestionsListService
             $questionsList->job_title = $data["job_title"];
             $questionsList->save();
 
-            $questions = collect($data['output']['interview_session'])->map(function ($item) use ($questionsList) {
+            $questions = collect($data['interview_session'])->map(function ($item) use ($questionsList) {
                 return [
                     'questions_list_id' => $questionsList->id,
                     'question' => $item['question'],

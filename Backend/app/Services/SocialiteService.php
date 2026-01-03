@@ -3,9 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
-use Illuminate\Support\Str;
 
 class SocialiteService
 {
@@ -32,42 +30,40 @@ class SocialiteService
         try {
             $socialiteUser = Socialite::driver($provider)->stateless()->user();
         } catch (\Exception $e) {
-    
             return response()->json([
-            'error' => 'Social authentication failed',
-            'message' => $e->getMessage() 
-        ], 401);
+                'error' => 'Social authentication failed',
+                'message' => $e->getMessage() 
+            ], 401);
         }
 
-        $user = self::findOrCreateUser($socialiteUser, $provider);
+        $user = self::updateExistingUser($socialiteUser, $provider);
 
-        Auth::login($user);
+        if (!$user) {
+            return response()->json(['error' => 'No existing account found to connect'], 404);
+        }
 
+        // Generate new JWT for the updated user
         $token = auth('api')->login($user);
 
         return [
             'status' => 'success',
             'user' => $user,
             'token' => $token,
-            'redirect_to' => '/onboarding'
         ];
     }
 
-    public static function findOrCreateUser($socialiteUser, string $provider): User
+    public static function updateExistingUser($socialiteUser, string $provider): ?User
     {
         $idColumn = ($provider === 'linkedin-openid') ? 'linkedin_id' : "{$provider}_id";
         $tokenColumn = ($provider === 'linkedin-openid') ? 'linkedin_token' : "{$provider}_token";
 
-        // 1. Try finding user by social ID
-        $user = User::where($idColumn, $socialiteUser->getId())->first();
+        // 1. Try to get user from the current JWT token
+        $user = auth('api')->user();
 
-        if ($user) {
-            $user->update([$tokenColumn => $socialiteUser->token]);
-            return $user;
+        // 2. Fallback to email if not logged in
+        if (!$user) {
+            $user = User::where('email', $socialiteUser->getEmail())->first();
         }
-
-        // 2. Try finding user by email to link accounts
-        $user = User::where('email', $socialiteUser->getEmail())->first();
 
         if ($user) {
             $user->update([
@@ -77,18 +73,6 @@ class SocialiteService
             return $user;
         }
 
-        // 3. Create a new user (Split names for your table structure)
-        $fullName = $socialiteUser->getName() ?? 'User';
-        $nameParts = explode(' ', $fullName, 2);
-
-        return User::create([
-            'first_name' => $nameParts[0],
-            'last_name' => $nameParts[1] ?? '',
-            'email' => $socialiteUser->getEmail(),
-            'password' => null, // Allowed as per our migration update
-            $idColumn => $socialiteUser->getId(),
-            $tokenColumn => $socialiteUser->token,
-            'email_verified_at' => now(),
-        ]);
+        return null;
     }
 }

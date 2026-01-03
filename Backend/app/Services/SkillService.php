@@ -3,14 +3,14 @@
 namespace App\Services;
 use App\Models\Skill;
 
-class SkillsService
+class SkillService
 {
     static function addSkill($skill , $data)
     {
         $skill->user_id = $data["user_id"];
         $skill->name = $data["name"];
         $skill->category = $data["category"];
-        $skill->level = $data["proficiency_level"];
+        $skill->proficiency = $data["proficiency"];
 
 
         $skill->save();
@@ -19,9 +19,9 @@ class SkillsService
 
     static function updateSkill($id, $data){
         $skill = Skill::find($id);
-        $skill->name = $data["name"];
-        $skill->category = $data["category"];
-        $skill->level = $data["proficiency_level"];
+        $skill->name = $data["name"]?$data["name"]:$skill->name;
+        $skill->category = $data["category"]?$data["category"]:$skill->category;
+        $skill->proficiency = $data["proficiency"]?$data["proficiency"]:$skill->proficiency;
 
         $skill->save();
         return $skill;

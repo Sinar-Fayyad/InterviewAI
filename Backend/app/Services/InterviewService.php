@@ -1,11 +1,11 @@
 <?php
 
 namespace App\Services;
-
+use App\Models\Interview;
 
 class InterviewService
 {
-    function addInterview($interview, $data){
+    static function addInterview($interview, $data){
         $interview->user_id = $data["user_id"]? $data["user_id"]:$interview->user_id;
         $interview->interview_title = $data["interview_title"]? $data["interview_title"]:$interview->interview_title;
         $interview->company_name = $data["company_name"]? $data["company_name"]:$interview->company_name;
@@ -17,15 +17,15 @@ class InterviewService
         return $interview;
     }
 
-    function getInterviews($user_id){
+    static function getInterviews($user_id){
         return Interview::where('user_id', $user_id)->get();
     }
 
-    function getInterview($id){
+    static function getInterview($id){
         return Interview::find($id);
     }
 
-    function deleteInterview($id){
+    static function deleteInterview($id){
         $interview = Interview::find($id);
         if($interview){
             $interview->delete();

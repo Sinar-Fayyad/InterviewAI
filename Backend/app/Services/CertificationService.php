@@ -11,7 +11,6 @@ class CertificationService
         $certification->certification_name = $data["certification_name"];
         $certification->organization_name = $data["organization_name"];
         $certification->date_obtained = $data["date_obtained"];  
-        $certification->description = $data["description"];
         $certification->save();
         return $certification;
     }
@@ -21,7 +20,6 @@ class CertificationService
         $certification->certification_name = $data["certification_name"]?$data["certification_name"]:$certification->certification_name;
         $certification->organization_name = $data["organization_name"]?$data["organization_name"]:$certification->organization_name;
         $certification->date_obtained = $data["date_obtained"]?$data["date_obtained"]:$certification->date_obtained;  
-        $certification->description = $data["description"]?$data["description"]:$certification->description;
 
         $certification->save();
         return $certification;

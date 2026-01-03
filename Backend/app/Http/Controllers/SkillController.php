@@ -7,7 +7,7 @@ use App\Models\Skill;
 use App\Services\SkillService;
 use App\Http\Controllers\Controller;
 
-class SkillsController extends Controller
+class SkillController extends Controller
 {
     function addSkill(Request $request){
 
