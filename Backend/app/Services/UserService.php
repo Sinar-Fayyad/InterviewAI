@@ -21,8 +21,8 @@ class UserService
         return $user;
     }
 
-    function changeTheme($data, $user){
-        $user->theme = $data["theme"]? $data["theme"]:$user->theme;
+    function changeTheme( $user){
+        $user->theme = ($user->theme == "light" ? "dark" : "light");
         $user->save();
         return $user;
     }

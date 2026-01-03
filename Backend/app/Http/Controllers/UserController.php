@@ -21,9 +21,9 @@ class UserController extends Controller
         return $this->responseJSON($user);
     }
 
-    function ChangeTheme(Request $request, $id){
+    function ChangeTheme($id){
         $user = User::find($id);
-        $user = UserService::changeTheme($request, $user);
+        $user = UserService::changeTheme($user);
         $user->save();
         return $this->responseJSON($user);
     }  
