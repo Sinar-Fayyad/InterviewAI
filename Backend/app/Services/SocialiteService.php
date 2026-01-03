@@ -32,18 +32,18 @@ class SocialiteService
         try {
             $socialiteUser = Socialite::driver($provider)->stateless()->user();
         } catch (\Exception $e) {
-    // This will tell you if it's a 401 Unauthorized, a network error, or a configuration mismatch
-    return response()->json([
-        'error' => 'Social authentication failed',
-        'message' => $e->getMessage() 
-    ], 401);
-}
+    
+            return response()->json([
+            'error' => 'Social authentication failed',
+            'message' => $e->getMessage() 
+        ], 401);
+        }
 
         $user = self::findOrCreateUser($socialiteUser, $provider);
 
         Auth::login($user);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = auth('api')->login($user);
 
         return [
             'status' => 'success',
