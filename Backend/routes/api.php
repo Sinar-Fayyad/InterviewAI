@@ -27,7 +27,7 @@ Route::group(["prefix" => "v0.1"], function(){
         // User Routes
         Route::get('/user/{id}', [UserController::class, 'getUser']);
         Route::post('/user/update', [UserController::class, 'updateUser']);
-        Route::post('/user/change_theme', [UserController::class, 'changeTheme']);
+        Route::get('/user/change_theme', [UserController::class, 'changeTheme']);
 
         // Education Routes
         Route::post('/addEducation', [EducationController::class, 'addEducation']);
