@@ -30,6 +30,8 @@ class User extends Authenticatable implements JWTSubject
         'linkedin_id',
         'google_token',
         'linkedin_token',
+        'google_refresh_token',
+        'linkedin_expires_at', 
     ];
 
     /**

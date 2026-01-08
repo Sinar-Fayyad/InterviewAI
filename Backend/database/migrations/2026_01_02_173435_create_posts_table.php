@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('body');
             $table->text('media');
-            $table->date('scheduled_at');
+            $table->dateTime('scheduled_at');
             $table->timestamps();
         });
     }

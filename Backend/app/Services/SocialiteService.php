@@ -12,37 +12,40 @@ class SocialiteService
         'linkedin-openid',
     ];
 
-    public static function redirect(string $provider)
+    static function redirect(string $provider)
     {
         if (!in_array($provider, self::$officialProviders)) {
-            return response()->json(['error' => 'Provider not supported'], 404);
+            return ['error' => 'Provider not supported', 'status' => 404];
         }
 
-        return Socialite::driver($provider)->stateless()->redirect();
+        return Socialite::driver($provider)->stateless()->redirect()->getTargetUrl();
     }
 
-    public static function callback(string $provider)
+    static function callback(string $provider)
     {
         if (!in_array($provider, self::$officialProviders)) {
-            return response()->json(['error' => 'Invalid provider'], 404);
+            return ['error' => 'Invalid provider', 'status' => 404];
         }
 
         try {
             $socialiteUser = Socialite::driver($provider)->stateless()->user();
         } catch (\Exception $e) {
-            return response()->json([
+            return [
                 'error' => 'Social authentication failed',
-                'message' => $e->getMessage() 
-            ], 401);
+                'message' => $e->getMessage(),
+                'status' => 401
+            ];
         }
 
         $user = self::updateExistingUser($socialiteUser, $provider);
 
         if (!$user) {
-            return response()->json(['error' => 'No existing account found to connect'], 404);
+            return [
+                'error' => 'No existing account found to connect',
+                'status' => 404
+            ];
         }
 
-        // Generate new JWT for the updated user
         $token = auth('api')->login($user);
 
         return [
@@ -52,27 +55,37 @@ class SocialiteService
         ];
     }
 
-    public static function updateExistingUser($socialiteUser, string $provider): ?User
+    static function updateExistingUser($socialiteUser, string $provider)
     {
-        $idColumn = ($provider === 'linkedin-openid') ? 'linkedin_id' : "{$provider}_id";
-        $tokenColumn = ($provider === 'linkedin-openid') ? 'linkedin_token' : "{$provider}_token";
+        $idColumn = ($provider === 'linkedin-openid') ? 'linkedin_id' : 'google_id';
+        $tokenColumn = ($provider === 'linkedin-openid') ? 'linkedin_token' : 'google_token';
+        $refreshTokenColumn = ($provider === 'linkedin-openid') ? null : 'google_refresh_token';
+        $expiresAtColumn = ($provider === 'linkedin-openid') ? 'linkedin_expires_at' : null;
 
-        // 1. Try to get user from the current JWT token
         $user = auth('api')->user();
 
-        // 2. Fallback to email if not logged in
         if (!$user) {
-            $user = User::where('email', $socialiteUser->getEmail())->first();
+            return null;
         }
 
-        if ($user) {
-            $user->update([
-                $idColumn => $socialiteUser->getId(),
-                $tokenColumn => $socialiteUser->token,
-            ]);
-            return $user;
+        $updates = [
+            $idColumn => $socialiteUser->getId(),
+            $tokenColumn => $socialiteUser->token,
+        ];
+
+        if ($provider === 'google') {
+            $updates['google_email'] = $socialiteUser->getEmail();
         }
 
-        return null;
+        if ($refreshTokenColumn && isset($socialiteUser->refreshToken)) {
+            $updates[$refreshTokenColumn] = $socialiteUser->refreshToken;
+        }
+
+        if ($expiresAtColumn && isset($socialiteUser->expiresIn)) {
+            $updates[$expiresAtColumn] = now()->addSeconds($socialiteUser->expiresIn);
+        }
+
+        $user->update($updates);
+        return $user;
     }
 }
