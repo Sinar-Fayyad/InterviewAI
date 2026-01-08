@@ -13,12 +13,14 @@ class CertificationController extends Controller
 
         $certification = new Certification;
         $certification = CertificationService::addCertification($certification, $request);
-        return $this->responseJSON($certification);
+        return $certifications?  $this->responseJSON($certifications):
+                                $this ->responseJSON (null , "Not found", 404);
     }
 
     function updateCertification(Request $request, $id){
         $certification = CertificationService::updateCertification($id, $request);
-        return $this->responseJSON($certification);
+        return $certifications?  $this->responseJSON($certifications):
+                                $this ->responseJSON (null , "Not found", 404);
     }
 
     function getCertification($id){
@@ -30,11 +32,12 @@ class CertificationController extends Controller
     function getCertifications($user_id){
         $certifications = CertificationService::getCertifications($user_id);
         return $certifications?  $this->responseJSON($certifications):
-                        $this ->responseJSON (null , "Not found", 404);
+                                $this ->responseJSON (null , "Not found", 404);
     }   
 
     function deleteCertification ($id){
         $certification = CertificationService::deleteCertification($id);
-        return $this->responseJSON($certification);
+        return $certifications?  $this->responseJSON($certifications):
+                                $this ->responseJSON (null , "Not found", 404);
     }
 }
