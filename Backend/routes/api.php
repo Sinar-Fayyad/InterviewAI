@@ -88,27 +88,28 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::post('/delete_post/{id}', [PostController::class, 'deletePost']);
 
         // Chatbot Routes
-        Route::post('/chat/init', [ChatbotController::class, 'initializeMemory']);
-        Route::post('/chat/send', [ChatbotController::class, 'sendMessage']);
+        Route::post('/initChatMemory', [ChatbotController::class, 'initializeMemory']);
+        Route::post('/sendChat', [ChatbotController::class, 'sendMessage']);
 
         // Email Routes
-        Route::post('/email/generate/{user_id?}', [EmailController::class, 'generateEmail']);
-        Route::post('/email/reply', [EmailController:: class, 'replyToEmail']);
-        Route::post('/email/send/{user_id}', [EmailController::class, 'sendEmail']);
+        Route::post('generate_email/{user_id?}', [EmailController::class, 'generateEmail']);
+        Route::post('reply_to_email', [EmailController:: class, 'replyToEmail']);
+        Route::post('send_email/{user_id}', [EmailController::class, 'sendEmail']);
+        Route::get('get_job_emails/{user_id}', [EmailController::class, 'getJobEmails']);
 
         // Linkedin Routes
-        Route::post('/linkedin/create', [LinkedinController::class, 'createPost']);
-        Route::post('/linkedin/profile', [LinkedinController::class, 'createProfile']);
-        Route::post('/linkedin/post/{user_id}', [LinkedinController::class, 'postToLinkedin']);
-        Route::post('/linkedin/schedule/{user_id}', [LinkedinController::class, 'schedulePost']);
+        Route::post('create_linkedin_post', [LinkedinController::class, 'createPost']);
+        Route::post('linkedin_profile', [LinkedinController::class, 'createProfile']);
+        Route::post('post_to_linkedin/{user_id}', [LinkedinController::class, 'postToLinkedin']);
+        Route::post('schedule_post/{user_id}', [LinkedinController::class, 'schedulePost']);
 
         // Content Routes 
         Route::post('/questions_generation', [ContentController::class, 'generate']);
 
         // Career Routes
-        Route::post('/career/resume-generation', [CareerController::class, 'resumeGeneration']);
-        Route::post('/career/resume-optimisation', [CareerController::class, 'resumeOptimisation']);
-        Route::post('/career/cover-letter-generation', [CareerController::class, 'coverLetterGeneration']);
-        Route::post('/career/cover-letter-optimisation', [CareerController::class, 'coverLetterOptimisation']);
+        Route::post('resume_generation', [CareerController::class, 'resumeGeneration']);
+        Route::post('resume_optimisation', [CareerController::class, 'resumeOptimisation']);
+        Route::post('cover_letter_generation', [CareerController::class, 'coverLetterGeneration']);
+        Route::post('cover_letter_optimisation', [CareerController::class, 'coverLetterOptimisation']);
     });
 });

@@ -29,4 +29,12 @@ class EmailController extends Controller
         return $result? $this->responseJSON($result):
                         $this->responseJSON(null, 'Failed to send email', 500);
     }
+
+    public function getJobEmails(Request $request, $user_id)
+    {
+        $result = EmailService::getJobEmails($user_id);
+        return $result ? $this->responseJSON($result) : 
+                         $this->responseJSON(null, 'Failed to fetch job emails', 500);
+    }
+
 }
