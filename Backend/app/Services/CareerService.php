@@ -26,9 +26,9 @@ class CareerService
         return self::handleCareerWorkflow($input, 'http://localhost:5678/webhook/Resume_generation', $user_id);
     }
 
-    static function resumeOptimisation($input, $user_id)
+    static function resumeOptimization($input, $user_id)
     {
-        return self::handleCareerWorkflow($input, 'http://localhost:5678/webhook/Resume_optimisation', $user_id);
+        return self::handleCareerWorkflow($input, 'http://localhost:5678/webhook/Resume_optimization', $user_id);
     }
 
     static function coverLetterGeneration($input, $user_id)
@@ -36,8 +36,8 @@ class CareerService
         return self::handleCareerWorkflow($input, 'http://localhost:5678/webhook/Cover_Letter_generation', $user_id);
     }
 
-    static function coverLetterOptimisation($input, $user_id)
+    static function coverLetterOptimization($input, $user_id)
     {
-        return self::handleCareerWorkflow($input, 'http://localhost:5678/webhook/Cover_letter_optimisation', $user_id);
+        return self::handleCareerWorkflow($input, 'http://localhost:5678/webhook/Cover_letter_optimization', $user_id);
     }
 }

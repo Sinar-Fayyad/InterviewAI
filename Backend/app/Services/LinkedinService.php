@@ -71,7 +71,7 @@ class LinkedinService
             'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
         ])
         ->timeout(120)
-        ->post('http://localhost:5678/webhook/LinkedIn', $payload);
+        ->post('http://localhost:5678/webhook/LinkedIn_post', $payload);
 
         return $response->successful() ? $response->json() : null;
     }

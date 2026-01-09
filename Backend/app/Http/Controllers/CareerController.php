@@ -16,11 +16,11 @@ class CareerController extends Controller
                        $this->responseJSON(null, 'Failed to generate resume', 500);
     }
 
-    function resumeOptimisation(Request $request, $user_id)
+    function resumeOptimization(Request $request, $user_id)
     {
-        $data = CareerService::resumeOptimisation($request->all(), $user_id);
+        $data = CareerService::resumeOptimization($request->all(), $user_id);
         return $data ? $this->responseJSON($data) : 
-                       $this->responseJSON(null, 'Failed to optimise resume', 500);
+                       $this->responseJSON(null, 'Failed to optimize resume', 500);
     }
 
     function coverLetterGeneration(Request $request, $user_id)
@@ -30,10 +30,10 @@ class CareerController extends Controller
                        $this->responseJSON(null, 'Failed to generate cover letter', 500);
     }
 
-    function coverLetterOptimisation(Request $request, $user_id)
+    function coverLetterOptimization(Request $request, $user_id)
     {
-        $data = CareerService::coverLetterOptimisation($request->all(), $user_id);
+        $data = CareerService::coverLetterOptimization($request->all(), $user_id);
         return $data ? $this->responseJSON($data) :
-                       $this->responseJSON(null, 'Failed to optimise cover letter', 500);
+                       $this->responseJSON(null, 'Failed to optimize cover letter', 500);
     }
 }

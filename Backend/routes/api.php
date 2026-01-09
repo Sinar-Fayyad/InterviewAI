@@ -109,8 +109,8 @@ Route::group(["prefix" => "v0.1"], function(){
 
         // Career Routes
         Route::post('resume_generation', [CareerController::class, 'resumeGeneration']);
-        Route::post('resume_optimisation', [CareerController::class, 'resumeOptimisation']);
+        Route::post('resume_optimization', [CareerController::class, 'resumeOptimization']);
         Route::post('cover_letter_generation', [CareerController::class, 'coverLetterGeneration']);
-        Route::post('cover_letter_optimisation', [CareerController::class, 'coverLetterOptimisation']);
+        Route::post('cover_letter_optimization', [CareerController::class, 'coverLetterOptimization']);
     });
 });
