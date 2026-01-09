@@ -8,6 +8,12 @@ use App\Http\Controllers\Controller;
 
 class LinkedinController
 {
+    function getMessages($userId)
+    {
+        $result = LinkedinService::getMessages($userId);
+        return $result ? $this->responseJSON($result) : 
+                         $this->responseJSON(null, 'Failed to fetch LinkedIn messages', 500);
+    }
 
     function createPost(Request $request)
     {
