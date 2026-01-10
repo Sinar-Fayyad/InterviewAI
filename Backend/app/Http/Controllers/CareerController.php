@@ -9,9 +9,9 @@ use App\Http\Controllers\Controller;
 
 class CareerController extends Controller
 {
-    function resumeGeneration(Request $request, $user_id)
+    function resumeGeneration($user_id)
     {
-        $data = CareerService::resumeGeneration($request->all(), $user_id);
+        $data = CareerService::resumeGeneration($user_id);
         return $data ? $this->responseJSON($data) : 
                        $this->responseJSON(null, 'Failed to generate resume', 500);
     }

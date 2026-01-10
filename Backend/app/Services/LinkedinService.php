@@ -76,16 +76,13 @@ class LinkedinService
         return $response->successful() ? $response->json() : null;
     }
 
-    static function createProfile($userInput)
+    static function createProfile()
     {
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
         ])
         ->timeout(120)
-        ->post('http://localhost:5678/webhook/Linkedin_profile', [
-            ...$userInput,
-            'profile' => ProfileService::getProfile(),
-        ]);
+        ->post('http://localhost:5678/webhook/Linkedin_profile', ProfileService::getProfile());
 
         return $response->successful() ? $response->json() : null;
     }
@@ -129,4 +126,30 @@ class LinkedinService
         return $response->successful() ? $response->json() : null;
     }
 
+    static function checkExpiry($user_id){
+        $user = User::find($user_id);
+        if (!$user) {
+            return null;
+        }
+
+        if (!$user->linkedin_expires_at) {
+            return false;
+        }
+
+        return now()->greaterThan($user->linkedin_expires_at);
+    }
+
+    static function disconnectLinkedin($user_id){
+        $user = User::find($user_id);
+        if (!$user) {
+            return null;
+        }
+
+        $user->linkedin_id = null;
+        $user->linkedin_token = null;
+        $user->linkedin_expires_at = null;
+        $user->save();
+
+        return $user;
+    }
 }

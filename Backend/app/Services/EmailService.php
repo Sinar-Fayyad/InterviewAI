@@ -126,4 +126,19 @@ class EmailService
         ]);
         return $response->successful() ? $response->json('access_token') : null;
     }
+
+    static function disconnectGoogle($user_id){
+        $user = User::find($user_id);
+        if (!$user) {
+            return null;
+        }
+
+        $user->google_id = null;
+        $user->google_email = null;
+        $user->google_token = null;
+        $user->google_refresh_token = null;
+        $user->save();
+
+        return $user;
+    }
 }

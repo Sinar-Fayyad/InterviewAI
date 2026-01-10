@@ -37,4 +37,9 @@ class EmailController extends Controller
                          $this->responseJSON(null, 'Failed to fetch job emails', 500);
     }
 
+    function disconnectGoogle($user_id){
+        $result = EmailService::disconnectGoogle($user_id);
+        return $result? $this->responseJSON($result):
+                        $this->responseJSON(null, "User not found", 404);
+    }
 }

@@ -21,9 +21,9 @@ class CareerService
         return $response->successful() ? $response->json() : null;
     }
 
-    static function resumeGeneration($input, $user_id)
+    static function resumeGeneration($user_id)
     {
-        return self::handleCareerWorkflow($input, 'http://localhost:5678/webhook/Resume_generation', $user_id);
+        return self::handleCareerWorkflow(null, 'http://localhost:5678/webhook/Resume_generation', $user_id);
     }
 
     static function resumeOptimization($input, $user_id)

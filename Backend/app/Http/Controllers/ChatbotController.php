@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 
 class ChatbotController extends Controller
 {
-    function initializeMemory(Request $request, $user_id = null)
+    function initializeMemory($user_id = null)
     {
         $result = ChatbotService::initializeMemory($user_id);
         return $result ? $this->responseJSON($result) : 

@@ -21,11 +21,11 @@ class EducationController extends Controller
         return $this->responseJSON($education);
     }
 
-    function getEducation($id){
-        $education = EducationService::getEducation($id);
-        return $education?  $this->responseJSON($education):
-                        $this ->responseJSON (null , "Not found", 404);
-    }
+    // function getEducation($id){
+    //     $education = EducationService::getEducation($id);
+    //     return $education?  $this->responseJSON($education):
+    //                     $this ->responseJSON (null , "Not found", 404);
+    // }
 
     function getEducations($user_id){
         $educations = EducationService::getEducations($user_id);

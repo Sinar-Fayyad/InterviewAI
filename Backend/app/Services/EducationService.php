@@ -35,9 +35,9 @@ class EducationService
         return Education::where( 'user_id' , $user_id)->get();
     }
 
-    static function getEducation($id){
-        return Education::find($id);
-    }
+    // static function getEducation($id){
+    //     return Education::find($id);
+    // }
 
     static function deleteEducation($id){
 

@@ -29,9 +29,9 @@ class CertificationService
         return Certification::where( 'user_id' , $user_id)->get();
     }
 
-    static function getCertification($id){
-        return Certification::find($id);
-    }
+    // static function getCertification($id){
+    //     return Certification::find($id);
+    // }
 
     static function deleteCertification($id){
 

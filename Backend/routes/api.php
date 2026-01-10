@@ -8,6 +8,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\CareerController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\LinkedinController;
@@ -29,8 +30,11 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::get('/auth/{provider}/redirect', [SocialiteController::class, "redirect"]);
         Route::get('/auth/{provider}/callback', [SocialiteController::class, "callback"]);
 
+        // Profile Routes
+        Route::get('/profile/{user_id}', [ProfileController::class, 'getProfile']);
+        Route::post('/save_profile/{user_id}', [ProfileController::class, 'saveProfile']);
+
         // User Routes
-        Route::get('/user/{id}', [UserController::class, 'getUser']);
         Route::post('/update_user/{id}', [UserController::class, 'updateUser']);
         Route::get('/change_theme/{id}', [UserController::class, 'changeTheme']);
 
@@ -38,21 +42,18 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::post('/add_education', [EducationController::class, 'addEducation']);
         Route::post('/update_education/{id}', [EducationController::class, 'updateEducation']);
         Route::get('/get_educations/{user_id}', [EducationController::class, 'getEducations']);
-        Route::get('/get_education/{id}', [EducationController::class, 'getEducation']);
         Route::post('/delete_education/{id}', [EducationController::class, 'deleteEducation']);
 
         // Experience Routes
         Route::post('/add_experience', [ExperienceController::class, 'addExperience']);
         Route::post('/update_experience/{id}', [ExperienceController::class, 'updateExperience']);
         Route::get('/get_experiences/{user_id}', [ExperienceController::class, 'getExperiences']);
-        Route::get('/get_experience/{id}', [ExperienceController::class, 'getExperience']);
         Route::post('/delete_experience/{id}', [ExperienceController::class, 'deleteExperience']);
 
         // Ceritification Routes
         Route::post('/add_certification', [CertificationController::class, 'addCertification']);
         Route::post('/update_certification/{id}', [CertificationController::class, 'updateCertification']);
         Route::get('/get_certifications/{user_id}', [CertificationController::class, 'getCertifications']);
-        Route::get('/get_certification/{id}', [CertificationController::class, 'getCertification']);
         Route::post('/delete_certification/{id}', [CertificationController::class, 'deleteCertification']);
 
         // Skills Routes
@@ -88,7 +89,7 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::post('/delete_post/{id}', [PostController::class, 'deletePost']);
 
         // Chatbot Routes
-        Route::post('/initChatMemory', [ChatbotController::class, 'initializeMemory']);
+        Route::get('/initChatMemory', [ChatbotController::class, 'initializeMemory']);
         Route::post('/sendChat', [ChatbotController::class, 'sendMessage']);
 
         // Email Routes
@@ -96,19 +97,22 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::post('reply_to_email', [EmailController:: class, 'replyToEmail']);
         Route::post('send_email/{user_id}', [EmailController::class, 'sendEmail']);
         Route::get('get_job_emails/{user_id}', [EmailController::class, 'getJobEmails']);
+        Route::post('disconnect_google/{user_id}', [EmailController::class, 'disconnectGoogle']);
 
         // Linkedin Routes
         Route::get('get_linkedin_messages/{user_id}', [LinkedinController::class, 'getMessages']);
         Route::post('create_linkedin_post', [LinkedinController::class, 'createPost']);
-        Route::post('linkedin_profile', [LinkedinController::class, 'createProfile']);
+        Route::get('linkedin_profile', [LinkedinController::class, 'createProfile']);
         Route::post('post_to_linkedin/{user_id}', [LinkedinController::class, 'postToLinkedin']);
         Route::post('schedule_post/{user_id}', [LinkedinController::class, 'schedulePost']);
+        Route::get('check_linkedin_expiry/{user_id}', [LinkedinController::class, 'checkExpiry']);
+        Route::post('disconnect_linkedin/{user_id}', [LinkedinController::class, 'disconnectLinkedin']);
 
         // Content Routes 
         Route::post('/questions_generation', [ContentController::class, 'generate']);
 
         // Career Routes
-        Route::post('resume_generation', [CareerController::class, 'resumeGeneration']);
+        Route::get('resume_generation', [CareerController::class, 'resumeGeneration']);
         Route::post('resume_optimization', [CareerController::class, 'resumeOptimization']);
         Route::post('cover_letter_generation', [CareerController::class, 'coverLetterGeneration']);
         Route::post('cover_letter_optimization', [CareerController::class, 'coverLetterOptimization']);

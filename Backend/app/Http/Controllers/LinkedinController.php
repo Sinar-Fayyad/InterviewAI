@@ -24,7 +24,7 @@ class LinkedinController
 
     function createProfile(Request $request)
     {
-        $result = LinkedinService::createProfile($request->all());
+        $result = LinkedinService::createProfile();
         return $result ? $this->responseJSON($result) :
                          $this->responseJSON(null, 'Failed to create LinkedIn profile', 500);
     }
@@ -41,5 +41,18 @@ class LinkedinController
         $result = LinkedinService::schedulePost($request->all(), $user_id);
         return $result ? $this->responseJSON($result) :
                          $this->responseJSON(null, 'Failed to schedule LinkedIn post', 500);
+    }
+
+    function checkExpiry($user_id){
+        $result = LinkedinService::checkExpiry($user_id);
+        return $result !== null 
+            ? $this->responseJSON(['is_expired' => $result]) 
+            : $this->responseJSON(null, "User not found", 404);
+    }
+
+    function disconnectLinkedin($user_id){
+        $result = LinkedinService::disconnectLinkedin($user_id);
+        return $result? $this->responseJSON($result):
+                        $this->responseJSON(null, "User not found", 404);
     }
 }

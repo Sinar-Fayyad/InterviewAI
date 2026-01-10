@@ -33,9 +33,9 @@ class ExperienceService
         return Experience::where( 'user_id' , $user_id)->get();
     }
 
-    static function getExperience($id){
-        return Experience::find($id);
-    }
+    // static function getExperience($id){
+    //     return Experience::find($id);
+    // }
 
     static function deleteExperience($id){
 
