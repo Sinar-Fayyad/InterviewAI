@@ -13,6 +13,9 @@ class InterviewService
         $interview->video_path = $data["video_path"]? $data["video_path"]:$interview->video_path;
         $interview->feedback = $data["feedback"]? $data["feedback"]:$interview->feedback;
         $interview->transcript = $data["transcript"]? $data["transcript"]:$interview->transcript;
+        $interview->question_count = $data["question_count"]? $data["question_count"]:$interview->question_count;
+        $interview->context_summary = $data["context_summary"]? $data["context_summary"]:$interview->context_summary;
+        $interview->status = $data["status"]? $data["status"]:$interview->status;
         $interview->save();
         return $interview;
     }

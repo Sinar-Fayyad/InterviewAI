@@ -14,12 +14,15 @@ return new class extends Migration
         Schema::create('interviews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('interview_title');
             $table->string('company_name');
             $table->string('job_title');
-            $table->string('video_path');
-            $table->text('feedback');
-            $table->text('transcript');
+            $table->text('feedback')->nullable();
+            $table->text('transcript')->nullable();
+            $table->string('video_path')->nullable();
+            $table->text('context_summary')->nullable();
+            $table->string('interview_title')->nullable();
+            $table->integer('question_count')->default(0);
+            $table->string('status')->default('active');
             $table->timestamps();
         });
     }

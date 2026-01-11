@@ -11,6 +11,7 @@ use App\Http\Controllers\CareerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\ResearchController;
 use App\Http\Controllers\LinkedinController;
 use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\SocialiteController;
@@ -61,6 +62,9 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::post('/update_skill/{id}', [SkillController::class, 'updateSkill']);
         Route::get('/get_skills/{user_id}', [SkillController::class, 'getSkills']);
         Route::post('/delete_skill/{id}', [SkillController::class, 'deleteSkill']);
+
+        // Research Routes
+        Route::post('/research', [ResearchController::class, 'Research']);
 
         // Interview Routes
         Route::post('/add_interview', [InterviewController::class, 'addInterview']);
