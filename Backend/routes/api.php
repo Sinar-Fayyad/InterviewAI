@@ -18,6 +18,7 @@ use App\Http\Controllers\SocialiteController;
 use App\Http\Controllers\EducationController;
 use App\Http\Controllers\ExperienceController;
 use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\InterviewAIController;
 use App\Http\Controllers\CertificationController;
 use App\Http\Controllers\QuestionsListController;
 
@@ -66,8 +67,13 @@ Route::group(["prefix" => "v0.1"], function(){
         // Research Routes
         Route::post('/research', [ResearchController::class, 'Research']);
 
+        // InterviewAI Routes
+        Route::post('/start_interview', [InterviewAIController::class, 'startInterview']);
+        Route::post('/answer_question', [InterviewAIController::class, 'answerQuestion']);
+        Route::post('/end_interview', [InterviewAIController::class, 'endInterview']);
+
         // Interview Routes
-        Route::post('/add_interview', [InterviewController::class, 'addInterview']);
+        //Route::post('/add_interview', [InterviewController::class, 'addInterview']);
         Route::get('/get_interviews/{user_id}', [InterviewController::class, 'getInterviews']);
         Route::get('/get_interview/{id}', [InterviewController::class, 'getInterview']);
         Route::post('/delete_interview/{id}', [InterviewController::class, 'deleteInterview']);

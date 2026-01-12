@@ -16,13 +16,12 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('company_name');
             $table->string('job_title');
+            $table->text('context_summary');
             $table->text('feedback')->nullable();
             $table->text('transcript')->nullable();
             $table->string('video_path')->nullable();
-            $table->text('context_summary')->nullable();
             $table->string('interview_title')->nullable();
             $table->integer('question_count')->default(0);
-            $table->string('status')->default('active');
             $table->timestamps();
         });
     }
