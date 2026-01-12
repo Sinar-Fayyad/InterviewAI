@@ -116,7 +116,6 @@ class LinkedinService
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
         ])
-        ->timeout(120)
         ->post('http://localhost:5678/webhook/Schedule_posts', [
             ...$userInput,
             'linkedin_token' => $user->linkedin_token,

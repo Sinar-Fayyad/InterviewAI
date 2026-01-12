@@ -24,7 +24,7 @@ class EmailService
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET')
-        ])->timeout(120)->post('http://localhost:5678/webhook/Email generation', [
+        ])->timeout(120)->post('http://localhost:5678/webhook/generate_email', [
             'input' => $request->all(),
             'profile' => $profile
         ]);

@@ -21,14 +21,15 @@ class SkillController extends Controller
         return $this->responseJSON($skill);
     }
 
-    function getSkills($user_id){
-        $skills = SkillService::getSkills($user_id);
-        return $skills?  $this->responseJSON($skills):
-                        $this ->responseJSON (null , "Not found", 404);
-    }   
-
     function deleteSkill ($id){
         $skill = SkillService::deleteSkill($id);
         return $this->responseJSON($skill);
     }
+    
+    // function getSkills($user_id){
+    //     $skills = SkillService::getSkills($user_id);
+    //     return $skills?  $this->responseJSON($skills):
+    //                     $this ->responseJSON (null , "Not found", 404);
+    // }   
+
 }

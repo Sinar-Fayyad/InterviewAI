@@ -14,10 +14,10 @@ class ProfileService
     {
         return [
             'user_info' => UserService::getUser($user_id),
-            'education' => EducationService::getEducation($user_id),
-            'experience' => ExperienceService::getExperience($user_id),
-            'certifications' => CertificationService::getCertification($user_id),
-            'skills' => SkillService::getSkill($user_id),
+            'education' => EducationService::getEducations($user_id),
+            'experience' => ExperienceService::getExperiences($user_id),
+            'certifications' => CertificationService::getCertifications($user_id),
+            'skills' => SkillService::getSkills($user_id),
         ];
     }
 

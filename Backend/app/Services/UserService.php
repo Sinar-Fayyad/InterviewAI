@@ -7,11 +7,18 @@ class UserService
 {
     static function getUser($id)
     {
-        return User::find($id);
+        return User::find($id)
+                    ->select('id', 'first_name', 'last_name', 'email', 'phone', 'location', 'summary', 'theme')
+                    ->get();
     }
 
-    static function updateUser($data, $user)
+    static function updateUser($data, $id)
     {
+        $user = User::find($id);
+        if (!$user) {
+            return null;
+        }
+
         $user->first_name = $data["first_name"]? $data["first_name"]:$user->first_name;
         $user->last_name = $data["last_name"]? $data["last_name"]:$user->last_name;
         $user->email = $data["email"]? $data["email"]:$user->email;
@@ -23,8 +30,13 @@ class UserService
         return $user;
     }
 
-    static function changeTheme($user)
+    static function changeTheme($id)
     {
+        $user = User::find($id);
+        if (!$user) {
+            return null;
+        }
+
         $user->theme = ($user->theme == "light" ? "dark" : "light");
         $user->save();
         return $user;

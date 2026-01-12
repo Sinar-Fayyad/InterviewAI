@@ -9,23 +9,19 @@ use App\Http\Controllers\Controller;
 
 class UserController extends Controller
 {
-    function getUser($id)
-    {
-        $user = UserService::getUser($id);
-        return $this->responseJSON($user);
-    }
+    // function getUser($id)
+    // {
+    //     $user = UserService::getUser($id);
+    //     return $this->responseJSON($user);
+    // }
 
     function updateUser(Request $request, $id){
-
-        $user = UserService::getUser($id);
-        $user = UserService::updateUser($request, $user);
-        return $this->responseJSON($user);
+        $user = UserService::updateUser($request->all(), $id);
+        return $user? $this->responseJSON($user):null ;
     }
 
     function changeTheme($id){
-        $user = UserService::getUser($id);
-        $user = UserService::changeTheme($user);
-        $user->save();
-        return $this->responseJSON($user);
+        $user = UserService::changeTheme($id);
+        return $user? $this->responseJSON($user) : null ;
     }  
 }

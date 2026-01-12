@@ -22,8 +22,8 @@ class QuestionsListService
             ])
             ->timeout(120)
             ->post('http://localhost:5678/webhook/Questions_Generation', [
+                'profile'         => UserService::getUser($data["user_id"]),
                 'context_summary' => $data["context_summary"],
-                'user_info'       => UserService::getUser($data["user_id"]),
             ]);
 
             if (!$response->successful()) {

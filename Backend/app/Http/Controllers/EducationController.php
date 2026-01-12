@@ -21,20 +21,21 @@ class EducationController extends Controller
         return $this->responseJSON($education);
     }
 
+    function deleteEducation ($id){
+        $education = EducationService::deleteEducation($id);
+        return $this->responseJSON($education);
+    }
+    
     // function getEducation($id){
     //     $education = EducationService::getEducation($id);
     //     return $education?  $this->responseJSON($education):
     //                     $this ->responseJSON (null , "Not found", 404);
     // }
 
-    function getEducations($user_id){
-        $educations = EducationService::getEducations($user_id);
-        return $educations?  $this->responseJSON($educations):
-                        $this ->responseJSON (null , "Not found", 404);
-    }   
+    // function getEducations($user_id){
+    //     $educations = EducationService::getEducations($user_id);
+    //     return $educations?  $this->responseJSON($educations):
+    //                     $this ->responseJSON (null , "Not found", 404);
+    // }   
 
-    function deleteEducation ($id){
-        $education = EducationService::deleteEducation($id);
-        return $this->responseJSON($education);
-    }
 }

@@ -14,7 +14,7 @@ class QuestionsListController extends Controller
         $questionsList = QuestionsListService::addQuestionsList($questionsList, $request->all());
 
         return $questionsList? $this->responseJSON($questionsList):
-                                $this ->responseJSON (null , "Not found", 404);
+                                $this ->responseJSON (null , "Failed to generate questions", 404);
     }
 
     function getQuestionsList($id){

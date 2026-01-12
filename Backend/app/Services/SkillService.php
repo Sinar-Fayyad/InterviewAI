@@ -27,9 +27,9 @@ class SkillService
         return $skill;
     }
 
-    static function getSkill($id){
-        return Skill::find($id);
-    }
+    // static function getSkill($id){
+    //     return Skill::find($id);
+    // }
     
     static function getSkills($user_id){
         return Skill::where( 'user_id' , $user_id)->get();

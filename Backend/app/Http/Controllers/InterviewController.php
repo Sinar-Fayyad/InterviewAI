@@ -9,11 +9,11 @@ use App\Http\Controllers\Controller;
 
 class InterviewController extends Controller
 {
-    function addInterview(Request $request){
-        $interview = new Interview;
-        $interview = InterviewService::addInterview($interview, $request);
-        return $this->responseJSON($interview);
-    }
+    // function addInterview(Request $request){
+    //     $interview = new Interview;
+    //     $interview = InterviewService::addInterview($interview, $request);
+    //     return $this->responseJSON($interview);
+    // }
 
     function getInterview($id){
         $interview = InterviewService::getInterview($id);
