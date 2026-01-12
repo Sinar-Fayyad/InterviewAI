@@ -101,8 +101,10 @@ class InterviewAIService
         $interviewId = $interview->id;
         $interviewTitle = $data["interview_title"] ?? "Interview";
 
-        $videoPath = "videos/interview_{$interviewId}.webm";
-        request()->file('video')->storeAs('', $videoPath, 'local');
+        $filename = "interview_{$interviewId}.webm";
+        request()->file('video')->storeAs('videos', $filename, 'public');
+
+        $videoPath = "videos/{$filename}";
 
         $parsed = self::parseTranscript($interview->transcript);
         $profile = UserService::getUser($interview->user_id);

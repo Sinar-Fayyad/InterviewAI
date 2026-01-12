@@ -30,20 +30,28 @@ class InterviewService
         return null;
     }
 
-    static function getInterviews($user_id){
-        return Interview::where('user_id', $user_id)->get();
+    static function getInterviews($user_id) {
+        return Interview::where('user_id', $user_id)
+            ->select('id', 'interview_title','company_name','job_title', 'created_at')
+            ->get();
     }
 
-    static function getInterview($id){
-        return Interview::find($id);
+    static function getInterview($id) {
+        $interview = Interview::find($id);
+        if ($interview && $interview->video_path) {
+            $interview->video_url = Storage::url($interview->video_path);
+        }
+        return $interview;
     }
 
     static function deleteInterview($id){
         $interview = Interview::find($id);
-        if($interview){
+        if ($interview) {
+            if ($interview->video_path) {
+                Storage::delete($interview->video_path);
+            }
             $interview->delete();
         }
-        
         return $interview;
     }
 }
