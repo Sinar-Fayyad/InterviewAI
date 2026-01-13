@@ -45,7 +45,7 @@ class ChatbotService
         $message = $request->input('message');
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
-        ])->timeout(120)->post('http://localhost:5678/webhook/0eba5969-64db-4b26-a127-98869c3f397e/chat', [
+        ])->timeout(120)->post('http://localhost:5678/webhook/Chatbot', [
             'message' => $message,
         ]);
 
