@@ -24,7 +24,10 @@ class AuthService{
         }
         $user = Auth::user();
         $user->token = $token;
-        return $user;
+        return [
+            'user_id' => $user->id,
+            'token' => $token,
+        ];
     }
 
     static function register(Request $request){
@@ -45,7 +48,10 @@ class AuthService{
         $token = Auth::login($user);
 
         $user->token = $token;
-        return $user;
+        return [
+            'user_id' => $user->id,
+            'token' => $token,
+        ];
     }
 
     static function logout (){
