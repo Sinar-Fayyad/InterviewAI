@@ -30,6 +30,19 @@ class InterviewAIController extends Controller
                          $this->responseJSON(null, "Not found", 404);
     }
 
+    function generateFeedback($interview_id)
+    {
+        $interview = Interview::find($interview_id);
+        if (!$interview) {
+            return $this->responseJSON(null, "Interview not found", 404);
+        }
+
+        $result = InterviewAIService::generateFeedback($interview);
+
+        return $result ? $this->responseJSON($result) :
+                         $this->responseJSON(null, "Not found", 404);
+    }
+
     function endInterview(Request $request)
     {
         $interview = Interview::find($request->input('interview_id'));

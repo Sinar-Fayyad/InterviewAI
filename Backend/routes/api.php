@@ -65,7 +65,8 @@ Route::group(["prefix" => "v0.1"], function(){
         // InterviewAI Routes
         Route::post('/start_interview', [InterviewAIController::class, 'startInterview']); // AI call 
         Route::post('/answer_question', [InterviewAIController::class, 'answerQuestion']); // AI call 
-        Route::post('/end_interview', [InterviewAIController::class, 'endInterview']); // AI call 
+        Route::post('/generate_feedack', [InterviewAIController::class, 'generateFeedback']); // AI call
+        Route::post('/end_interview', [InterviewAIController::class, 'endInterview']);  
 
         // Interview Routes
         Route::get('/get_interviews/{user_id}', [InterviewController::class, 'getInterviews']);

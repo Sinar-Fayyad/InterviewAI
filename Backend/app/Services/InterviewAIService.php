@@ -94,17 +94,7 @@ class InterviewAIService
         return ['message' => $nextQuestion];
     }
 
-    static function endInterview($interview, $data)
-    {
-        if (!request()->hasFile('video')) return null;
-
-        $interviewId = $interview->id;
-        $interviewTitle = $data["interview_title"] ?? "Interview";
-
-        $filename = "interview_{$interviewId}.webm";
-        request()->file('video')->storeAs('videos', $filename, 'public');
-
-        $videoPath = "videos/{$filename}";
+    static function generateFeedback($interview){
 
         $parsed = self::parseTranscript($interview->transcript);
         $profile = UserService::getUser($interview->user_id);
@@ -119,9 +109,22 @@ class InterviewAIService
             'emotions' => $parsed['emotions']
         ]);
 
-        $feedback = $response->successful() 
-            ? ($response->json()['feedback'] ?? "No feedback available.")
-            : "Feedback generation failed.";
+        return $response->successful() ? $response->json() : null;
+
+    }
+
+    static function endInterview($interview, $data)
+    {
+        if (!request()->hasFile('video')) return null;
+
+        $interviewId = $interview->id;
+        $interviewTitle = $data["interview_title"] ?? "Interview";
+        $feedback = $data["feedback"] ?? null;
+
+        $filename = "interview_{$interviewId}.webm";
+        request()->file('video')->storeAs('videos', $filename, 'public');
+
+        $videoPath = "videos/{$filename}";
 
         InterviewService::updateInterview($interviewId, [
             'interview_title' => $interviewTitle,
@@ -129,7 +132,7 @@ class InterviewAIService
             'feedback' => $feedback,
         ]);
 
-        return ['feedback' => $feedback];
+        return true;
     }
 
     static function transcribeAudio($audioFile)
