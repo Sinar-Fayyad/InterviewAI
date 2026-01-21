@@ -32,7 +32,7 @@ class InterviewService
 
     static function getInterviews($user_id) {
         return Interview::where('user_id', $user_id)
-            ->select('id', 'interview_title','company_name','job_title', 'created_at')
+            ->select('id', 'interview_title','company_name','job_title', 'created_at','feedback')
             ->get();
     }
 

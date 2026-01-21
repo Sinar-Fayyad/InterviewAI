@@ -15,11 +15,13 @@ use App\Http\Controllers\LinkedinController;
 use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\SocialiteController;
 use App\Http\Controllers\EducationController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExperienceController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\InterviewAIController;
 use App\Http\Controllers\CertificationController;
 use App\Http\Controllers\QuestionsListController;
+
 
 Route::group(["prefix" => "v0.1"], function(){
     Route::post("/login", [AuthController::class , "login"]);
@@ -58,6 +60,9 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::post('/add_skill', [SkillController::class, 'addSkill']);
         Route::post('/update_skill/{id}', [SkillController::class, 'updateSkill']);
         Route::post('/delete_skill/{id}', [SkillController::class, 'deleteSkill']);
+
+        //Dashboard Routes
+        Route::get('/analysis_feedback/{user_id}', [DashboardController::class, 'analysisFeedback']); // AI call
 
         // Research Routes
         Route::post('/research', [ResearchController::class, 'Research']); // AI call
