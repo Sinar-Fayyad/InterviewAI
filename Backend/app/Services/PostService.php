@@ -5,8 +5,9 @@ use App\Models\Post;
 
 class PostService
 {
-    static function addPost($post , $data){
+    static function addPost($data){
 
+        $post = new Post;
         $post->user_id = $data["user_id"];
         $post->title = $data["title"];
         $post->body = $data["body"];

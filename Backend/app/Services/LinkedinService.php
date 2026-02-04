@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Services\ProfileService;
+use App\Jobs\PublishLinkedInPost;
 use Illuminate\Support\Facades\Http;
 
 class LinkedinService
@@ -70,8 +71,8 @@ class LinkedinService
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
         ])
-        ->timeout(120)
-        ->post('http://localhost:5678/webhook/LinkedIn_post', $payload);
+            ->timeout(120)
+            ->post('http://localhost:5678/webhook/LinkedIn_post', $payload);
 
         return $response->successful() ? $response->json() : null;
     }
@@ -81,12 +82,12 @@ class LinkedinService
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
         ])
-        ->timeout(120)
-        ->post('http://localhost:5678/webhook/Linkedin_profile', ProfileService::getProfile());
+            ->timeout(120)
+            ->post('http://localhost:5678/webhook/Linkedin_profile', ProfileService::getProfile());
 
         return $response->successful() ? $response->json() : null;
     }
-    
+
     public static function postToLinkedIn($userId, $request)
     {
         $user = User::find($userId);
@@ -110,22 +111,30 @@ class LinkedinService
     {
         $user = User::find($user_id);
         if (!$user) {
-            return null;
+            throw new \Exception('User not found', 404);
         }
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
-        ])
-        ->post('http://localhost:5678/webhook/Schedule_posts', [
-            ...$userInput,
-            'linkedin_token' => $user->linkedin_token,
-            'linkedin_expires_at' => $user->linkedin_expires_at,
-        ]);
+        if (empty($userInput['body'])) {
+            throw new \Exception('Post content is required', 422);
+        }
 
-        return $response->successful() ? $response->json() : null;
+        if (empty($userInput['scheduled_at'])) {
+            throw new \Exception('Scheduled date is required', 422);
+        }
+
+        if (strtotime($userInput['scheduled_at']) < strtotime(now())) {
+            throw new \Exception('Scheduled date must be in the future', 422);
+        }
+
+        $post = PostService::addPost($userInput);
+
+        PublishLinkedInPost::dispatch($post)->delay($userInput['scheduled_at']);
+
+        return $post;
     }
 
-    static function checkExpiry($user_id){
+    static function checkExpiry($user_id)
+    {
         $user = User::find($user_id);
         if (!$user) {
             return null;
@@ -138,7 +147,8 @@ class LinkedinService
         return now()->greaterThan($user->linkedin_expires_at);
     }
 
-    static function disconnectLinkedin($user_id){
+    static function disconnectLinkedin($user_id)
+    {
         $user = User::find($user_id);
         if (!$user) {
             return null;
