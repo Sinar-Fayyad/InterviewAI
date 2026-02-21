@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Services\LinkedinService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SchedulePostRequest;
 
 class LinkedinController
 {
@@ -36,10 +37,11 @@ class LinkedinController
             $this->responseJSON(null, 'Failed to post to LinkedIn', 500);
     }
 
-    function schedulePost(Request $request, $user_id)
+    function schedulePost(SchedulePostRequest $request)
     {
+        $validated = $request->validated();
         try {
-            $result = LinkedinService::schedulePost($request->all(), $user_id);
+            $result = LinkedinService::schedulePost($validated);
             return $this->responseJSON($result, 'Post scheduled successfully');
         } 
         catch (\Exception $e) {

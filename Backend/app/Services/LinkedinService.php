@@ -107,28 +107,22 @@ class LinkedinService
         return $response->successful() ? $response->json() : null;
     }
 
-    static function schedulePost($userInput, $user_id)
+    static function schedulePost($userInput)
     {
-        $user = User::find($user_id);
+        $user = User::find($userInput['user_id']);
         if (!$user) {
-            throw new \Exception('User not found', 404);
-        }
-
-        if (empty($userInput['body'])) {
-            throw new \Exception('Post content is required', 422);
-        }
-
-        if (empty($userInput['scheduled_at'])) {
-            throw new \Exception('Scheduled date is required', 422);
-        }
-
-        if (strtotime($userInput['scheduled_at']) < strtotime(now())) {
-            throw new \Exception('Scheduled date must be in the future', 422);
+            throw new \Exception("User not found", 404);
         }
 
         $post = PostService::addPost($userInput);
+        if (!$post) {
+            throw new \Exception("Failed to create post", 500);
+        }
 
-        PublishLinkedInPost::dispatch($post)->delay($userInput['scheduled_at']);
+        $post = PublishLinkedInPost::dispatch($post)->delay($userInput['scheduled_at']);
+        if (!$post) {
+            throw new \Exception("Failed to schedule post", 500);
+        }
 
         return $post;
     }
