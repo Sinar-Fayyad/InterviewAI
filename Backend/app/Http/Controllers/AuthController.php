@@ -2,26 +2,44 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use App\Services\AuthService;
 use App\Http\Controllers\Controller;
 
 class AuthController extends Controller{
 
-    public function login(Request $request){
-        $user = AuthService::login($request);
+    public function login(LoginRequest $request){
 
-        return $user? $this->responseJSON($user):
-                      $this->responseJSON(null, "error", 401);
+        try {
+            $credentials = $request->only('email', 'password');
+            $result = AuthService::login($credentials);
+            return $this->SuccessJSON($result);
+
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 401);
+        }
     }
 
-    public function register(Request $request){
-        $user = AuthService::register($request);
-        return $this->responseJSON($user);
+    public function register(RegisterRequest $request){
+        try {
+            $data = $request->only(['first_name', 'last_name', 'email', 'password']);
+            $result = AuthService::register($data);
+            return $this->SuccessJSON($result);
+
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);
+        }
+
     }
 
     public function logout(){
-        $user = AuthService::logout();
-        return $this->responseJSON($user);
+        try {
+            AuthService::logout();
+            return $this->SuccessJSON(['message' => 'Logged out successfully']);
+
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);
+        }
     }
 }

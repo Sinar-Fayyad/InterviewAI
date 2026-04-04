@@ -8,25 +8,23 @@ use App\Http\Controllers\Controller;
 
 class SocialiteController extends Controller
 {
-    public function redirect(string $provider)
+    public function redirect(string $provider, $userId)
     {
-        $result = SocialiteService::redirect($provider);
-
-        if (isset($result['error'])) {
-            return $this->responseJSON(null, $result['error'], $result['status'] ?? 400);
+        try {
+            $url = SocialiteService::redirect($provider, $userId);
+            return redirect($url);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);
         }
-
-        return redirect($result);
     }
 
-    public function callback(string $provider)
+    public function callback(string $provider, Request $request)
     {
-        $result = SocialiteService::callback($provider);
-
-        if (isset($result['error'])) {
-            return $this->responseJSON(null, $result['error'], $result['status'] ?? 400);
+        try {
+            $result = SocialiteService::callback($provider, $request);
+            return $this->SuccessJSON($result);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);
         }
-
-        return $this->responseJSON($result);
     }
 }

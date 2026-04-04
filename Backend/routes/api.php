@@ -29,9 +29,9 @@ Route::group(["prefix" => "v0.1"], function(){
 
     Route::middleware('jwt.auth')->group(function() {
 
-        Route::get('/logout', [AuthController::class, 'logout']);
-        Route::get('/auth/{provider}/redirect', [SocialiteController::class, "redirect"]);
-        Route::get('/auth/{provider}/callback', [SocialiteController::class, "callback"]);
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/auth/{provider}/redirect/{user_id}', [SocialiteController::class, "redirect"]);
+        Route::get('/auth/{provider}/callback', [SocialiteController::class, "callback"]); 
 
         // Profile Routes
         Route::get('/profile/{user_id}', [ProfileController::class, 'getProfile']);

@@ -3,59 +3,44 @@
 namespace App\Services;
 
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+
 
 class AuthService{
    
-    static function login(Request $request){
-        $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
-        $credentials = $request->only('email', 'password');
-
-        $token = Auth::attempt($credentials);
+    static function login(array $credentials){
+        $token = JWTAuth::attempt($credentials);
 
         if (!$token) {
-            return null;
+            throw new \Exception("Invalid credentials");
         }
-        $user = Auth::user();
-        $user->token = $token;
+        
+        $user = auth('api')->user();
         return [
-            'user_id' => $user->id,
+            'id' => $user->id,
             'token' => $token,
         ];
     }
 
-    static function register(Request $request){
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
-        ]);
+    static function register(array $data){
+        $userData = [
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+        ];
 
-        $user = new User;
-        $user->first_name = $request->first_name;
-        $user->last_name = $request->last_name;
-        $user->email = $request->email;
-        $user->password = Hash::make($request->password);
-        $user->save();
+        $user = User::create($userData);
+        $token = JWTAuth::fromUser($user);
 
-        $token = Auth::login($user);
-
-        $user->token = $token;
         return [
-            'user_id' => $user->id,
+            'id' => $user->id,
             'token' => $token,
         ];
     }
 
     static function logout (){
-        $user = Auth::logout();
-        return $user;
+        JWTAuth::invalidate(JWTAuth::getToken());
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 
 class SocialiteService
@@ -12,80 +13,62 @@ class SocialiteService
         'linkedin-openid',
     ];
 
-    static function redirect(string $provider)
+    static function redirect(string $provider, int $userId)
     {
         if (!in_array($provider, self::$officialProviders)) {
-            return ['error' => 'Provider not supported', 'status' => 404];
+            throw new \InvalidArgumentException('Provider not supported', 404);
         }
 
-        return Socialite::driver($provider)->stateless()->redirect()->getTargetUrl();
+        return Socialite::driver($provider)->stateless()->with(['state' => (string)$userId])->redirect()->getTargetUrl();
     }
 
-    static function callback(string $provider)
+    static function callback(string $provider, Request $request)
     {
         if (!in_array($provider, self::$officialProviders)) {
-            return ['error' => 'Invalid provider', 'status' => 404];
+            throw new \InvalidArgumentException('Invalid provider', 404);
         }
 
-        try {
-            $socialiteUser = Socialite::driver($provider)->stateless()->user();
-        } catch (\Exception $e) {
-            return [
-                'error' => 'Social authentication failed',
-                'message' => $e->getMessage(),
-                'status' => 401
-            ];
+        $userId = $request->query('state');
+        if (!$userId || !is_numeric($userId)) {
+            throw new \InvalidArgumentException('Invalid user_id in state', 400);
         }
+        $userId = (int)$userId;
 
-        $user = self::updateExistingUser($socialiteUser, $provider);
+        $socialiteUser = Socialite::driver($provider)->stateless()->user();
+        $user = User::findOrFail($userId);
 
-        if (!$user) {
-            return [
-                'error' => 'No existing account found to connect',
-                'status' => 404
-            ];
-        }
+        $updatedUser = self::linkSocialAccountToUser($socialiteUser, $provider, $user);
 
-        $token = auth('api')->login($user);
+        $token = auth('api')->login($updatedUser);
 
         return [
             'status' => 'success',
-            'user' => $user,
             'token' => $token,
         ];
     }
 
-    static function updateExistingUser($socialiteUser, string $provider)
+    static function linkSocialAccountToUser($socialiteUser, string $provider, User $user)
     {
         $idColumn = ($provider === 'linkedin-openid') ? 'linkedin_id' : 'google_id';
         $tokenColumn = ($provider === 'linkedin-openid') ? 'linkedin_token' : 'google_token';
-        $refreshTokenColumn = ($provider === 'linkedin-openid') ? null : 'google_refresh_token';
+        $refreshTokenColumn = ($provider === 'google') ? 'google_refresh_token' : null;
         $expiresAtColumn = ($provider === 'linkedin-openid') ? 'linkedin_expires_at' : null;
-
-        $user = auth('api')->user();
-
-        if (!$user) {
-            return null;
-        }
 
         $updates = [
             $idColumn => $socialiteUser->getId(),
             $tokenColumn => $socialiteUser->token,
         ];
 
-        if ($provider === 'google') {
-            $updates['google_email'] = $socialiteUser->getEmail();
+        if ($provider === 'google' && isset($socialiteUser->refreshToken)) {
+            $updates['google_refresh_token'] = $socialiteUser->refreshToken;
         }
 
-        if ($refreshTokenColumn && isset($socialiteUser->refreshToken)) {
-            $updates[$refreshTokenColumn] = $socialiteUser->refreshToken;
+        if ($provider === 'linkedin-openid' && isset($socialiteUser->expiresIn)) {
+            $updates['linkedin_expires_at'] = now()->addSeconds($socialiteUser->expiresIn);
         }
 
-        if ($expiresAtColumn && isset($socialiteUser->expiresIn)) {
-            $updates[$expiresAtColumn] = now()->addSeconds($socialiteUser->expiresIn);
-        }
-
-        $user->update($updates);
+        $user->updateOrFail($updates);
         return $user;
     }
 }
+
