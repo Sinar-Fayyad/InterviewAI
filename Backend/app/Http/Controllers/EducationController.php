@@ -11,8 +11,7 @@ class EducationController extends Controller
 {
     function addEducation(Request $request){
 
-        $education = new Education;
-        $education = EducationService::addEducation($education, $request);
+        $education = EducationService::addEducation($request);
         return $this->responseJSON($education);
     }
 

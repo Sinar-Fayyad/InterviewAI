@@ -11,8 +11,7 @@ class SkillController extends Controller
 {
     function addSkill(Request $request){
 
-        $skill = new Skill;
-        $skill = SkillService::addSkill($skill, $request);
+        $skill = SkillService::addSkill($request);
         return $this->responseJSON($skill);
     }
 

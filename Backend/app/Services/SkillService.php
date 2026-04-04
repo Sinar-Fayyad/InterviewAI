@@ -5,8 +5,9 @@ use App\Models\Skill;
 
 class SkillService
 {
-    static function addSkill($skill , $data)
+    static function addSkill($data)
     {
+        $skill = new Skill;
         $skill->user_id = $data["user_id"];
         $skill->name = $data["name"];
         $skill->category = $data["category"];

@@ -11,8 +11,7 @@ class ExperienceController extends Controller
 {
     function addExperience(Request $request){
 
-        $experience = new Experience;
-        $experience = ExperienceService::addExperience($experience, $request);
+        $experience = ExperienceService::addExperience ($request);
         return $this->responseJSON($experience);
     }
 

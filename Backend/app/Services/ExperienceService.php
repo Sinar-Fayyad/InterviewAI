@@ -5,8 +5,9 @@ use App\Models\Experience;
 
 class ExperienceService
 {
-    static function addExperience($experience , $data){
+    static function addExperience($data){
 
+        $experience = new Experience;
         $experience->user_id = $data["user_id"];
         $experience->company_name = $data["company_name"];
         $experience->position = $data["position"];
