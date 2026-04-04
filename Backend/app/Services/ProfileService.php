@@ -12,6 +12,10 @@ class ProfileService
 {
     static function getFullProfile($user_id)
     {
+        if (!UserService::getUser($user_id)) {
+            throw new \Exception("User not found", 404);
+        }
+
         return [
             'user_info' => UserService::getUser($user_id),
             'education' => EducationService::getEducations($user_id),
@@ -21,10 +25,10 @@ class ProfileService
         ];
     }
 
-    static function saveProfile($user_id, $request){
-        $user = UserService::getUser($user_id);
-        if (!$user) {
-            return null;
+    static function saveProfile($user_id, $request)
+    {
+        if (!UserService::getUser($user_id)) {
+            throw new \Exception("User not found", 404);
         }
 
         UserService::updateUser($user_id, $request['user_info']);
@@ -34,6 +38,5 @@ class ProfileService
         collect($request['skills'])->each(fn($skill) => SkillService::addSkill( $skill));
         collect($request['certifications'])->each(fn($cert) => CertificationService::addCertification( $cert));
 
-        return true;
     }
 }
