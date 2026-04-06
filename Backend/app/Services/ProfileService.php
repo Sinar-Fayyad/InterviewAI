@@ -33,10 +33,10 @@ class ProfileService
 
         UserService::updateUser($user_id, $request['user_info']);
 
-        collect($request['education'])->each(fn($edu) => EducationService::addEducation($edu));
-        collect($request['experience'])->each(fn($exp) => ExperienceService::addExperience($exp));
-        collect($request['skills'])->each(fn($skill) => SkillService::addSkill( $skill));
-        collect($request['certifications'])->each(fn($cert) => CertificationService::addCertification( $cert));
+        collect($request['education'])->each(fn($edu) => EducationService::addEducation( $edu, $user_id,));
+        collect($request['experience'])->each(fn($exp) => ExperienceService::addExperience( $exp, $user_id,));
+        collect($request['skills'])->each(fn($skill) => SkillService::addSkill( $skill ,$user_id));
+        collect($request['certifications'])->each(fn($cert) => CertificationService::addCertification( $cert, $user_id));
 
     }
 }
