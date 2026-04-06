@@ -2,26 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\User;
 use App\Services\UserService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UserUpdateRequest;
 
 class UserController extends Controller
 {
-    // function getUser($id)
-    // {
-    //     $user = UserService::getUser($id);
-    //     return $this->responseJSON($user);
-    // }
 
-    function updateUser(Request $request, $id){
-        $user = UserService::updateUser($request->all(), $id);
-        return $user? $this->responseJSON($user):null ;
+    function updateUser(UserUpdateRequest $request, $id){
+        try {
+            UserService::updateUser($request->all(), $id);
+            return $this->SuccessJSON() ;
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode()) ;
+        }
     }
 
     function changeTheme($id){
-        $user = UserService::changeTheme($id);
-        return $user? $this->responseJSON($user) : null ;
+        try {
+            UserService::changeTheme($id);
+            return $this->SuccessJSON();
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode()) ;
+        }
     }  
 }

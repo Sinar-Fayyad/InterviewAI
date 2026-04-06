@@ -7,16 +7,20 @@ class UserService
 {
     static function getUser($id)
     {
-        return User::find($id)
-                    ->select('id', 'first_name', 'last_name', 'email', 'phone', 'location', 'summary', 'theme')
-                    ->get();
+        $user = User::find($id);
+        if (!$user) {
+            throw new \Exception("User not found", 404);
+        }
+
+        return $user ->select('id', 'first_name', 'last_name', 'email', 'phone', 'location', 'summary', 'theme')
+                     ->get();
     }
 
     static function updateUser($data, $id)
     {
         $user = User::find($id);
         if (!$user) {
-            return null;
+            throw new \Exception("User not found", 404);
         }
 
         $user->first_name = $data["first_name"]? $data["first_name"]:$user->first_name;
@@ -27,18 +31,16 @@ class UserService
         $user->summary = $data["summary"]? $data["summary"]:$user->summary;
 
         $user->save();
-        return $user;
     }
 
     static function changeTheme($id)
     {
         $user = User::find($id);
         if (!$user) {
-            return null;
+            throw new \Exception("User not found", 404);
         }
 
         $user->theme = ($user->theme == "light" ? "dark" : "light");
         $user->save();
-        return $user;
     }
 }
