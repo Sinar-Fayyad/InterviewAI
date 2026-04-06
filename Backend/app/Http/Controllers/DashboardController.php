@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Services\DashboardService;
+use App\Http\Controllers\Controller;
 
 class DashboardController extends Controller
 {
     function analysisFeedback($user_id)
     {
-        $data = DashboardService::analysisFeedback($user_id);
-        return $data ? $this->responseJSON($data) : 
-                       $this->responseJSON(null, 'Failed to analyze feedback', 500);
+        try {
+            $feedback = DashboardService::analysisFeedback($user_id);
+            return $this->SuccessJSON($feedback);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
+                       
     }
 }

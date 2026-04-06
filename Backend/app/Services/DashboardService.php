@@ -1,19 +1,30 @@
 <?php
 
 namespace App\Services;
+use App\Models\User;
 use App\Services\InterviewService;
 use Illuminate\Support\Facades\Http;
 
 class DashboardService
 {
-   static function analysisFeedback($user_id)
-   {
-       $interviews = InterviewService::getInterviews($user_id);
+    static function analysisFeedback($user_id)
+    {
+        if (!User::find($user_id)) {
+            throw new \Exception('User not found', 404);
+        }
+        $interviews = InterviewService::getInterviews($user_id);
 
-       $response = Http::withHeaders([
+        if (!$interviews) {
+            throw new \Exception('No interviews found for this user', 404);
+        }
+
+        $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET')
         ])->timeout(120)->post('http://localhost:5678/webhook/Dashboard', $interviews);
 
-        return $response->successful() ? $response->json() : null;
-   }
+        if (!$response->successful()) {
+            throw new \Exception('Failed to fetch analysis feedback: ' . $response->body(), $response->status());
+        }
+        return $response->json();
+    }
 }
