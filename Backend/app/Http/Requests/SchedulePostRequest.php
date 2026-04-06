@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\ApiFormRequest;
 
-class SchedulePostRequest extends FormRequest
+class SchedulePostRequest extends ApiFormRequest
 {
     public function authorize(): bool
     {

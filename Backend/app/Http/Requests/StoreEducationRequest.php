@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 
-class StoreEducationRequest extends FormRequest
+use App\Http\Requests\ApiFormRequest;
+
+class StoreEducationRequest extends ApiFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

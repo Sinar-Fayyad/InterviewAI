@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\ApiFormRequest;
 
-class StoreExperienceRequest extends FormRequest
+class StoreExperienceRequest extends ApiFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
