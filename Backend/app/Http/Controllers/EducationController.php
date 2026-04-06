@@ -12,7 +12,7 @@ class EducationController extends Controller
     function addEducation(StoreEducationRequest $request, $user_id)
     {
         try {
-            $education = EducationService::addEducation($request, $user_id);
+            $education = EducationService::addEducation($request->validated(), $user_id);
             return $this->SuccessJSON($education);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode());
@@ -21,7 +21,7 @@ class EducationController extends Controller
     function updateEducation(UpdateEducationRequest $request, $id)
     {
         try {
-            $education = EducationService::updateEducation($request, $id);
+            $education = EducationService::updateEducation($request->validated(), $id);
             return $this->SuccessJSON($education);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode());

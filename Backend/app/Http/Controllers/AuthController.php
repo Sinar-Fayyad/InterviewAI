@@ -12,7 +12,7 @@ class AuthController extends Controller{
     public function login(LoginRequest $request){
 
         try {
-            $credentials = $request->only('email', 'password');
+            $credentials = $request->validated()->only('email', 'password');
             $result = AuthService::login($credentials);
             return $this->SuccessJSON($result);
 
@@ -23,7 +23,7 @@ class AuthController extends Controller{
 
     public function register(RegisterRequest $request){
         try {
-            $data = $request->only(['first_name', 'last_name', 'email', 'password']);
+            $data = $request->validated()->only(['first_name', 'last_name', 'email', 'password']);
             $result = AuthService::register($data);
             return $this->SuccessJSON($result);
 
