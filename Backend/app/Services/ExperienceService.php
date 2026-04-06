@@ -44,6 +44,10 @@ class ExperienceService
 
     static function getExperiences($user_id)
     {
+        if (!User::find($user_id)) {
+            throw new \Exception("User not found", 404);
+        }
+
         return Experience::where('user_id', $user_id)->get();
     }
 
@@ -53,9 +57,8 @@ class ExperienceService
 
     static function deleteExperience($id)
     {
-
         $experience = Experience::find($id);
         $experience->delete();
-        return $experience;
+        return true;
     }
 }
