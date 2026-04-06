@@ -20,7 +20,6 @@ class StoreEducationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'required|exists:users,id',
             'institution_name' => 'required|string|max:255',
             'degree' => 'nullable|string|max:255',
             'field_of_study' => 'nullable|string|max:255',
@@ -36,8 +35,6 @@ class StoreEducationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'user_id.required' => 'User ID is required.',
-            'user_id.exists' => 'User does not exist.',
             'institution_name.required' => 'Institution name is required.',
             'institution_name.string' => 'Institution name must be a string.',
             'institution_name.max' => 'Institution name may not be greater than 255 characters.',

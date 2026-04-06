@@ -20,7 +20,6 @@ class UpdateEducationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'sometimes|exists:users,id',
             'institution_name' => 'sometimes|required|string|max:255',
             'degree' => 'sometimes|nullable|string|max:255',
             'field_of_study' => 'sometimes|nullable|string|max:255',
@@ -36,7 +35,6 @@ class UpdateEducationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'user_id.exists' => 'User does not exist.',
             'institution_name.string' => 'Institution name must be a string.',
             'institution_name.max' => 'Institution name may not be greater than 255 characters.',
             'start_date.date' => 'Start date must be a valid date.',
