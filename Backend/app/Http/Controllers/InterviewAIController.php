@@ -2,57 +2,54 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Interview;
 use App\Services\InterviewAIService;
+use App\Http\Requests\EndInterviewRequest;
+use App\Http\Requests\SubmitAnswerRequest;
+use App\Http\Requests\StartInterviewRequest;
 
 class InterviewAIController extends Controller
 {
-    function startInterview(Request $request)
+    function startInterview(StartInterviewRequest $request, $user_id)
     {
-        $interview = new Interview;
-        $interview = InterviewAIService::startInterview($interview, $request->all());
-
-        return $interview ? $this->responseJSON($interview) :
-                            $this->responseJSON(null, "Not found", 404);
+        try {
+            $interview = InterviewAIService::startInterview($request->validated(), $user_id);
+            return $this->SuccessJSON($interview);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function submitAnswer(Request $request)
+    function submitAnswer(SubmitAnswerRequest $request, $id)
     {
-        $interview = Interview::find($request->input('interview_id'));
-        if (!$interview) {
-            return $this->responseJSON(null, "Interview not found", 404);
+        try {
+            $validated = $request->validated();
+            $validated['audio'] = $request->file('audio');
+            $result = InterviewAIService::submitAnswer($validated, $id);
+            return $this->SuccessJSON($result);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
         }
-
-        $result = InterviewAIService::submitAnswer($interview, $request->all());
-
-        return $result ? $this->responseJSON($result) :
-                         $this->responseJSON(null, "Not found", 404);
     }
 
     function generateFeedback($interview_id)
     {
-        $interview = Interview::find($interview_id);
-        if (!$interview) {
-            return $this->responseJSON(null, "Interview not found", 404);
+        try {
+            $result = InterviewAIService::generateFeedback($interview_id);
+            return $this->SuccessJSON($result);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
         }
-
-        $result = InterviewAIService::generateFeedback($interview);
-
-        return $result ? $this->responseJSON($result) :
-                         $this->responseJSON(null, "Not found", 404);
     }
 
-    function endInterview(Request $request)
+    function endInterview(EndInterviewRequest $request, $interview_id)
     {
-        $interview = Interview::find($request->input('interview_id'));
-        if (!$interview) {
-            return $this->responseJSON(null, "Interview not found", 404);
+        try {
+            $validated = $request->validated();
+            $validated['video'] = $request->file('video');
+            $result = InterviewAIService::endInterview($validated, $interview_id);
+            return $this->SuccessJSON($result);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
         }
-
-        $result = InterviewAIService::endInterview($interview, $request->all());
-
-        return $result ? $this->responseJSON($result) :
-                     $this->responseJSON(null, "Not found", 404);
     }
 }

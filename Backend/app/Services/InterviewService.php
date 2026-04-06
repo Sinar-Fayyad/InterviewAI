@@ -1,57 +1,92 @@
 <?php
 
 namespace App\Services;
+
+use App\Models\User;
 use App\Models\Interview;
+use Illuminate\Support\Facades\Storage;
 
 class InterviewService
 {
-    static function addInterview($interview, $data){
-        $interview->user_id = $data["user_id"];
+    static function addInterview($data, $user_id)
+    {
+        if (!User::find($user_id)) {
+            throw new \Exception("User not found", 404);
+        }
+
+        $interview = new Interview;
+        $interview->user_id = $user_id;
         $interview->company_name = $data["company_name"];
         $interview->job_title = $data["job_title"];
         $interview->transcript = $data["transcript"];
         $interview->question_count = $data["question_count"];
         $interview->context_summary = $data["context_summary"];
+
         $interview->save();
         return $interview;
     }
 
-    static function updateInterview($id, $data){
+    static function updateInterview($data, $id)
+    {
         $interview = Interview::find($id);
-        if($interview){
-            $interview->interview_title = $data["interview_title"]?$data["interview_title"]:$interview->interview_title;
-            $interview->video_path = $data["video_path"]?$data["video_path"]:$interview->video_path;
-            $interview->feedback = $data["feedback"]?$data["feedback"]:$interview->feedback;
-            $interview->transcript = $data["transcript"]?$data["transcript"]:$interview->transcript;
-            $interview->question_count = $data["question_count"]?$data["question_count"]:$interview->question_count;
-            $interview->save();
-            return $interview;
+        if (!$interview) {
+            throw new \Exception("Interview not found", 404);
         }
-        return null;
+
+        $interview->interview_title = $data["interview_title"] ? $data["interview_title"] : $interview->interview_title;
+        $interview->video_path = $data["video_path"] ? $data["video_path"] : $interview->video_path;
+        $interview->feedback = $data["feedback"] ? $data["feedback"] : $interview->feedback;
+        $interview->transcript = $data["transcript"] ? $data["transcript"] : $interview->transcript;
+        $interview->question_count = $data["question_count"] ? $data["question_count"] : $interview->question_count;
+
+        $interview->save();
+        return $interview;
+
     }
 
-    static function getInterviews($user_id) {
+    static function getInterviews($user_id)
+    {
+        if (!User::find($user_id)) {
+            throw new \Exception("User not found", 404);
+        }
+
         return Interview::where('user_id', $user_id)
-            ->select('id', 'interview_title','company_name','job_title', 'created_at','feedback')
+            ->select('id', 'interview_title', 'company_name', 'job_title', 'created_at', 'feedback')
             ->get();
     }
 
-    static function getInterview($id) {
+    static function getInterview($id)
+    {
         $interview = Interview::find($id);
-        if ($interview && $interview->video_path) {
-            $interview->video_url = Storage::url($interview->video_path);
+
+        if (!$interview) {
+            throw new \Exception("Interview not found", 404);
         }
+
+        if (!$interview->video_path) {
+            throw new \Exception("Interview video not found", 404);
+        }
+
+        $interview->video_url = Storage::url($interview->video_path);
         return $interview;
     }
 
-    static function deleteInterview($id){
+    static function deleteInterview($id)
+    {
         $interview = Interview::find($id);
-        if ($interview) {
-            if ($interview->video_path) {
-                Storage::delete($interview->video_path);
-            }
-            $interview->delete();
+
+        if (!$interview) {
+            throw new \Exception("Interview not found", 404);
         }
+
+        if (!$interview->video_path) {
+            throw new \Exception("Interview video not found", 404);
+        }
+
+        Storage::delete($interview->video_path);
+
+        $interview->delete();
+
         return $interview;
     }
 }

@@ -2,31 +2,43 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
+use App\Models\User;
+use App\Models\Interview;
 use App\Services\UserService;
 use App\Services\InterviewService;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class InterviewAIService
 {
-    static function startInterview($interview, $data)
+    static function startInterview($data, $user_id)
     {
-        $profile = UserService::getUser($data["user_id"]);
-        if (!$profile) return null;
+        if (!User::find($user_id)) {
+            throw new \Exception("User not found", 404);
+        }
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
-        ])->timeout(120)->post('http://localhost:5678/webhook/interview_maker', [
-            'profile' => $profile,
-            'context_summary' => $data["context_summary"],
-            'conversation' => [],
-            'emotions' => []
-        ]);
+        $profile = UserService::getUser($user_id);
 
-        if (!$response->successful()) return null;
+        if (!$profile) {
+            throw new \Exception("User profile not found", 404);
+        }
 
-        $firstQuestion = $response->json()['question'] ?? null;
-        if (!$firstQuestion) return null;
+        do {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
+            ])->timeout(120)->post('http://localhost:5678/webhook/interview_maker', [
+                        'profile' => $profile,
+                        'context_summary' => $data["context_summary"],
+                        'conversation' => [],
+                        'emotions' => []
+                    ]);
+
+            if (!$response->successful()) {
+                throw new \Exception("Failed to start interview", $response->body(), $response->getStatusCode());
+            }
+        } while (!$response->json()['question']);
+
+        $firstQuestion = $response->json()['question'];
 
         $transcript = self::appendToTranscript("", "question1", $firstQuestion);
 
@@ -39,25 +51,38 @@ class InterviewAIService
             'question_count' => 1,
         ];
 
-        $saved = InterviewService::addInterview($interview, $interviewData);
+        $saved = InterviewService::addInterview($interviewData, $user_id);
         $saved->message = $firstQuestion;
         return $saved;
     }
 
-    static function submitAnswer($interview, $data)
+    static function submitAnswer($data, $id)
     {
-        $interviewId = $interview->id;
+        $interview = Interview::find($id);
+
+        if (!$interview) {
+            throw new \Exception("Interview not found", 404);
+        }
+
+        $interviewId = $id;
         $currentQNum = $interview->question_count;
         $emotion = $data["emotion"] ?? "neutral";
 
-        $answerText = self::transcribeAudio(request()->file('audio'));
-        if (!$answerText) return null;
+        try {
+            $answerText = self::transcribeAudio(request()->file('audio'));
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage(), $e->getCode());
+        }
+
+        if (!$answerText) {
+            throw new \Exception("Failed to transcribe audio", 500);
+        }
 
         $transcript = $interview->transcript;
         $transcript = self::appendToTranscript($transcript, "answer{$currentQNum}", $answerText);
         $transcript = self::appendToTranscript($transcript, "emotion{$currentQNum}", $emotion);
 
-        InterviewService::updateInterview($interviewId, ['transcript' => $transcript]);
+        InterviewService::updateInterview(['transcript' => $transcript], $interviewId);
 
         $endNow = ($data["end_now"] ?? false) || ($currentQNum >= 10);
 
@@ -67,77 +92,97 @@ class InterviewAIService
 
         $parsed = self::parseTranscript($transcript);
         $profile = UserService::getUser($interview->user_id);
-        if (!$profile) return null;
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
-        ])->timeout(120)->post('http://localhost:5678/webhook/interview_maker', [
-            'profile' => $profile,
-            'context_summary' => $interview->context_summary,
-            'conversation' => $parsed['conversation'],
-            'emotions' => $parsed['emotions']
-        ]);
+        if (!$profile) {
+            throw new \Exception("User profile not found", 404);
+        }
 
-        if (!$response->successful()) return null;
+        do {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
+            ])->timeout(120)->post('http://localhost:5678/webhook/interview_maker', [
+                        'profile' => $profile,
+                        'context_summary' => $interview->context_summary,
+                        'conversation' => $parsed['conversation'],
+                        'emotions' => $parsed['emotions']
+                    ]);
 
-        $nextQuestion = $response->json()['question'] ?? null;
-        if (!$nextQuestion) return null;
+            if (!$response->successful()) {
+                throw new \Exception("Failed to get next question", $response->body(), $response->getStatusCode());
+            }
+        } while (!$response->json()['question']);
+
+        $nextQuestion = $response->json()['question'];
 
         $nextQNum = $currentQNum + 1;
         $transcript = self::appendToTranscript($transcript, "question{$nextQNum}", $nextQuestion);
 
-        InterviewService::updateInterview($interviewId, [
+        InterviewService::updateInterview([
             'transcript' => $transcript,
             'question_count' => $nextQNum,
-        ]);
+        ], $interviewId);
 
         return ['message' => $nextQuestion];
     }
 
-    static function generateFeedback($interview){
+    static function generateFeedback($interview_id)
+    {
+        $interview = Interview::find($interview_id);
+
+        if (!$interview) {
+            throw new \Exception("Interview not found", 404);
+        }
 
         $parsed = self::parseTranscript($interview->transcript);
         $profile = UserService::getUser($interview->user_id);
-        if (!$profile) return null;
+
+        if (!$profile) {
+            throw new \Exception("User profile not found", 404);
+        }
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
         ])->timeout(120)->post('http://localhost:5678/webhook/interview_feedback', [
-            'profile' => $profile,
-            'context_summary' => $interview->context_summary,
-            'conversation' => $parsed['conversation'],
-            'emotions' => $parsed['emotions']
-        ]);
+                    'profile' => $profile,
+                    'context_summary' => $interview->context_summary,
+                    'conversation' => $parsed['conversation'],
+                    'emotions' => $parsed['emotions']
+                ]);
 
-        return $response->successful() ? $response->json() : null;
+        if (!$response->successful()) {
+            throw new \Exception("Failed to generate feedback", $response->body(), $response->getStatusCode());
+        }
+
+        return $response->json();
 
     }
 
-    static function endInterview($interview, $data)
+    static function endInterview($data, $interview_id)
     {
-        if (!request()->hasFile('video')) return null;
+        if (!request()->hasFile('video'))
+            throw new \Exception("Interview video is required", 400);
 
-        $interviewId = $interview->id;
         $interviewTitle = $data["interview_title"] ?? "Interview";
         $feedback = $data["feedback"] ?? null;
 
-        $filename = "interview_{$interviewId}.webm";
+        $filename = "interview_{$interview_id}.webm";
         request()->file('video')->storeAs('videos', $filename, 'public');
 
         $videoPath = "videos/{$filename}";
 
-        InterviewService::updateInterview($interviewId, [
+        InterviewService::updateInterview([
             'interview_title' => $interviewTitle,
             'video_path' => $videoPath,
             'feedback' => $feedback,
-        ]);
+        ], $interview_id);
 
         return true;
     }
 
     static function transcribeAudio($audioFile)
     {
-        if (!$audioFile) return null;
+        if (!$audioFile)
+            throw new \Exception("Audio file is required", 400);
 
         $interviewId = time();
         $tempAudioPath = "temp/{$interviewId}.wav";
@@ -149,7 +194,7 @@ class InterviewAIService
 
         if (!file_exists($whisperExe) || !file_exists($audioFullPath)) {
             Storage::delete($tempAudioPath);
-            return null;
+            throw new \Exception("Audio processing failed", 500);
         }
 
         shell_exec("\"{$whisperExe}\" -m \"{$model}\" -f \"{$audioFullPath}\" --output-txt");
@@ -161,10 +206,16 @@ class InterviewAIService
             unlink($txtPath);
         }
 
-        Storage::delete($tempAudioPath);
-        if (file_exists($audioFullPath)) unlink($audioFullPath);
+        if (!$text) {
+            throw new \Exception("Audio transcription failed", 500);
+        }
 
-        return $text ?: null;
+        Storage::delete($tempAudioPath);
+        if (file_exists($audioFullPath)) {
+            unlink($audioFullPath);
+        }
+
+        return $text;
     }
 
     static function appendToTranscript($transcript, $key, $value)

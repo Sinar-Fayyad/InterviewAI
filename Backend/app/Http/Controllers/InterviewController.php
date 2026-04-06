@@ -9,26 +9,30 @@ use App\Http\Controllers\Controller;
 
 class InterviewController extends Controller
 {
-    // function addInterview(Request $request){
-    //     $interview = new Interview;
-    //     $interview = InterviewService::addInterview($interview, $request);
-    //     return $this->responseJSON($interview);
-    // }
-
     function getInterview($id){
-        $interview = InterviewService::getInterview($id);
-        return $interview?  $this->responseJSON($interview):
-                        $this ->responseJSON (null , "Not found", 404);
+        try {
+            $interview = InterviewService::getInterview($id);
+            return $this->SuccessJSON($interview);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
     function getInterviews($user_id){
-        $interviews = InterviewService::getInterviews($user_id);
-        return $interviews?  $this->responseJSON($interviews):
-                        $this ->responseJSON (null , "Not found", 404);
+        try {
+            $interviews = InterviewService::getInterviews($user_id);
+            return $this->SuccessJSON($interviews);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }   
 
     function deleteInterview ($id){
-        $interview = InterviewService::deleteInterview($id);
-        return $this->responseJSON($interview);
+        try {
+            InterviewService::deleteInterview($id);
+            return $this->SuccessJSON(['message' => 'Interview deleted successfully']);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 }
