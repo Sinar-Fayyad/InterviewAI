@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Services\ResearchService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ResearchRequest;
 
 class ResearchController extends Controller
 {
-    function Research(Request $request)
+function Research(ResearchRequest $request)
     {
-        $result = ResearchService::Research($request->all());
-        return $result ? $this->responseJSON($result) : 
-                         $this->responseJSON(null, 'Failed to research', 500);
+        try {
+            $result = ResearchService::Research($request->validated());
+            return $this->SuccessJSON($result);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 }

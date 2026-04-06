@@ -15,6 +15,10 @@ class ResearchService
         ->timeout(120)
         ->post('http://localhost:5678/webhook/Research', $payload);
 
-        return $result->successful() ? $result->json() : null;
+        if (!$result->successful()) {
+            throw new \Exception('Failed to fetch research data: ' . $result->body(), $result->getStatusCode());
+        }
+
+        return $result->json();
     }
 }

@@ -23,7 +23,7 @@ class DashboardService
         ])->timeout(120)->post('http://localhost:5678/webhook/Dashboard', $interviews);
 
         if (!$response->successful()) {
-            throw new \Exception('Failed to fetch analysis feedback: ' . $response->body(), $response->status());
+            throw new \Exception('Failed to fetch analysis feedback: ' . $response->body(), $response->getStatusCode());
         }
         return $response->json();
     }
