@@ -9,10 +9,10 @@ use App\Http\Requests\UpdateEducationRequest;
 
 class EducationController extends Controller
 {
-    function addEducation(StoreEducationRequest $request, $id)
+    function addEducation(StoreEducationRequest $request, $user_id)
     {
         try {
-            $education = EducationService::addEducation($id, $request);
+            $education = EducationService::addEducation($request, $user_id);
             return $this->SuccessJSON($education);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode());
@@ -21,7 +21,7 @@ class EducationController extends Controller
     function updateEducation(UpdateEducationRequest $request, $id)
     {
         try {
-            $education = EducationService::updateEducation($id, $request);
+            $education = EducationService::updateEducation($request, $id);
             return $this->SuccessJSON($education);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode());

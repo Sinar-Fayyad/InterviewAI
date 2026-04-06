@@ -6,7 +6,7 @@ use App\Models\User;
 
 class EducationService
 {
-    static function addEducation($id, $data, )
+    static function addEducation($data, $id)
     {
         if (!User::find($id)) {
             throw new \Exception("User not found", 404);
@@ -25,12 +25,8 @@ class EducationService
         return $education;
     }
 
-    static function updateEducation($id, $data)
+    static function updateEducation($data, $id)
     {
-        if (!User::find($id)) {
-            throw new \Exception("User not found", 404);
-        }
-
         $education = Education::find($id);
 
         if (!$education) {
