@@ -68,9 +68,9 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::post('/research', [ResearchController::class, 'Research']); // AI call
 
         // InterviewAI Routes
-        Route::post('/start_interview', [InterviewAIController::class, 'startInterview']); // AI call 
-        Route::post('/answer_question', [InterviewAIController::class, 'answerQuestion']); // AI call 
-        Route::post('/generate_feedack/{id}', [InterviewAIController::class, 'generateFeedback']); // AI call
+        Route::post('/start_interview/{user_id}', [InterviewAIController::class, 'startInterview']); // AI call 
+        Route::post('/submit_answer/{id}', [InterviewAIController::class, 'submitAnswer']); // AI call 
+        Route::post('/generate_feedback/{id}', [InterviewAIController::class, 'generateFeedback']); // AI call
         Route::post('/end_interview', [InterviewAIController::class, 'endInterview']);  
 
         // Interview Routes
