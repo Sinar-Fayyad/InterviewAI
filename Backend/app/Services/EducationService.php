@@ -6,14 +6,14 @@ use App\Models\User;
 
 class EducationService
 {
-    static function addEducation($data, $id)
+    static function addEducation($data, $user_id)
     {
-        if (!User::find($id)) {
+        if (!User::find($user_id)) {
             throw new \Exception("User not found", 404);
         }
 
         $education = new Education;
-        $education->user_id = $id;
+        $education->user_id = $user_id;
         $education->institution_name = $data["institution_name"];
         $education->degree = $data["degree"];
         $education->field_of_study = $data["field_of_study"];
@@ -44,13 +44,13 @@ class EducationService
         return $education;
     }
 
-    static function getEducations($id)
+    static function getEducations($user_id)
     {
-        if (!User::find($id)) {
+        if (!User::find($user_id)) {
             throw new \Exception("User not found", 404);
         }
 
-        return Education::where('user_id', $id)->get();
+        return Education::where('user_id', $user_id)->get();
     }
 
     // static function getEducation($id){
@@ -59,9 +59,6 @@ class EducationService
 
     static function deleteEducation($id)
     {
-        if (!User::find($id)) {
-            throw new \Exception("User not found", 404);
-        }
         $education = Education::find($id);
 
         if (!$education) {
@@ -69,5 +66,6 @@ class EducationService
         }
 
         $education->delete();
+        return true;
     }
 }
