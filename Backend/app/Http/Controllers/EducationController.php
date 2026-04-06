@@ -2,39 +2,41 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Education;
 use App\Services\EducationService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreEducationRequest;
+use App\Http\Requests\UpdateEducationRequest;
 
 class EducationController extends Controller
 {
-    function addEducation(Request $request){
-
-        $education = EducationService::addEducation($request);
-        return $this->responseJSON($education);
+    function addEducation(StoreEducationRequest $request, $id)
+    {
+        try {
+            $education = EducationService::addEducation($id, $request);
+            return $this->SuccessJSON($education);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
+    }
+    function updateEducation(UpdateEducationRequest $request, $id)
+    {
+        try {
+            $education = EducationService::updateEducation($id, $request);
+            return $this->SuccessJSON($education);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function updateEducation(Request $request, $id){
-        $education = EducationService::updateEducation($id, $request);
-        return $this->responseJSON($education);
+    function deleteEducation($id)
+    {
+        try {
+            EducationService::deleteEducation($id);
+            return $this->SuccessJSON();
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function deleteEducation ($id){
-        $education = EducationService::deleteEducation($id);
-        return $this->responseJSON($education);
-    }
-    
-    // function getEducation($id){
-    //     $education = EducationService::getEducation($id);
-    //     return $education?  $this->responseJSON($education):
-    //                     $this ->responseJSON (null , "Not found", 404);
-    // }
-
-    // function getEducations($user_id){
-    //     $educations = EducationService::getEducations($user_id);
-    //     return $educations?  $this->responseJSON($educations):
-    //                     $this ->responseJSON (null , "Not found", 404);
-    // }   
 
 }

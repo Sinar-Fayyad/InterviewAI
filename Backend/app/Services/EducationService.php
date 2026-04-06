@@ -2,26 +2,41 @@
 
 namespace App\Services;
 use App\Models\Education;
+use App\Models\User;
 
 class EducationService
 {
-    static function addEducation($data)
+    static function addEducation($id, $data, )
     {
+        if (!User::find($id)) {
+            throw new \Exception("User not found", 404);
+        }
+
         $education = new Education;
-        $education ->user_id = $data["user_id"];
-        $education ->institution_name = $data["institution_name"];
-        $education ->degree = $data["degree"];
-        $education ->field_of_study = $data["field_of_study"];
-        $education ->start_date = $data["start_date"];
-        $education ->end_date = $data["end_date"];
-        $education ->description = $data["description"];
-        $education ->save();
+        $education->user_id = $id;
+        $education->institution_name = $data["institution_name"];
+        $education->degree = $data["degree"];
+        $education->field_of_study = $data["field_of_study"];
+        $education->start_date = $data["start_date"];
+        $education->end_date = $data["end_date"];
+        $education->description = $data["description"];
+        $education->save();
+
         return $education;
     }
 
     static function updateEducation($id, $data)
     {
+        if (!User::find($id)) {
+            throw new \Exception("User not found", 404);
+        }
+
         $education = Education::find($id);
+
+        if (!$education) {
+            throw new \Exception("Education not found", 404);
+        }
+
         $education->institution_name = $data["institution_name"] ? $data["institution_name"] : $education->institution_name;
         $education->degree = $data["degree"] ? $data["degree"] : $education->degree;
         $education->field_of_study = $data["field_of_study"] ? $data["field_of_study"] : $education->field_of_study;
@@ -33,9 +48,13 @@ class EducationService
         return $education;
     }
 
-    static function getEducations($user_id)
+    static function getEducations($id)
     {
-        return Education::where('user_id', $user_id)->get();
+        if (!User::find($id)) {
+            throw new \Exception("User not found", 404);
+        }
+
+        return Education::where('user_id', $id)->get();
     }
 
     // static function getEducation($id){
@@ -44,9 +63,15 @@ class EducationService
 
     static function deleteEducation($id)
     {
-
+        if (!User::find($id)) {
+            throw new \Exception("User not found", 404);
+        }
         $education = Education::find($id);
+
+        if (!$education) {
+            throw new \Exception("Education not found", 404);
+        }
+
         $education->delete();
-        return $education;
     }
 }
