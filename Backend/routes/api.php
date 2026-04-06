@@ -38,26 +38,26 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::post('/save_profile/{user_id}', [ProfileController::class, 'saveProfile']);
 
         // User Routes
-        Route::post('/update_user/{id}', [UserController::class, 'updateUser']);
-        Route::get('/change_theme/{id}', [UserController::class, 'changeTheme']);
+        Route::post('/update_user/{user_id}', [UserController::class, 'updateUser']);
+        Route::post('/change_theme/{id}', [UserController::class, 'changeTheme']);
 
         // Education Routes
-        Route::post('/add_education/{id}', [EducationController::class, 'addEducation']);
+        Route::post('/add_education/{user_id}', [EducationController::class, 'addEducation']);
         Route::post('/update_education/{id}', [EducationController::class, 'updateEducation']);
         Route::post('/delete_education/{id}', [EducationController::class, 'deleteEducation']);
 
         // Experience Routes
-        Route::post('/add_experience/{id}', [ExperienceController::class, 'addExperience']);
+        Route::post('/add_experience/{user_id}', [ExperienceController::class, 'addExperience']);
         Route::post('/update_experience/{id}', [ExperienceController::class, 'updateExperience']);
         Route::post('/delete_experience/{id}', [ExperienceController::class, 'deleteExperience']);
 
         // Ceritification Routes
-        Route::post('/add_certification/{id}', [CertificationController::class, 'addCertification']);
+        Route::post('/add_certification/{user_id}', [CertificationController::class, 'addCertification']);
         Route::post('/update_certification/{id}', [CertificationController::class, 'updateCertification']);
         Route::post('/delete_certification/{id}', [CertificationController::class, 'deleteCertification']);
 
         // Skills Routes
-        Route::post('/add_skill/{id}', [SkillController::class, 'addSkill']);
+        Route::post('/add_skill/{user_id}', [SkillController::class, 'addSkill']);
         Route::post('/update_skill/{id}', [SkillController::class, 'updateSkill']);
         Route::post('/delete_skill/{id}', [SkillController::class, 'deleteSkill']);
 
