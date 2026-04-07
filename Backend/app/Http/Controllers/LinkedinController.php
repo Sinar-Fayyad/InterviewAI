@@ -2,64 +2,81 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\CreateLinkedinPostRequest;
+use App\Http\Requests\PostToLinkedinRequest;
 use App\Services\LinkedinService;
-use App\Http\Controllers\Controller;
 use App\Http\Requests\SchedulePostRequest;
 
 class LinkedinController
 {
     function getMessages($user_id)
     {
-        $result = LinkedinService::getMessages($user_id);
-        return $result ? $this->responseJSON($result) :
-            $this->responseJSON(null, 'Failed to fetch LinkedIn messages', 500);
+        try {
+            $messages = LinkedinService::getMessages($user_id);
+            return $this->SuccessJSON($messages);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function createPost(Request $request)
+    function createPost(CreateLinkedinPostRequest $request)
     {
-        $result = LinkedinService::createPost($request->all());
-        return $result ? $this->responseJSON($result) :
-            $this->responseJSON(null, 'Failed to create LinkedIn post', 500);
+        try {
+            $post = LinkedinService::createPost($request->all());
+            return $this->SuccessJSON($post);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function createProfile(Request $request)
+    function createProfile()
     {
-        $result = LinkedinService::createProfile();
-        return $result ? $this->responseJSON($result) :
-            $this->responseJSON(null, 'Failed to create LinkedIn profile', 500);
+        try {
+            $profile = LinkedinService::createProfile();
+            return $this->SuccessJSON($profile);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function postToLinkedin(Request $request, $user_id)
+    function postToLinkedin(PostToLinkedinRequest $request, $user_id)
     {
-        $result = LinkedinService::postToLinkedin($request->all(), $user_id);
-        return $result ? $this->responseJSON($result) :
-            $this->responseJSON(null, 'Failed to post to LinkedIn', 500);
+        try {
+            LinkedinService::postToLinkedIn($request, $user_id);
+            return $this->SuccessJSON(null, ["message" => "Post published successfully"]);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
     function schedulePost(SchedulePostRequest $request, $user_id)
     {
         try {
-            $result = LinkedinService::schedulePost($request->validated(), $user_id);
-            return $this->responseJSON($result, 'Post scheduled successfully');
+            LinkedinService::schedulePost($request->validated(), $user_id);
+            return $this->SuccessJSON(null, ["message" => "Post scheduled successfully"]);
         } 
         catch (\Exception $e) {
-            return $this->responseJSON(null, $e->getMessage(), $e->getCode());
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
         }
     }
 
     function checkExpiry($user_id)
     {
-        $result = LinkedinService::checkExpiry($user_id);
-        return $result !== null
-            ? $this->responseJSON(['is_expired' => $result])
-            : $this->responseJSON(null, "User not found", 404);
+        try {
+            $result = LinkedinService::checkExpiry($user_id);
+            return $this->SuccessJSON($result);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
     function disconnectLinkedin($user_id)
     {
-        $result = LinkedinService::disconnectLinkedin($user_id);
-        return $result ? $this->responseJSON($result) :
-            $this->responseJSON(null, "User not found", 404);
+        try {
+            LinkedinService::disconnectLinkedin($user_id);
+            return $this->SuccessJSON(null, ['message' => 'LinkedIn account disconnected successfully']);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 }

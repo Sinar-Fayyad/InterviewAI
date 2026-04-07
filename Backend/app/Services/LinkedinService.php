@@ -12,8 +12,13 @@ class LinkedinService
     static function getMessages($user_id)
     {
         $user = User::find($user_id);
-        if (!$user || !$user->linkedin_token || !now()->lt($user->linkedin_expires_at)) {
-            return null;
+
+        if (!$user) {
+            throw new \Exception("User not found", 404);
+        }
+
+        if (!$user->linkedin_token || !now()->lt($user->linkedin_expires_at)) {
+            throw new \Exception("LinkedIn token is missing or expired", 401);
         }
 
         $myUrn = "urn:li:person:{$user->linkedin_id}";
@@ -27,7 +32,7 @@ class LinkedinService
             ]);
 
         if (!$convoResponse->successful()) {
-            return null;
+            throw new \Exception("Failed to fetch conversations from LinkedIn", $convoResponse->getStatusCode());
         }
 
         return collect($convoResponse->json('elements', []))
@@ -41,17 +46,17 @@ class LinkedinService
                     ]);
 
                 if (!$msgResponse->successful()) {
-                    return null;
+                    throw new \Exception("Failed to fetch messages for conversation", $msgResponse->getStatusCode());
                 }
 
                 $messages = $msgResponse->json('elements', []);
                 if (empty($messages)) {
-                    return null;
+                    throw new \Exception("No messages found for conversation", 404);
                 }
 
                 $lastMessage = $messages[0];
                 if (($lastMessage['createdActor'] ?? '') === $myUrn) {
-                    return null;
+                    throw new \Exception("No messages from recruiter in this conversation", 404);
                 }
 
                 return [
@@ -74,7 +79,11 @@ class LinkedinService
             ->timeout(120)
             ->post('http://localhost:5678/webhook/LinkedIn_post', $payload);
 
-        return $response->successful() ? $response->json() : null;
+        if (!$response->successful()) {
+            throw new \Exception("Failed to create LinkedIn post", $response->getStatusCode());
+        }
+
+        return $response->json();
     }
 
     static function createProfile()
@@ -85,14 +94,23 @@ class LinkedinService
             ->timeout(120)
             ->post('http://localhost:5678/webhook/Linkedin_profile', ProfileService::getProfile());
 
-        return $response->successful() ? $response->json() : null;
+        if (!$response->successful()) {
+            throw new \Exception("Failed to create LinkedIn profile", $response->getStatusCode());
+        }
+
+        return $response->json();
     }
 
     public static function postToLinkedIn($request, $user_id)
     {
         $user = User::find($user_id);
-        if (!$user || !$user->linkedin_token || !now()->lt($user->linkedin_expires_at)) {
-            return null;
+
+        if (!$user) {
+            throw new \Exception("User not found", 404);
+        }
+
+        if (!$user->linkedin_token || !now()->lt($user->linkedin_expires_at)) {
+            throw new \Exception("LinkedIn token is missing or expired", 401);
         }
 
         $response = Http::withToken($user->linkedin_token)
@@ -104,17 +122,19 @@ class LinkedinService
                 'commentary' => $request->text
             ]);
 
-        return $response->successful() ? $response->json() : null;
+        if (!$response->successful()) {
+            throw new \Exception("Failed to publish post to LinkedIn", $response->getStatusCode());
+        }
     }
 
     static function schedulePost($userInput, $user_id)
     {
-        $user = User::find($userInput['user_id']);
+        $user = User::find($user_id);
         if (!$user) {
             throw new \Exception("User not found", 404);
         }
 
-        $post = PostService::addPost($userInput , $user_id);
+        $post = PostService::addPost($userInput, $user_id);
         if (!$post) {
             throw new \Exception("Failed to create post", 500);
         }
@@ -124,28 +144,31 @@ class LinkedinService
             throw new \Exception("Failed to schedule post", 500);
         }
 
-        return $post;
     }
 
     static function checkExpiry($user_id)
     {
         $user = User::find($user_id);
         if (!$user) {
-            return null;
+            throw new \Exception("User not found", 404);
         }
 
         if (!$user->linkedin_expires_at) {
-            return false;
+            throw new \Exception("LinkedIn token expiry not set", 400);
         }
 
-        return now()->greaterThan($user->linkedin_expires_at);
+        if (now()->greaterThan($user->linkedin_expires_at)) {
+            return ['is_expired' => true];
+        } else {
+            return ['is_expired' => false];
+        }
     }
 
     static function disconnectLinkedin($user_id)
     {
         $user = User::find($user_id);
         if (!$user) {
-            return null;
+            throw new \Exception("User not found", 404);
         }
 
         $user->linkedin_id = null;
