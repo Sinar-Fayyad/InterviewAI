@@ -88,7 +88,7 @@ class LinkedinService
         return $response->successful() ? $response->json() : null;
     }
 
-    public static function postToLinkedIn($user_id, $request)
+    public static function postToLinkedIn($request, $user_id)
     {
         $user = User::find($user_id);
         if (!$user || !$user->linkedin_token || !now()->lt($user->linkedin_expires_at)) {

@@ -25,13 +25,13 @@ class ProfileService
         ];
     }
 
-    static function saveProfile($user_id, $request)
+    static function saveProfile($request, $user_id)
     {
         if (!UserService::getUser($user_id)) {
             throw new \Exception("User not found", 404);
         }
 
-        UserService::updateUser($user_id, $request['user_info']);
+        UserService::updateUser($request['user_info'], $user_id);
 
         collect($request['education'])->each(fn($edu) => EducationService::addEducation( $edu, $user_id,));
         collect($request['experience'])->each(fn($exp) => ExperienceService::addExperience( $exp, $user_id,));
