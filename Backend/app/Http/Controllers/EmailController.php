@@ -2,44 +2,61 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Services\EmailService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SendEmailRequest;
+use App\Http\Requests\ReplyToEmailRequest;
+use App\Http\Requests\GenerateEmailRequest;
 
 class EmailController extends Controller
 {
-    function generateEmail(Request $request, $user_id = null)
+function generateEmail(GenerateEmailRequest $request, $user_id = null)
     {
-        $result = EmailService::generateEmail($user_id, $request);
-        return $result? $this->responseJSON($result):
-                        $this->responseJSON(null, 'Email generation failed', 500);
+        try {
+            $email = EmailService::generateEmail($request->validated(), $user_id);
+            return $this->SuccessJSON($email);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    public function replyToEmail(Request $request)
+public function replyToEmail(ReplyToEmailRequest $request)
     {
-        $result = EmailService::replyToEmail($request);
-        return $result? $this->responseJSON($result):
-                        $this->responseJSON(null, 'Failed to generate email reply', 500);
+        try {
+            $reply = EmailService::replyToEmail($request->validated());
+            return $this->SuccessJSON($reply);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    public function sendEmail(Request $request, $user_id)
+public function sendEmail(SendEmailRequest $request, $user_id)
     {
-        $result = EmailService::sendEmail($user_id, $request);
-
-        return $result? $this->responseJSON($result):
-                        $this->responseJSON(null, 'Failed to send email', 500);
+        try {
+            EmailService::sendEmail($request->validated(), $user_id);
+            return $this->SuccessJSON(null, ["message" => "Email sent successfully"]);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    public function getJobEmails(Request $request, $user_id)
+    public function getJobEmails($user_id)
     {
-        $result = EmailService::getJobEmails($user_id);
-        return $result ? $this->responseJSON($result) : 
-                         $this->responseJSON(null, 'Failed to fetch job emails', 500);
+        try {
+            $emails = EmailService::getJobEmails($user_id);
+            return $this->SuccessJSON($emails);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function disconnectGoogle($user_id){
-        $result = EmailService::disconnectGoogle($user_id);
-        return $result? $this->responseJSON($result):
-                        $this->responseJSON(null, "User not found", 404);
+    function disconnectGoogle($user_id)
+    {
+        try {
+            EmailService::disconnectGoogle($user_id);
+            return $this->SuccessJSON(null, ["message" => "Google account disconnected successfully"] );
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 }

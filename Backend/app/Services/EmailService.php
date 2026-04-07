@@ -2,16 +2,25 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use App\Services\ProfileService;
 use Illuminate\Support\Facades\Http;
-use App\Models\User;
 
 class EmailService
 {
-    static function generateEmail($userId, $request)
+    static function generateEmail($request, $user_id = null)
     {
-        if ($userId) {
-            $profile = ProfileService::getProfile($userId);
+        if ($user_id) {
+
+            if (!User::find($user_id)) {
+                throw new \Exception("User not found", 404);
+            }
+
+            $profile = ProfileService::getProfile($user_id);
+
+            if (!$profile) {
+                throw new \Exception("Profile not found for user", 404);
+            }
         } else {
             $profile = [
                 'user_info' => null,
@@ -22,61 +31,77 @@ class EmailService
             ];
         }
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET')
-        ])->timeout(120)->post('http://localhost:5678/webhook/generate_email', [
-            'input' => $request->all(),
-            'profile' => $profile
-        ]);
+        do {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET')
+            ])->timeout(120)->post('http://localhost:5678/webhook/generate_email', [
+                        'input' => $request->all(),
+                        'profile' => $profile
+                    ]);
+        } while (!$response->successful()); // Retry until successful
 
-        return $response->successful() ? $response->json() : null;
+        return $response->json();
     }
 
     static function replyToEmail($request)
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET')
-        ])->timeout(120)->post('http://localhost:5678/webhook/ReplyToEmail', $request->all());
+        do {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET')
+            ])->timeout(120)->post('http://localhost:5678/webhook/ReplyToEmail', $request->all());
 
-        return $response->successful() ? $response->json() : null;
+        } while (!$response->successful()); // Retry until successful
+
+        return $response->json();
     }
 
-    static function sendEmail($userId, $request)
+    static function sendEmail($request, $user_id)
     {
-        $user = User::find($userId);
-        if (!$user || !$user->google_refresh_token || !$user->google_email) {
-            return null;
-        }
+        $user = User::find($user_id);
 
+        if (!$user) {
+            throw new \Exception("User not found", 404);
+        }
+        
+        if (!$user->google_refresh_token || !$user->google_email) {
+            throw new \Exception("Google account not connected", 400);
+        }
         $access_token = self::refreshGoogleToken($user->google_refresh_token);
+
         if (!$access_token) {
-            return null;
+            throw new \Exception("Failed to refresh Google access token", 500);
         }
 
         $raw = "To: {$request->to}\r\n
                 From: {$user->google_email}\r\n
                 Subject: {$request->subject}\r\n
                 Content-Type: text/plain; charset=utf-8\r\n\r\n{$request->body}";
-                
+
         $encoded = rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
 
         $response = Http::withToken($access_token)
             ->timeout(30)
             ->post('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', ['raw' => $encoded]);
 
-        return $response->successful() ? $response->json() : null;
+        if (!$response->successful()) {
+            throw new \Exception("Failed to send email: " . $response->body(), $response->getStatusCode());
+        }
     }
 
-    static function getJobEmails($userId)
+    static function getJobEmails($user_id)
     {
-        $user = User::find($userId);
-        if (!$user || !$user->google_refresh_token) {
-            return null;
+        $user = User::find($user_id);
+        if (!$user) {
+            throw new \Exception("User not found", 404);
+        }
+
+        if (!$user->google_refresh_token) {
+            throw new \Exception("Google account not connected", 400);
         }
 
         $access_token = self::refreshGoogleToken($user->google_refresh_token);
         if (!$access_token) {
-            return null;
+            throw new \Exception("Failed to refresh Google access token", 500);
         }
 
         $emailsResponse = Http::withToken($access_token)
@@ -89,7 +114,7 @@ class EmailService
             ]);
 
         if (!$emailsResponse->successful()) {
-            return null;
+            throw new \Exception("Failed to fetch emails: " . $emailsResponse->body(), $emailsResponse->getStatusCode());
         }
 
         return collect($emailsResponse->json('messages', []))
@@ -99,7 +124,7 @@ class EmailService
                     ->json();
 
                 if (!$detail || !isset($detail['payload'])) {
-                    return null;
+                    throw new \Exception("Failed to fetch email details", 500);
                 }
 
                 $headers = collect($detail['payload']['headers']);
@@ -127,7 +152,8 @@ class EmailService
         return $response->successful() ? $response->json('access_token') : null;
     }
 
-    static function disconnectGoogle($user_id){
+    static function disconnectGoogle($user_id)
+    {
         $user = User::find($user_id);
         if (!$user) {
             return null;
