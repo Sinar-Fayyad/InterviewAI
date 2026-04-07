@@ -22,7 +22,7 @@ class LinkedinController
     function createPost(CreateLinkedinPostRequest $request)
     {
         try {
-            $post = LinkedinService::createPost($request->all());
+            $post = LinkedinService::createPost($request->validated());
             return $this->SuccessJSON($post);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode());
@@ -42,7 +42,7 @@ class LinkedinController
     function postToLinkedin(PostToLinkedinRequest $request, $user_id)
     {
         try {
-            LinkedinService::postToLinkedIn($request, $user_id);
+            LinkedinService::postToLinkedIn($request->validated(), $user_id);
             return $this->SuccessJSON(null, ["message" => "Post published successfully"]);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode());
