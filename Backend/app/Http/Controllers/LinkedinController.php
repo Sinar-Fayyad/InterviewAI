@@ -37,11 +37,10 @@ class LinkedinController
             $this->responseJSON(null, 'Failed to post to LinkedIn', 500);
     }
 
-    function schedulePost(SchedulePostRequest $request)
+    function schedulePost(SchedulePostRequest $request, $user_id)
     {
-        $validated = $request->validated();
         try {
-            $result = LinkedinService::schedulePost($validated);
+            $result = LinkedinService::schedulePost($request->validated(), $user_id);
             return $this->responseJSON($result, 'Post scheduled successfully');
         } 
         catch (\Exception $e) {

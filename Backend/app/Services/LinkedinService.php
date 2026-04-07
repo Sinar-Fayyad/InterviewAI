@@ -107,14 +107,14 @@ class LinkedinService
         return $response->successful() ? $response->json() : null;
     }
 
-    static function schedulePost($userInput)
+    static function schedulePost($userInput, $user_id)
     {
         $user = User::find($userInput['user_id']);
         if (!$user) {
             throw new \Exception("User not found", 404);
         }
 
-        $post = PostService::addPost($userInput);
+        $post = PostService::addPost($userInput , $user_id);
         if (!$post) {
             throw new \Exception("Failed to create post", 500);
         }
