@@ -48,7 +48,7 @@ function updatePost(UpdatePostRequest $request, $id){
     function deletePost ($id){
         try {
             PostService::deletePost($id);
-            return $this->SuccessJSON(["message" => "Post deleted successfully"]);
+            return $this->SuccessJSON(null, ["message" => "Post deleted successfully"]);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode());
         }

@@ -30,7 +30,7 @@ class ProfileController extends Controller
                 throw new \Exception("User ID is required", 400);
             }
             ProfileService::saveProfile($user_id, $request);
-            return $this->SuccessJSON("Profile saved successfully");
+            return $this->SuccessJSON(null, ["message" => "Profile saved successfully"]);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode());
         }

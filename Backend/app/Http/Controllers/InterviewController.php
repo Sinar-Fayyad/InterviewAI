@@ -30,7 +30,7 @@ class InterviewController extends Controller
     function deleteInterview ($id){
         try {
             InterviewService::deleteInterview($id);
-            return $this->SuccessJSON(['message' => 'Interview deleted successfully']);
+            return $this->SuccessJSON(null, ['message' => 'Interview deleted successfully']);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode());
         }

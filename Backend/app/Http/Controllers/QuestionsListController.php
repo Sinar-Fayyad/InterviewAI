@@ -42,7 +42,7 @@ function addQuestionsList(AddQuestionsListRequest $request, $user_id)
     {
         try {
             QuestionsListService::deleteQuestionsList($id);
-            return $this->SuccessJSON(['message' => 'Questions List deleted successfully']);
+            return $this->SuccessJSON(null, ['message' => 'Questions List deleted successfully']);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode());
         }

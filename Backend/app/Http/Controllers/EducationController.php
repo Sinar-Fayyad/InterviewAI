@@ -32,7 +32,7 @@ class EducationController extends Controller
     {
         try {
             EducationService::deleteEducation($id);
-            return $this->SuccessJSON();
+            return $this->SuccessJSON(null, ["message" => "Education deleted successfully"]);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode());
         }

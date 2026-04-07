@@ -33,7 +33,7 @@ class CertificationController extends Controller
     {
         try {
             CertificationService::deleteCertification($id);
-            return $this->SuccessJSON();
+            return $this->SuccessJSON(null, ["message" => "Certification deleted successfully"]);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode() );
         }

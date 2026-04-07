@@ -36,7 +36,7 @@ class AuthController extends Controller{
     public function logout(){
         try {
             AuthService::logout();
-            return $this->SuccessJSON(['message' => 'Logged out successfully']);
+            return $this->SuccessJSON(null, ['message' => 'Logged out successfully']);
 
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);
