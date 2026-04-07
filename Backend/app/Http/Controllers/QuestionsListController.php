@@ -2,37 +2,50 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\QuestionsList;
 use App\Http\Controllers\Controller;
 use App\Services\QuestionsListService;
+use App\Http\Requests\AddQuestionsListRequest;
 
 class QuestionsListController extends Controller
 {
-    function addQuestionsList(Request $request){
-        $questionsList = new QuestionsList;
-        $questionsList = QuestionsListService::addQuestionsList($questionsList, $request->all());
-
-        return $questionsList? $this->responseJSON($questionsList):
-                                $this ->responseJSON (null , "Failed to generate questions", 404);
+function addQuestionsList(AddQuestionsListRequest $request, $user_id)
+    {
+        try {
+            $questionsList = QuestionsListService::addQuestionsList($request->validated(), $user_id);
+            return $this->SuccessJSON($questionsList);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function getQuestionsList($id){
-        $questionsList = QuestionsListService::getQuestionsListById($id);
-        return $questionsList?  $this->responseJSON($questionsList):
-                        $this ->responseJSON (null , "Not found", 404);
+    function getQuestionsList($id)
+    {
+        try {
+            $questionsList = QuestionsListService::getQuestionsListById($id);
+            return $this->SuccessJSON($questionsList);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function getQuestionsLists($user_id){
-        $questionsLists = QuestionsListService::getQuestionsLists($user_id);
-        return $questionsLists?  $this->responseJSON($questionsLists):
-                        $this ->responseJSON (null , "Not found", 404);
+    function getQuestionsLists($user_id)
+    {
+        try {
+            $questionsLists = QuestionsListService::getQuestionsListsByUserId($user_id);
+            return $this->SuccessJSON($questionsLists);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function deleteQuestionsList($id){
-        $questionsList = QuestionsListService::deleteQuestionsList($id);
-        return $questionsList?  $this->responseJSON($questionsList):
-                        $this ->responseJSON (null , "Not found", 404);
+    function deleteQuestionsList($id)
+    {
+        try {
+            QuestionsListService::deleteQuestionsList($id);
+            return $this->SuccessJSON(['message' => 'Questions List deleted successfully']);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 }
 

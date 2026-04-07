@@ -79,7 +79,7 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::post('/delete_interview/{id}', [InterviewController::class, 'deleteInterview']);
 
         // Questions List Routes
-        Route::post('/add_questions_list', [QuestionsListController::class, 'addQuestionsList']); // AI call 
+        Route::post('/add_questions_list/{user_id}', [QuestionsListController::class, 'addQuestionsList']); // AI call 
         Route::get('/get_questions_lists/{user_id}', [QuestionsListController::class, 'getQuestionsLists']);
         Route::get('/get_questions_list/{id}', [QuestionsListController::class, 'getQuestionsList']);
         Route::post('/delete_questions_list/{id}', [QuestionsListController::class, 'deleteQuestionsList']);

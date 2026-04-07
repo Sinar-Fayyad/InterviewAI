@@ -1,17 +1,20 @@
 <?php
 
 namespace App\Services;
-use App\Models\QuestionsList;
+
+use App\Models\User;
 use App\Models\Question;
+use App\Models\QuestionsList;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class QuestionsListService
 {
-    public static function addQuestionsList($questionsList, $data)
+    public static function addQuestionsList($data, $user_id)
     {
-        return DB::transaction(function () use ($questionsList, $data) {
-            $questionsList->user_id = $data["user_id"];
+        return DB::transaction(function () use ($data, $user_id) {
+            $questionsList = new QuestionsList();
+            $questionsList->user_id = $user_id;
             $questionsList->company_name = $data["company_name"];
             $questionsList->job_title = $data["job_title"];
             $questionsList->context_summary = $data["context_summary"];
@@ -20,63 +23,81 @@ class QuestionsListService
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
             ])
-            ->timeout(120)
-            ->post('http://localhost:5678/webhook/Questions_Generation', [
-                'profile'         => UserService::getUser($data["user_id"]),
-                'context_summary' => $data["context_summary"],
-            ]);
+                ->timeout(120)
+                ->post('http://localhost:5678/webhook/Questions_Generation', [
+                    'profile' => UserService::getUser($user_id),
+                    'context_summary' => $data["context_summary"],
+                ]);
 
             if (!$response->successful()) {
-                return null;
+                throw new \Exception('Failed to generate questions: ' . $response->body(), $response->getStatusCode());
             }
 
-            $session = $response->json('questions');
+            $questions = $response->json('questions');
 
-            if (!is_array($session)) {
-                return null;
+            if (!is_array($questions)) {
+                throw new \Exception('Invalid response format: expected an array of questions', 500);
             }
 
-            $questionsToInsert = collect($session)->map(function ($item) use ($questionsList) {
+            $questionsToInsert = collect($questions)->map(function ($item) use ($questionsList) {
                 return [
                     'questions_list_id' => $questionsList->id,
-                    'question'          => $item['question'],
-                    'answer'            => $item['answer'],
-                    'created_at'        => now(),
-                    'updated_at'        => now(),
+                    'question' => $item['question'],
+                    'answer' => $item['answer'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ];
             })->all();
 
             if (empty($questionsToInsert)) {
-                return null;
+                throw new \Exception('No questions generated', 500);
             }
-    
+
             Question::insert($questionsToInsert);
 
             return $questionsToInsert;
         });
     }
 
-    static function getQuestionsListById($id) {
-        return QuestionsList::with('questions')->find($id);
-    }
-
-    static function getQuestionsLists($user_id) {
-        return QuestionsList::where('user_id', $user_id)
-            ->with('questions')
-            ->get();
-    }
-
-    static function deleteQuestionsList($id) 
+    static function getQuestionsListById($id)
     {
-        return DB::transaction(function () use ($id) {
+        $questionsList = QuestionsList::find($id);
+
+        if (!$questionsList) {
+            throw new \Exception('Questions List not found', 404);
+        }
+
+        return $questionsList->load('questions');
+    }
+
+    static function getQuestionsLists($user_id)
+    {
+        if (!User::find($user_id)) {
+            throw new \Exception('User not found', 404);
+        }
+
+        $questionsLists = QuestionsList::where('user_id', $user_id)->with('questions')->get();
+
+        if (!$questionsLists) {
+            throw new \Exception('Questions Lists not found', 404);
+        }
+
+        return $questionsLists;
+    }
+
+    static function deleteQuestionsList($id)
+    {
+        DB::transaction(function () use ($id) {
             $questionsList = QuestionsList::find($id);
 
-            if ($questionsList) {
-                $questionsList->questions()->delete();
-                $questionsList->delete();
+            if (!$questionsList) {
+                throw new \Exception('Questions List not found', 404);
             }
 
-            return $questionsList;
+            $questionsList->questions()->delete();
+            $questionsList->delete();
         });
+
+        return true;
     }
 }
