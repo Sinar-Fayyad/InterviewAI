@@ -99,7 +99,7 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::post('/delete_post/{id}', [PostController::class, 'deletePost']);
 
         // Chatbot Routes
-        Route::post('/initChatMemory', [ChatbotController::class, 'initializeMemory']); // AI call
+        Route::post('/initChatMemory/{user_id?}', [ChatbotController::class, 'initializeMemory']); // AI call
         Route::post('/sendChat', [ChatbotController::class, 'sendMessage']); // AI call
 
         // Email Routes

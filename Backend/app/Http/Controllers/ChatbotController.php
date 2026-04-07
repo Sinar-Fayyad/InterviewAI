@@ -2,23 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Services\ChatbotService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SendChatRequest;
 
 class ChatbotController extends Controller
 {
     function initializeMemory($user_id = null)
     {
-        $result = ChatbotService::initializeMemory($user_id);
-        return $result ? $this->responseJSON($result) : 
-                         $this->responseJSON(null, 'Failed to initialize chat memory', 500);
+        try {
+            $result = ChatbotService::initializeMemory($user_id);
+            return $this->SuccessJSON($result);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function sendMessage(Request $request)
+    function sendMessage(SendChatRequest $request)
     {
-        $result = ChatbotService::sendMessage($request);
-        return $result ? $this->responseJSON($result) : 
-                         $this->responseJSON(null, 'Failed to send message', 500);
+        try {
+            $result = ChatbotService::sendMessage($request->validated());
+            return $this->SuccessJSON($result);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 }
