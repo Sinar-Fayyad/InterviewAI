@@ -9,9 +9,9 @@ use Illuminate\Support\Facades\Http;
 
 class LinkedinService
 {
-    static function getMessages($userId)
+    static function getMessages($user_id)
     {
-        $user = User::find($userId);
+        $user = User::find($user_id);
         if (!$user || !$user->linkedin_token || !now()->lt($user->linkedin_expires_at)) {
             return null;
         }
@@ -88,9 +88,9 @@ class LinkedinService
         return $response->successful() ? $response->json() : null;
     }
 
-    public static function postToLinkedIn($userId, $request)
+    public static function postToLinkedIn($user_id, $request)
     {
-        $user = User::find($userId);
+        $user = User::find($user_id);
         if (!$user || !$user->linkedin_token || !now()->lt($user->linkedin_expires_at)) {
             return null;
         }

@@ -8,10 +8,10 @@ use App\Http\Controllers\Controller;
 
 class SocialiteController extends Controller
 {
-    public function redirect(string $provider, $userId)
+    public function redirect(string $provider, $user_id)
     {
         try {
-            $url = SocialiteService::redirect($provider, $userId);
+            $url = SocialiteService::redirect($provider, $user_id);
             return redirect($url);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);

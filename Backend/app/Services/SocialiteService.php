@@ -13,13 +13,13 @@ class SocialiteService
         'linkedin-openid',
     ];
 
-    static function redirect(string $provider, int $userId)
+    static function redirect(string $provider, int $user_id)
     {
         if (!in_array($provider, self::$officialProviders)) {
             throw new \InvalidArgumentException('Provider not supported', 404);
         }
 
-        return Socialite::driver($provider)->stateless()->with(['state' => (string)$userId])->redirect()->getTargetUrl();
+        return Socialite::driver($provider)->stateless()->with(['state' => (string)$user_id])->redirect()->getTargetUrl();
     }
 
     static function callback(string $provider, Request $request)
@@ -28,14 +28,14 @@ class SocialiteService
             throw new \InvalidArgumentException('Invalid provider', 404);
         }
 
-        $userId = $request->query('state');
-        if (!$userId || !is_numeric($userId)) {
+        $user_id = $request->query('state');
+        if (!$user_id || !is_numeric($user_id)) {
             throw new \InvalidArgumentException('Invalid user_id in state', 400);
         }
-        $userId = (int)$userId;
+        $user_id = (int)$user_id;
 
         $socialiteUser = Socialite::driver($provider)->stateless()->user();
-        $user = User::findOrFail($userId);
+        $user = User::findOrFail($user_id);
 
         $updatedUser = self::linkSocialAccountToUser($socialiteUser, $provider, $user);
 

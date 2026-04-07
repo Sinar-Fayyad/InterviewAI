@@ -9,9 +9,9 @@ use App\Http\Requests\SchedulePostRequest;
 
 class LinkedinController
 {
-    function getMessages($userId)
+    function getMessages($user_id)
     {
-        $result = LinkedinService::getMessages($userId);
+        $result = LinkedinService::getMessages($user_id);
         return $result ? $this->responseJSON($result) :
             $this->responseJSON(null, 'Failed to fetch LinkedIn messages', 500);
     }
