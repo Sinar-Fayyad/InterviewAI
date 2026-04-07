@@ -2,38 +2,55 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Post;
 use App\Services\PostService;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller; 
+use App\Http\Requests\AddPostRequest;
+use App\Http\Requests\UpdatePostRequest;
 
 class PostController extends Controller
 {
-    function addPost(Request $request){
-        $post = new Post;
-        $post = PostService::addPost($post, $request);
-        return $this->responseJSON($post);
+function addPost(AddPostRequest $request, $user_id){
+        try {
+            $post = PostService::addPost($request->validated(), $user_id);
+            return $this->SuccessJSON($post);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function updatePost(Request $request, $id){
-        $post = PostService::updatePost($id, $request);
-        return $this->responseJSON($post);
+function updatePost(UpdatePostRequest $request, $id){
+        try {
+            $post = PostService::updatePost ($request->validated(), $id);
+            return $this->SuccessJSON($post);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
     function getPost($id){
-        $post = PostService::getPost($id);
-        return $post?  $this->responseJSON($post):
-                        $this ->responseJSON (null , "Not found", 404);
+        try {
+            $post = PostService::getPost($id);
+            return $this->SuccessJSON($post);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
     
     function getPosts($user_id){
-        $posts = PostService::getPosts($user_id);
-        return $posts?  $this->responseJSON($posts):
-                        $this ->responseJSON (null , "Not found", 404);
+        try {
+            $posts = PostService::getPosts($user_id);
+            return $this->SuccessJSON($posts);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }   
 
     function deletePost ($id){
-        $post = PostService::deletePost($id);
-        return $this->responseJSON($post);
+        try {
+            PostService::deletePost($id);
+            return $this->SuccessJSON(["message" => "Post deleted successfully"]);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 }
