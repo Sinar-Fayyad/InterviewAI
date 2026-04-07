@@ -2,38 +2,52 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Services\ProfileService;
 use App\Services\CareerService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ResumeGenerationRequest;
+use App\Http\Requests\ResumeOptimizationRequest;
+use App\Http\Requests\CoverLetterGenerationRequest;
+use App\Http\Requests\CoverLetterOptimizationRequest;
 
 class CareerController extends Controller
 {
-    function resumeGeneration($user_id)
+    function resumeGeneration(ResumeGenerationRequest $request, $user_id)
     {
-        $data = CareerService::resumeGeneration($user_id);
-        return $data ? $this->responseJSON($data) : 
-                       $this->responseJSON(null, 'Failed to generate resume', 500);
+        try {
+            $resume = CareerService::resumeGeneration($request->validated(), $user_id);
+            return $this->SuccessJSON($resume);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function resumeOptimization(Request $request, $user_id)
+    function resumeOptimization(ResumeOptimizationRequest $request, $user_id)
     {
-        $data = CareerService::resumeOptimization($request->all(), $user_id);
-        return $data ? $this->responseJSON($data) : 
-                       $this->responseJSON(null, 'Failed to optimize resume', 500);
+        try {
+            $resume = CareerService::resumeOptimization($request->validated(), $user_id);
+            return $this->SuccessJSON($resume);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function coverLetterGeneration(Request $request, $user_id)
+    function coverLetterGeneration(CoverLetterGenerationRequest $request, $user_id)
     {
-        $data = CareerService::coverLetterGeneration($request->all(), $user_id);
-        return $data ? $this->responseJSON($data) : 
-                       $this->responseJSON(null, 'Failed to generate cover letter', 500);
+        try {
+            $coverLetter = CareerService::coverLetterGeneration($request->validated(), $user_id);
+            return $this->SuccessJSON($coverLetter);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 
-    function coverLetterOptimization(Request $request, $user_id)
+    function coverLetterOptimization(CoverLetterOptimizationRequest $request, $user_id)
     {
-        $data = CareerService::coverLetterOptimization($request->all(), $user_id);
-        return $data ? $this->responseJSON($data) :
-                       $this->responseJSON(null, 'Failed to optimize cover letter', 500);
+        try {
+            $coverLetter = CareerService::coverLetterOptimization($request->validated(), $user_id);
+            return $this->SuccessJSON($coverLetter);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+        }
     }
 }

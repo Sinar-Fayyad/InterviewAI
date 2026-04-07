@@ -2,14 +2,23 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
+use App\Models\User;
 use App\Services\ProfileService;
+use Illuminate\Support\Facades\Http;
 
 class CareerService
 {
     static function handleCareerWorkflow($input, $webhookUrl, $user_id)
     {
+        if(!User::find($user_id)) {
+            throw new \Exception("User not found", 404);
+        }
+
         $profile = ProfileService::getProfile($user_id);
+
+        if (!$profile) {
+            throw new \Exception("Profile not found for user", 404);
+        }
 
         $response = Http::withToken(env('N8N_WEBHOOK_SECRET'))
             ->timeout(120)
@@ -18,12 +27,16 @@ class CareerService
                 'profile' => $profile,
             ]);
 
-        return $response->successful() ? $response->json() : null;
+        if (!$response->successful()) {
+            throw new \Exception("Failed to process career workflow: " . $response->body(), $response->status());
+        }
+
+        return $response->json();
     }
 
-    static function resumeGeneration($user_id)
+    static function resumeGeneration($input,$user_id)
     {
-        return self::handleCareerWorkflow(null, 'http://localhost:5678/webhook/Resume_generation', $user_id);
+        return self::handleCareerWorkflow($input , 'http://localhost:5678/webhook/Resume_generation', $user_id);
     }
 
     static function resumeOptimization($input, $user_id)

@@ -119,7 +119,7 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::post('disconnect_linkedin/{user_id}', [LinkedinController::class, 'disconnectLinkedin']);
 
         // Career Routes
-        Route::get('resume_generation', [CareerController::class, 'resumeGeneration']); // AI call
+        Route::post('resume_generation', [CareerController::class, 'resumeGeneration']); // AI call
         Route::post('resume_optimization', [CareerController::class, 'resumeOptimization']); // AI call
         Route::post('cover_letter_generation', [CareerController::class, 'coverLetterGeneration']); // AI call
         Route::post('cover_letter_optimization', [CareerController::class, 'coverLetterOptimization']); // AI call
