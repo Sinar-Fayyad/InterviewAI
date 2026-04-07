@@ -85,21 +85,21 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::post('/delete_questions_list/{id}', [QuestionsListController::class, 'deleteQuestionsList']);
 
         // Applications Routes
-        Route::post('/add_application', [ApplicationController::class, 'addApplication']);
+        Route::post('/add_application/{user_id}', [ApplicationController::class, 'addApplication']);
         Route::post('/update_application/{id}', [ApplicationController::class, 'updateApplication']);
         Route::get('/get_applications/{user_id}', [ApplicationController::class, 'getApplications']);
         Route::get('/get_application/{id}', [ApplicationController::class, 'getApplication']);
         Route::post('/delete_application/{id}', [ApplicationController::class, 'deleteApplication']);
 
         // Posts Routes
-        Route::post('/add_post', [PostController::class, 'addPost']);
+        Route::post('/add_post/{user_id}', [PostController::class, 'addPost']);
         Route::post('/update_post/{id}', [PostController::class, 'updatePost']);
         Route::get('/get_posts/{user_id}', [PostController::class, 'getPosts']);
         Route::get('/get_post/{id}', [PostController::class, 'getPost']);
         Route::post('/delete_post/{id}', [PostController::class, 'deletePost']);
 
         // Chatbot Routes
-        Route::get('/initChatMemory', [ChatbotController::class, 'initializeMemory']); // AI call
+        Route::post('/initChatMemory', [ChatbotController::class, 'initializeMemory']); // AI call
         Route::post('/sendChat', [ChatbotController::class, 'sendMessage']); // AI call
 
         // Email Routes
