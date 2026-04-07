@@ -67,6 +67,10 @@ class SocialiteService
             $updates['linkedin_expires_at'] = now()->addSeconds($socialiteUser->expiresIn);
         }
 
+        if ($provider === 'google' && $socialiteUser->email) {
+            $updates['google_email'] = $socialiteUser->email;
+        }
+
         $user->updateOrFail($updates);
         return $user;
     }
