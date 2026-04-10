@@ -23,15 +23,20 @@ use App\Http\Controllers\CertificationController;
 use App\Http\Controllers\QuestionsListController;
 
 
-Route::group(["prefix" => "v0.1"], function(){
-    Route::post("/login", [AuthController::class , "login"]);
-    Route::post("/register", [AuthController::class , "register"]);
+Route::group(["prefix" => "v0.1"], function () {
 
-    Route::middleware('jwt.auth')->group(function() {
+    Route::post("/login", [AuthController::class, "login"]);
+    Route::post("/register", [AuthController::class, "register"]);
+
+    // Chatbot Routes
+    Route::post('/initChatMemory/{user_id?}', [ChatbotController::class, 'initializeMemory']); // AI call
+    Route::post('/sendChat', [ChatbotController::class, 'sendMessage']); // AI call
+
+    Route::middleware('jwt.auth')->group(function () {
 
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/auth/{provider}/redirect/{user_id}', [SocialiteController::class, "redirect"]);
-        Route::get('/auth/{provider}/callback', [SocialiteController::class, "callback"]); 
+        Route::get('/auth/{provider}/callback', [SocialiteController::class, "callback"]);
 
         // Profile Routes
         Route::get('/profile/{user_id}', [ProfileController::class, 'getProfile']);
@@ -71,7 +76,7 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::post('/start_interview/{user_id}', [InterviewAIController::class, 'startInterview']); // AI call 
         Route::post('/submit_answer/{id}', [InterviewAIController::class, 'submitAnswer']); // AI call 
         Route::post('/generate_feedback/{id}', [InterviewAIController::class, 'generateFeedback']); // AI call
-        Route::post('/end_interview', [InterviewAIController::class, 'endInterview']);  
+        Route::post('/end_interview', [InterviewAIController::class, 'endInterview']);
 
         // Interview Routes
         Route::get('/get_interviews/{user_id}', [InterviewController::class, 'getInterviews']);
@@ -98,15 +103,11 @@ Route::group(["prefix" => "v0.1"], function(){
         Route::get('/get_post/{id}', [PostController::class, 'getPost']);
         Route::post('/delete_post/{id}', [PostController::class, 'deletePost']);
 
-        // Chatbot Routes
-        Route::post('/initChatMemory/{user_id?}', [ChatbotController::class, 'initializeMemory']); // AI call
-        Route::post('/sendChat', [ChatbotController::class, 'sendMessage']); // AI call
-
         // Email Routes
         Route::post('generate_email/{user_id?}', [EmailController::class, 'generateEmail']); // AI call
-        Route::post('reply_to_email', [EmailController:: class, 'replyToEmail']); // AI call
-        Route::post('send_email/{user_id}', [EmailController::class, 'sendEmail']); 
-        Route::get('get_job_emails/{user_id}', [EmailController::class, 'getJobEmails']); 
+        Route::post('reply_to_email', [EmailController::class, 'replyToEmail']); // AI call
+        Route::post('send_email/{user_id}', [EmailController::class, 'sendEmail']);
+        Route::get('get_job_emails/{user_id}', [EmailController::class, 'getJobEmails']);
         Route::post('disconnect_google/{user_id}', [EmailController::class, 'disconnectGoogle']);
 
         // Linkedin Routes
