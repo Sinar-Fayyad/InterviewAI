@@ -23,12 +23,11 @@ class AuthController extends Controller{
 
     public function register(RegisterRequest $request){
         try {
-            $data = $request->validated()->only(['first_name', 'last_name', 'email', 'password']);
-            $result = AuthService::register($data);
+            $result = AuthService::register($request->validated());
             return $this->SuccessJSON($result);
 
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);
+            return $this->ErrorJSON($e->getMessage(), $e->getCode());
         }
 
     }

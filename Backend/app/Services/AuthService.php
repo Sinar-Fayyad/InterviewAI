@@ -23,7 +23,7 @@ class AuthService{
         ];
     }
 
-    static function register(array $data){
+    static function register($data){
         $userData = [
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
@@ -32,12 +32,9 @@ class AuthService{
         ];
 
         $user = User::create($userData);
-        $token = JWTAuth::fromUser($user);
+        $token = self::login($data); 
 
-        return [
-            'id' => $user->id,
-            'token' => $token,
-        ];
+        return $token;
     }
 
     static function logout (){
