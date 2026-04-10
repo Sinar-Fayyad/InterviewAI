@@ -35,30 +35,31 @@ class ChatbotService
             throw new \Exception("Failed to load documentation content", 500);
         }
 
-        do {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
-            ])->timeout(120)->post('http://localhost:5678/webhook/Chatbot_memory', [
-                        'user_context' => $user_context,
-                        'docs_content' => $docs_content,
-                    ]);
+        $response = Http::withHeaders([
+            'X-N8N-KEY' => config('services.n8n.auth_key'),
+        ])->timeout(120)->post('http://127.0.0.1:5678/webhook/Chatbot_memory', [
+                    'user_context' => $user_context,
+                    'docs_content' => $docs_content,
+                ]);
 
-        } while (!$response->successful()); // Retry until successful
+        if (!$response->successful()) {
+            throw new \Exception($response->body(), $response->getStatusCode());
+        }
 
         return $response->json();
     }
 
     static function sendMessage($request)
     {
-        do {
-            $message = $request->input('message');
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
-            ])->timeout(120)->post('http://localhost:5678/webhook/Chatbot', [
-                        'message' => $message,
-                    ]);
+        $response = Http::withHeaders([
+            'X-N8N-KEY' => config('services.n8n.auth_key'),
+        ])->timeout(120)->post('http://127.0.0.1:5678/webhook/Chatbot', [
+                    'message' => $request['message'],
+                ]);
 
-        } while (!$response->successful()); // Retry until successful
+        if (!$response->successful()) {
+            throw new \Exception($response->body(), $response->getStatusCode());
+        }
 
         return $response->json();
     }

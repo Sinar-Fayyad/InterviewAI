@@ -14,6 +14,11 @@ return [
     |
     */
 
+    
+    'n8n' => [
+        'auth_key' => env('N8N_WEBHOOK_SECRET'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
