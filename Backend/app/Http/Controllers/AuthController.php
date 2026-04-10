@@ -12,8 +12,7 @@ class AuthController extends Controller{
     public function login(LoginRequest $request){
 
         try {
-            $credentials = $request->validated()->only('email', 'password');
-            $result = AuthService::login($credentials);
+            $result = AuthService::login($request->validated());
             return $this->SuccessJSON($result);
 
         } catch (\Exception $e) {

@@ -9,7 +9,7 @@ use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class AuthService{
    
-    static function login(array $credentials){
+    static function login($credentials){
         $token = JWTAuth::attempt($credentials);
 
         if (!$token) {
