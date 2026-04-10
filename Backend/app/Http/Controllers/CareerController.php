@@ -17,7 +17,9 @@ class CareerController extends Controller
             $resume = CareerService::resumeGeneration($request->validated(), $user_id);
             return $this->SuccessJSON($resume);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -27,7 +29,9 @@ class CareerController extends Controller
             $resume = CareerService::resumeOptimization($request->validated(), $user_id);
             return $this->SuccessJSON($resume);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -37,7 +41,9 @@ class CareerController extends Controller
             $coverLetter = CareerService::coverLetterGeneration($request->validated(), $user_id);
             return $this->SuccessJSON($coverLetter);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -47,7 +53,9 @@ class CareerController extends Controller
             $coverLetter = CareerService::coverLetterOptimization($request->validated(), $user_id);
             return $this->SuccessJSON($coverLetter);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 }

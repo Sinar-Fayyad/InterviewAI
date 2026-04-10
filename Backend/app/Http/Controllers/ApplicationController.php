@@ -15,7 +15,9 @@ class ApplicationController extends Controller
             $application = ApplicationService::addApplication($request->validated(), $user_id);
             return $this->SuccessJSON($application);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
     function updateApplication(UpdateApplicationRequest $request, $id)
@@ -24,7 +26,9 @@ class ApplicationController extends Controller
             $application = ApplicationService::updateApplication($request->validated(), $id);
             return $this->SuccessJSON($application);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -34,7 +38,9 @@ class ApplicationController extends Controller
             $applications = ApplicationService::getApplications($user_id);
             return $this->SuccessJSON($applications);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -44,7 +50,9 @@ class ApplicationController extends Controller
             $application = ApplicationService::getApplication($id);
             return $this->SuccessJSON($application);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -54,7 +62,9 @@ class ApplicationController extends Controller
             ApplicationService::deleteApplication($id);
             return $this->SuccessJSON(null, ["message" => "Application deleted successfully"]);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 }

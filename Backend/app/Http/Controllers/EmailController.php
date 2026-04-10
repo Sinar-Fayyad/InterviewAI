@@ -16,7 +16,9 @@ function generateEmail(GenerateEmailRequest $request, $user_id = null)
             $email = EmailService::generateEmail($request->validated(), $user_id);
             return $this->SuccessJSON($email);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -26,7 +28,9 @@ public function replyToEmail(ReplyToEmailRequest $request)
             $reply = EmailService::replyToEmail($request->validated());
             return $this->SuccessJSON($reply);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -36,7 +40,9 @@ public function sendEmail(SendEmailRequest $request, $user_id)
             EmailService::sendEmail($request->validated(), $user_id);
             return $this->SuccessJSON(null, ["message" => "Email sent successfully"]);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -46,7 +52,9 @@ public function sendEmail(SendEmailRequest $request, $user_id)
             $emails = EmailService::getJobEmails($user_id);
             return $this->SuccessJSON($emails);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -56,7 +64,9 @@ public function sendEmail(SendEmailRequest $request, $user_id)
             EmailService::disconnectGoogle($user_id);
             return $this->SuccessJSON(null, ["message" => "Google account disconnected successfully"] );
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 }

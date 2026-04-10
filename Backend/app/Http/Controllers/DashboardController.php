@@ -13,7 +13,9 @@ class DashboardController extends Controller
             $feedback = DashboardService::analysisFeedback($user_id);
             return $this->SuccessJSON($feedback);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
                        
     }

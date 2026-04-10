@@ -14,7 +14,9 @@ function addPost(AddPostRequest $request, $user_id){
             $post = PostService::addPost($request->validated(), $user_id);
             return $this->SuccessJSON($post);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -23,7 +25,9 @@ function updatePost(UpdatePostRequest $request, $id){
             $post = PostService::updatePost ($request->validated(), $id);
             return $this->SuccessJSON($post);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -32,7 +36,9 @@ function updatePost(UpdatePostRequest $request, $id){
             $post = PostService::getPost($id);
             return $this->SuccessJSON($post);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
     
@@ -41,7 +47,9 @@ function updatePost(UpdatePostRequest $request, $id){
             $posts = PostService::getPosts($user_id);
             return $this->SuccessJSON($posts);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }   
 
@@ -50,7 +58,9 @@ function updatePost(UpdatePostRequest $request, $id){
             PostService::deletePost($id);
             return $this->SuccessJSON(null, ["message" => "Post deleted successfully"]);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 }

@@ -15,7 +15,9 @@ class EducationController extends Controller
             $education = EducationService::addEducation($request->validated(), $user_id);
             return $this->SuccessJSON($education);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
     function updateEducation(UpdateEducationRequest $request, $id)
@@ -24,7 +26,9 @@ class EducationController extends Controller
             $education = EducationService::updateEducation($request->validated(), $id);
             return $this->SuccessJSON($education);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -34,7 +38,9 @@ class EducationController extends Controller
             EducationService::deleteEducation($id);
             return $this->SuccessJSON(null, ["message" => "Education deleted successfully"]);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 

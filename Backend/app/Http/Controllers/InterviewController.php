@@ -14,7 +14,9 @@ class InterviewController extends Controller
             $interview = InterviewService::getInterview($id);
             return $this->SuccessJSON($interview);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -23,7 +25,9 @@ class InterviewController extends Controller
             $interviews = InterviewService::getInterviews($user_id);
             return $this->SuccessJSON($interviews);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }   
 
@@ -32,7 +36,9 @@ class InterviewController extends Controller
             InterviewService::deleteInterview($id);
             return $this->SuccessJSON(null, ['message' => 'Interview deleted successfully']);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 }

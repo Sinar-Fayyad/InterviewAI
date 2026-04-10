@@ -14,7 +14,9 @@ function addQuestionsList(AddQuestionsListRequest $request, $user_id)
             $questionsList = QuestionsListService::addQuestionsList($request->validated(), $user_id);
             return $this->SuccessJSON($questionsList);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -24,7 +26,9 @@ function addQuestionsList(AddQuestionsListRequest $request, $user_id)
             $questionsList = QuestionsListService::getQuestionsListById($id);
             return $this->SuccessJSON($questionsList);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -34,7 +38,9 @@ function addQuestionsList(AddQuestionsListRequest $request, $user_id)
             $questionsLists = QuestionsListService::getQuestionsListsByUserId($user_id);
             return $this->SuccessJSON($questionsLists);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -44,7 +50,9 @@ function addQuestionsList(AddQuestionsListRequest $request, $user_id)
             QuestionsListService::deleteQuestionsList($id);
             return $this->SuccessJSON(null, ['message' => 'Questions List deleted successfully']);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 }

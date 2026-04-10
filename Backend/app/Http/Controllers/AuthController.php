@@ -16,7 +16,9 @@ class AuthController extends Controller{
             return $this->SuccessJSON($result);
 
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 401);
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -26,7 +28,9 @@ class AuthController extends Controller{
             return $this->SuccessJSON($result);
 
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
 
     }
@@ -37,7 +41,9 @@ class AuthController extends Controller{
             return $this->SuccessJSON(null, ['message' => 'Logged out successfully']);
 
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 }

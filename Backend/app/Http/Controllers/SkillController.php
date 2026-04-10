@@ -15,7 +15,9 @@ class SkillController extends Controller
             $skill = SkillService::addSkill($request->validated(), $user_id);
             return $this->SuccessJSON($skill);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
     function updateSkill(UpdateSkillRequest $request, $id)
@@ -24,7 +26,9 @@ class SkillController extends Controller
             $skill = SkillService::updateSkill($request->validated(), $id);
             return $this->SuccessJSON($skill);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -34,7 +38,9 @@ class SkillController extends Controller
             SkillService::deleteSkill($id);
             return $this->SuccessJSON(null, ["message" => "Skill deleted successfully"]);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 

@@ -15,7 +15,9 @@ class InterviewAIController extends Controller
             $interview = InterviewAIService::startInterview($request->validated(), $user_id);
             return $this->SuccessJSON($interview);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -27,7 +29,9 @@ class InterviewAIController extends Controller
             $result = InterviewAIService::submitAnswer($validated, $id);
             return $this->SuccessJSON($result);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -37,7 +41,9 @@ class InterviewAIController extends Controller
             $result = InterviewAIService::generateFeedback($interview_id);
             return $this->SuccessJSON($result);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -49,7 +55,9 @@ class InterviewAIController extends Controller
             $result = InterviewAIService::endInterview($validated, $interview_id);
             return $this->SuccessJSON($result);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 }

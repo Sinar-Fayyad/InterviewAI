@@ -15,7 +15,9 @@ class LinkedinController
             $messages = LinkedinService::getMessages($user_id);
             return $this->SuccessJSON($messages);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -25,7 +27,9 @@ class LinkedinController
             $post = LinkedinService::createPost($request->validated());
             return $this->SuccessJSON($post);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -35,7 +39,9 @@ class LinkedinController
             $profile = LinkedinService::createProfile();
             return $this->SuccessJSON($profile);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -45,7 +51,9 @@ class LinkedinController
             LinkedinService::postToLinkedIn($request->validated(), $user_id);
             return $this->SuccessJSON(null, ["message" => "Post published successfully"]);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -56,7 +64,9 @@ class LinkedinController
             return $this->SuccessJSON(null, ["message" => "Post scheduled successfully"]);
         } 
         catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -66,7 +76,9 @@ class LinkedinController
             $result = LinkedinService::checkExpiry($user_id);
             return $this->SuccessJSON($result);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 
@@ -76,7 +88,9 @@ class LinkedinController
             LinkedinService::disconnectLinkedin($user_id);
             return $this->SuccessJSON(null, ['message' => 'LinkedIn account disconnected successfully']);
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode());
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
 }
