@@ -2,17 +2,18 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use App\Services\UserService;
+use App\Services\SkillService;
 use App\Services\EducationService;
 use App\Services\ExperienceService;
 use App\Services\CertificationService;
-use App\Services\SkillService;
 
 class ProfileService
 {
-    static function getFullProfile($user_id)
+    static function getProfile($user_id)
     {
-        if (!UserService::getUser($user_id)) {
+        if (!User::find($user_id)) {
             throw new \Exception("User not found", 404);
         }
 
@@ -27,11 +28,11 @@ class ProfileService
 
     static function saveProfile($request, $user_id)
     {
-        if (!UserService::getUser($user_id)) {
+        if (!User::find($user_id)) {
             throw new \Exception("User not found", 404);
         }
 
-        UserService::updateUser($request['user_info'], $user_id);
+        UserService::updateUser($request->input('user_info.0'), $user_id);
 
         collect($request['education'])->each(fn($edu) => EducationService::addEducation( $edu, $user_id,));
         collect($request['experience'])->each(fn($exp) => ExperienceService::addExperience( $exp, $user_id,));
