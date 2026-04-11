@@ -20,6 +20,17 @@ class ChatbotController extends Controller
         }
     }
 
+    function clearMemory($collection_name)
+    {
+        try {
+            $result = ChatbotService::clearMemory($collection_name);
+            return $this->SuccessJSON($result);
+        } catch (\Exception $e) {
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
+        }
+    }
     function sendMessage(SendChatRequest $request)
     {
         try {

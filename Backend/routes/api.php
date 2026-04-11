@@ -31,6 +31,7 @@ Route::group(["prefix" => "v0.1"], function () {
     // Chatbot Routes
     Route::post('/initChatMemory/{user_id?}', [ChatbotController::class, 'initializeMemory']); // AI call
     Route::post('/sendChat', [ChatbotController::class, 'sendMessage']); // AI call
+    Route::post('/clearChatMemory/{collection_name}', [ChatbotController::class, 'clearMemory']); // AI call
 
     Route::middleware('jwt.auth')->group(function () {
 
