@@ -57,12 +57,11 @@ class ApplicationService
 
     static function getApplications($user_id)
     {
-        $application = Application::where('user_id', $user_id)->get();
-        if (!$application) {
-            throw new \Exception("Applications not found", 404);
+        if (!User::find($user_id)) {
+            throw new \Exception("User not found", 404);
         }
 
-        return $application;
+        return Application::where('user_id', $user_id)->get();
     }
 
     static function getApplication($id)

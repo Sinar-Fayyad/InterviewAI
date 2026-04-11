@@ -11,9 +11,9 @@ class UserContextService
     static function build($user_id)
     {
         return [
-            ...ProfileService::getFullProfile($user_id),
-            'interviews' => InterviewService::getInterview($user_id),
-            'applications' => ApplicationService::getApplication($user_id),
+            ...ProfileService::getProfile($user_id),
+            'interviews' => InterviewService::getInterviews($user_id),
+            'applications' => ApplicationService::getApplications($user_id),
         ];
     }
 }
