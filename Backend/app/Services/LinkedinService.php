@@ -74,7 +74,7 @@ class LinkedinService
     static function createPost($payload)
     {
         $response = Http::withHeaders([
-            'X-N8N-KEY' => config('services.n8n.auth_key'),,
+            'X-N8N-KEY' => config('services.n8n.auth_key'),
         ])
             ->timeout(120)
             ->post('http://127.0.0.1:5678/webhook/LinkedIn_post', $payload);
@@ -89,7 +89,7 @@ class LinkedinService
     static function createProfile($user_id)
     {
         $response = Http::withHeaders([
-            'X-N8N-KEY' => config('services.n8n.auth_key'),,
+            'X-N8N-KEY' => config('services.n8n.auth_key'),
         ])
             ->timeout(120)
             ->post('http://127.0.0.1:5678/webhook/Linkedin_profile', ProfileService::getProfile($user_id));
