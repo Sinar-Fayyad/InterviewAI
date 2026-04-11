@@ -40,7 +40,7 @@ class QuestionsListService
             }
 
             $questionsToInsert = collect($questions)->map(function ($item) use ($questionsList) {
-                return [
+                [
                     'questions_list_id' => $questionsList->id,
                     'question' => $item['question'],
                     'answer' => $item['answer'],
