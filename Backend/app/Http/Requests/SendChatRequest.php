@@ -18,7 +18,9 @@ class SendChatRequest extends ApiFormRequest
     public function rules(): array
     {
         return [
+            'collection_id' => 'required|string',
             'message' => 'required|string',
+            'chat_history' => 'nullable|array', 
         ];
     }
 
@@ -30,6 +32,9 @@ class SendChatRequest extends ApiFormRequest
         return [
             'message.required' => 'The message is required.',
             'message.string' => 'The message must be a string.',
+            'collection_id.required' => 'The collection ID is required.',
+            'collection_id.string' => 'The collection ID must be a string.',
+            'chat_history.array' => 'The chat history must be an array.',
         ];
     }
 }
