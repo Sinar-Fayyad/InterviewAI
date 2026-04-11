@@ -41,7 +41,8 @@ class PostService
 
     static function getPosts($user_id)
     {
-        $posts = Post::where('user_id', $user_id)->get();
+        $posts = Post::where('user_id', $user_id)->get()
+                     ->toArray();
         if (count($posts) === 0) {
             throw new \Exception("No posts found for this user", 404);
         }

@@ -52,7 +52,8 @@ class InterviewService
 
         return Interview::where('user_id', $user_id)
             ->select('id', 'interview_title', 'company_name', 'job_title', 'created_at', 'feedback')
-            ->get();
+            ->get()
+                     ->toArray();
     }
 
     static function getInterview($id)

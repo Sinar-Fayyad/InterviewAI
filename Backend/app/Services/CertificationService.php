@@ -44,7 +44,8 @@ class CertificationService
             throw new \Exception("User not found", 404);
         }
 
-        return Certification::where('user_id', $user_id)->get();
+        return Certification::where('user_id', $user_id)->get()
+                     ->toArray();
     }
 
     // static function getCertification($id){

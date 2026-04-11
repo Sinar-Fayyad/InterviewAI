@@ -48,7 +48,8 @@ class SkillService
             throw new \Exception("User not found", 404);     
         }
     
-        return Skill::where( 'user_id' , $user_id)->get();
+        return Skill::where( 'user_id' , $user_id)->get()
+                     ->toArray();
     }
 
     static function deleteSkill($id){

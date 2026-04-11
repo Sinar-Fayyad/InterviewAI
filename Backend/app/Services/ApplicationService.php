@@ -61,7 +61,9 @@ class ApplicationService
             throw new \Exception("User not found", 404);
         }
 
-        return Application::where('user_id', $user_id)->get();
+        return Application::where('user_id', $user_id)
+                            ->get()
+                            ->toArray();
     }
 
     static function getApplication($id)

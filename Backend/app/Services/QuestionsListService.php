@@ -76,7 +76,8 @@ class QuestionsListService
             throw new \Exception('User not found', 404);
         }
 
-        $questionsLists = QuestionsList::where('user_id', $user_id)->with('questions')->get();
+        $questionsLists = QuestionsList::where('user_id', $user_id)->with('questions')->get()
+                     ->toArray();
 
         if (!$questionsLists) {
             throw new \Exception('Questions Lists not found', 404);

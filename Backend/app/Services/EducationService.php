@@ -50,7 +50,8 @@ class EducationService
             throw new \Exception("User not found", 404);
         }
 
-        return Education::where('user_id', $user_id)->get();
+        return Education::where('user_id', $user_id)->get()
+                     ->toArray();
     }
 
     // static function getEducation($id){

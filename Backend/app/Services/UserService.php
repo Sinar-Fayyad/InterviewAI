@@ -13,7 +13,8 @@ class UserService
         }
 
         return $user ->select('id', 'first_name', 'last_name', 'email', 'phone', 'location', 'summary', 'theme')
-                     ->get();
+                     ->get()
+                     ->toArray();
     }
 
     static function updateUser($data, $id)

@@ -48,7 +48,8 @@ class ExperienceService
             throw new \Exception("User not found", 404);
         }
 
-        return Experience::where('user_id', $user_id)->get();
+        return Experience::where('user_id', $user_id)->get()
+                     ->toArray();
     }
 
     // static function getExperience($id){
