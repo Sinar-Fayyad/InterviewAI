@@ -52,8 +52,8 @@ class InterviewAIController extends Controller
         try {
             $validated = $request->validated();
             $validated['video'] = $request->file('video');
-            $result = InterviewAIService::endInterview($validated, $interview_id);
-            return $this->SuccessJSON($result);
+            InterviewAIService::endInterview($validated, $interview_id);
+            return $this->SuccessJSON(null , "Interview ended successfully");
         } catch (\Exception $e) {
             $code = $e->getCode();
             $httpCode = ($code >= 100 && $code < 600) ? $code : 500;

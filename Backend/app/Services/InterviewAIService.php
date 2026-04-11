@@ -184,7 +184,6 @@ class InterviewAIService
             'feedback' => $feedback,
         ], $interview_id);
 
-        return true;
     }
 
     static function transcribeAudio($audioFile)
