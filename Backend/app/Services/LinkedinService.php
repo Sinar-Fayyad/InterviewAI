@@ -50,7 +50,7 @@ class LinkedinService
                 }
 
                 $messages = $msgResponse->json('elements', []);
-                if (empty($messages)) {
+                if (count($messages) === 0) {
                     throw new \Exception("No messages found for conversation", 404);
                 }
 
@@ -86,13 +86,13 @@ class LinkedinService
         return $response->json();
     }
 
-    static function createProfile()
+    static function createProfile($user_id)
     {
         $response = Http::withHeaders([
             'X-N8N-KEY' => config('services.n8n.auth_key'),,
         ])
             ->timeout(120)
-            ->post('http://127.0.0.1:5678/webhook/Linkedin_profile', ProfileService::getProfile());
+            ->post('http://127.0.0.1:5678/webhook/Linkedin_profile', ProfileService::getProfile($user_id));
 
         if (!$response->successful()) {
             throw new \Exception("Failed to create LinkedIn profile", $response->getStatusCode());

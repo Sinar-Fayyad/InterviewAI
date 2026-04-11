@@ -33,10 +33,10 @@ class LinkedinController
         }
     }
 
-    function createProfile()
+    function createProfile($user_id)
     {
         try {
-            $profile = LinkedinService::createProfile();
+            $profile = LinkedinService::createProfile($user_id);
             return $this->SuccessJSON($profile);
         } catch (\Exception $e) {
             $code = $e->getCode();

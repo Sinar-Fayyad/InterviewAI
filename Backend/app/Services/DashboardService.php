@@ -14,7 +14,7 @@ class DashboardService
         }
         $interviews = InterviewService::getInterviews($user_id);
 
-        if (!$interviews) {
+        if (count($interviews) === 0) {
             throw new \Exception('No interviews found for this user', 404);
         }
 
