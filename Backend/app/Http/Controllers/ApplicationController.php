@@ -60,7 +60,7 @@ class ApplicationController extends Controller
     {
         try {
             ApplicationService::deleteApplication($id);
-            return $this->SuccessJSON(null, ["message" => "Application deleted successfully"]);
+            return $this->SuccessJSON(null,  "Application deleted successfully");
         } catch (\Exception $e) {
             $code = $e->getCode();
             $httpCode = ($code >= 100 && $code < 600) ? $code : 500;

@@ -36,7 +36,7 @@ class SkillController extends Controller
     {
         try {
             SkillService::deleteSkill($id);
-            return $this->SuccessJSON(null, ["message" => "Skill deleted successfully"]);
+            return $this->SuccessJSON(null, "Skill deleted successfully");
         } catch (\Exception $e) {
             $code = $e->getCode();
             $httpCode = ($code >= 100 && $code < 600) ? $code : 500;

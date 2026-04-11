@@ -32,7 +32,7 @@ class ProfileController extends Controller
                 throw new \Exception("User ID is required", 400);
             }
             ProfileService::saveProfile($request, $user_id);
-            return $this->SuccessJSON(null, ["message" => "Profile saved successfully"]);
+            return $this->SuccessJSON(null,  "Profile saved successfully");
         } catch (\Exception $e) {
             $code = $e->getCode();
             $httpCode = ($code >= 100 && $code < 600) ? $code : 500;

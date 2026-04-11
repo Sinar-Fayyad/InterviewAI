@@ -12,18 +12,22 @@ class UserController extends Controller
     function updateUser(UserUpdateRequest $request, $id){
         try {
             UserService::updateUser($request->all(), $id);
-            return $this->SuccessJSON(null, ["message" => "User updated successfully"]); ;
+            return $this->SuccessJSON(null, "User updated successfully"); ;
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode()) ;
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);;
         }
     }
 
     function changeTheme($id){
         try {
             UserService::changeTheme($id);
-            return $this->SuccessJSON(null, ["message" => "Theme changed successfully"]) ;
+            return $this->SuccessJSON(null, "Theme changed successfully") ;
         } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode()) ;
+            $code = $e->getCode();
+            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+            return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }  
 }

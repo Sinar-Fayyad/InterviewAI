@@ -56,7 +56,7 @@ function updatePost(UpdatePostRequest $request, $id){
     function deletePost ($id){
         try {
             PostService::deletePost($id);
-            return $this->SuccessJSON(null, ["message" => "Post deleted successfully"]);
+            return $this->SuccessJSON(null, "Post deleted successfully");
         } catch (\Exception $e) {
             $code = $e->getCode();
             $httpCode = ($code >= 100 && $code < 600) ? $code : 500;

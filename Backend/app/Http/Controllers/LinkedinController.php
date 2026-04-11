@@ -49,7 +49,7 @@ class LinkedinController
     {
         try {
             LinkedinService::postToLinkedIn($request->validated(), $user_id);
-            return $this->SuccessJSON(null, ["message" => "Post published successfully"]);
+            return $this->SuccessJSON(null,  "Post published successfully");
         } catch (\Exception $e) {
             $code = $e->getCode();
             $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
@@ -61,7 +61,7 @@ class LinkedinController
     {
         try {
             LinkedinService::schedulePost($request->validated(), $user_id);
-            return $this->SuccessJSON(null, ["message" => "Post scheduled successfully"]);
+            return $this->SuccessJSON(null,  "Post scheduled successfully");
         } 
         catch (\Exception $e) {
             $code = $e->getCode();

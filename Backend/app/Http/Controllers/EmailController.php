@@ -38,7 +38,7 @@ public function sendEmail(SendEmailRequest $request, $user_id)
     {
         try {
             EmailService::sendEmail($request->validated(), $user_id);
-            return $this->SuccessJSON(null, ["message" => "Email sent successfully"]);
+            return $this->SuccessJSON(null, "Email sent successfully");
         } catch (\Exception $e) {
             $code = $e->getCode();
             $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
@@ -62,7 +62,7 @@ public function sendEmail(SendEmailRequest $request, $user_id)
     {
         try {
             EmailService::disconnectGoogle($user_id);
-            return $this->SuccessJSON(null, ["message" => "Google account disconnected successfully"] );
+            return $this->SuccessJSON(null, "Google account disconnected successfully" );
         } catch (\Exception $e) {
             $code = $e->getCode();
             $httpCode = ($code >= 100 && $code < 600) ? $code : 500;

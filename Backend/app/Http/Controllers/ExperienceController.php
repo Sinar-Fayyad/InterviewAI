@@ -33,7 +33,7 @@ class ExperienceController extends Controller
     {
         try {
             ExperienceService::deleteExperience($id);
-            return $this->SuccessJSON(null, ["message" => "Experience deleted successfully"]);
+            return $this->SuccessJSON(null,  "Experience deleted successfully");
         } catch (\Exception $e) {
             return $this->ErrorJSON("Failed to delete experience.");
         }
