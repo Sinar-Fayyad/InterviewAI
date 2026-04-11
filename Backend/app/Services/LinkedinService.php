@@ -74,10 +74,10 @@ class LinkedinService
     static function createPost($payload)
     {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
+            'X-N8N-KEY' => config('services.n8n.auth_key'),,
         ])
             ->timeout(120)
-            ->post('http://localhost:5678/webhook/LinkedIn_post', $payload);
+            ->post('http://127.0.0.1:5678/webhook/LinkedIn_post', $payload);
 
         if (!$response->successful()) {
             throw new \Exception("Failed to create LinkedIn post", $response->getStatusCode());
@@ -89,10 +89,10 @@ class LinkedinService
     static function createProfile()
     {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
+            'X-N8N-KEY' => config('services.n8n.auth_key'),,
         ])
             ->timeout(120)
-            ->post('http://localhost:5678/webhook/Linkedin_profile', ProfileService::getProfile());
+            ->post('http://127.0.0.1:5678/webhook/Linkedin_profile', ProfileService::getProfile());
 
         if (!$response->successful()) {
             throw new \Exception("Failed to create LinkedIn profile", $response->getStatusCode());

@@ -19,8 +19,8 @@ class DashboardService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET')
-        ])->timeout(120)->post('http://localhost:5678/webhook/Dashboard', $interviews);
+            'X-N8N-KEY' => config('services.n8n.auth_key'),
+        ])->timeout(120)->post('http://127.0.0.1:5678/webhook/Dashboard', $interviews);
 
         if (!$response->successful()) {
             throw new \Exception('Failed to fetch analysis feedback: ' . $response->body(), $response->getStatusCode());

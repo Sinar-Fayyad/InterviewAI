@@ -33,8 +33,8 @@ class EmailService
 
         do {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET')
-            ])->timeout(120)->post('http://localhost:5678/webhook/generate_email', [
+                'X-N8N-KEY' => config('services.n8n.auth_key'),
+            ])->timeout(120)->post('http://127.0.0.1:5678/webhook/generate_email', [
                         'input' => $request->all(),
                         'profile' => $profile
                     ]);
@@ -47,8 +47,8 @@ class EmailService
     {
         do {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET')
-            ])->timeout(120)->post('http://localhost:5678/webhook/ReplyToEmail', $request->all());
+                'X-N8N-KEY' => config('services.n8n.auth_key'),
+            ])->timeout(120)->post('http://127.0.0.1:5678/webhook/ReplyToEmail', $request->all());
 
         } while (!$response->successful()); // Retry until successful
 

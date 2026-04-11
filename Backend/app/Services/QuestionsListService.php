@@ -21,10 +21,10 @@ class QuestionsListService
             $questionsList->save();
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('N8N_WEBHOOK_SECRET'),
+                'X-N8N-KEY' => config('services.n8n.auth_key'),,
             ])
                 ->timeout(120)
-                ->post('http://localhost:5678/webhook/Questions_Generation', [
+                ->post('http://127.0.0.1:5678/webhook/Questions_Generation', [
                     'profile' => UserService::getUser($user_id),
                     'context_summary' => $data["context_summary"],
                 ]);
