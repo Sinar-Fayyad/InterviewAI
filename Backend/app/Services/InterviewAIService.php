@@ -23,20 +23,23 @@ class InterviewAIService
             throw new \Exception("User profile not found", 404);
         }
 
-        do {
-            $response = Http::withHeaders([
-                'X-N8N-KEY' => config('services.n8n.auth_key'),,
-            ])->timeout(120)->post('http://127.0.0.1:5678/webhook/interview_maker', [
-                        'profile' => $profile,
-                        'context_summary' => $data["context_summary"],
-                        'conversation' => [],
-                        'emotions' => []
-                    ]);
 
-            if (!$response->successful()) {
-                throw new \Exception("Failed to start interview", $response->body(), $response->getStatusCode());
-            }
-        } while (!$response->json()['question']);
+        $response = Http::withHeaders([
+            'X-N8N-KEY' => config('services.n8n.auth_key'),
+            ,
+        ])->timeout(120)->post('http://127.0.0.1:5678/webhook/interview_maker', [
+                    'profile' => $profile,
+                    'context_summary' => $data["context_summary"],
+                    'conversation' => [],
+                    'emotions' => []
+                ]);
+
+        if (!$response->successful()) {
+            throw new \Exception("Failed to start interview", $response->body(), $response->getStatusCode());
+        }
+        if (!$response->json()['question']) {
+            throw new \Exception("Failed to get first question", 500);
+        }
 
         $firstQuestion = $response->json()['question'];
 
@@ -97,20 +100,23 @@ class InterviewAIService
             throw new \Exception("User profile not found", 404);
         }
 
-        do {
-            $response = Http::withHeaders([
-                'X-N8N-KEY' => config('services.n8n.auth_key'),,
-            ])->timeout(120)->post('http://127.0.0.1:5678/webhook/interview_maker', [
-                        'profile' => $profile,
-                        'context_summary' => $interview->context_summary,
-                        'conversation' => $parsed['conversation'],
-                        'emotions' => $parsed['emotions']
-                    ]);
 
-            if (!$response->successful()) {
-                throw new \Exception("Failed to get next question", $response->body(), $response->getStatusCode());
-            }
-        } while (!$response->json()['question']);
+        $response = Http::withHeaders([
+            'X-N8N-KEY' => config('services.n8n.auth_key'),
+            ,
+        ])->timeout(120)->post('http://127.0.0.1:5678/webhook/interview_maker', [
+                    'profile' => $profile,
+                    'context_summary' => $interview->context_summary,
+                    'conversation' => $parsed['conversation'],
+                    'emotions' => $parsed['emotions']
+                ]);
+
+        if (!$response->successful()) {
+            throw new \Exception("Failed to get next question", $response->body(), $response->getStatusCode());
+        }
+        if (!$response->json()['question']) {
+            throw new \Exception("Failed to get next question", 500);
+        }
 
         $nextQuestion = $response->json()['question'];
 
@@ -141,7 +147,8 @@ class InterviewAIService
         }
 
         $response = Http::withHeaders([
-            'X-N8N-KEY' => config('services.n8n.auth_key'),,
+            'X-N8N-KEY' => config('services.n8n.auth_key'),
+            ,
         ])->timeout(120)->post('http://127.0.0.1:5678/webhook/interview_feedback', [
                     'profile' => $profile,
                     'context_summary' => $interview->context_summary,

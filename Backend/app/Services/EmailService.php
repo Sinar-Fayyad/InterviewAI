@@ -31,26 +31,30 @@ class EmailService
             ];
         }
 
-        do {
-            $response = Http::withHeaders([
-                'X-N8N-KEY' => config('services.n8n.auth_key'),
-            ])->timeout(120)->post('http://127.0.0.1:5678/webhook/generate_email', [
-                        'input' => $request->all(),
-                        'profile' => $profile
-                    ]);
-        } while (!$response->successful()); // Retry until successful
+        $response = Http::withHeaders([
+            'X-N8N-KEY' => config('services.n8n.auth_key'),
+        ])->timeout(120)->post('http://127.0.0.1:5678/webhook/generate_email', [
+                    'input' => $request->all(),
+                    'profile' => $profile
+                ]);
+
+        if (!$response->successful()) {
+            throw new \Exception("Failed to generate email: " . $response->body(), $response->getStatusCode());
+        }
 
         return $response->json();
     }
 
     static function replyToEmail($request)
     {
-        do {
-            $response = Http::withHeaders([
-                'X-N8N-KEY' => config('services.n8n.auth_key'),
-            ])->timeout(120)->post('http://127.0.0.1:5678/webhook/ReplyToEmail', $request->all());
 
-        } while (!$response->successful()); // Retry until successful
+        $response = Http::withHeaders([
+            'X-N8N-KEY' => config('services.n8n.auth_key'),
+        ])->timeout(120)->post('http://127.0.0.1:5678/webhook/ReplyToEmail', $request->all());
+
+        if (!$response->successful()) {
+            throw new \Exception("Failed to generate email reply: " . $response->body(), $response->getStatusCode());
+        }
 
         return $response->json();
     }
@@ -62,7 +66,7 @@ class EmailService
         if (!$user) {
             throw new \Exception("User not found", 404);
         }
-        
+
         if (!$user->google_refresh_token || !$user->google_email) {
             throw new \Exception("Google account not connected", 400);
         }
