@@ -11,7 +11,7 @@ class UserController extends Controller
 
     function updateUser(UserUpdateRequest $request, $id){
         try {
-            UserService::updateUser($request->all(), $id);
+            UserService::updateUser($request, $id);
             return $this->SuccessJSON(null, "User updated successfully"); ;
         } catch (\Exception $e) {
             $code = $e->getCode();
