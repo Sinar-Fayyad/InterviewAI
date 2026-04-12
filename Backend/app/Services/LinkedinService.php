@@ -32,7 +32,7 @@ class LinkedinService
             ]);
 
         if (!$convoResponse->successful()) {
-            throw new \Exception("Failed to fetch conversations from LinkedIn", $convoResponse->getStatusCode());
+            throw new \Exception("Failed to fetch conversations from LinkedIn: ".$convoResponse->body() , $convoResponse->getStatusCode());
         }
 
         return collect($convoResponse->json('elements', []))
@@ -46,7 +46,7 @@ class LinkedinService
                     ]);
 
                 if (!$msgResponse->successful()) {
-                    throw new \Exception("Failed to fetch messages for conversation", $msgResponse->getStatusCode());
+                    throw new \Exception("Failed to fetch messages for conversation: ".$msgResponse->body() , $msgResponse->getStatusCode());
                 }
 
                 $messages = $msgResponse->json('elements', []);
@@ -80,7 +80,7 @@ class LinkedinService
             ->post('http://127.0.0.1:5678/webhook/LinkedIn_post', $payload);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to create LinkedIn post", $response->getStatusCode());
+            throw new \Exception("Failed to create LinkedIn post", 500);
         }
 
         return $response->json();
@@ -92,10 +92,10 @@ class LinkedinService
             'X-N8N-KEY' => config('services.n8n.auth_key'),
         ])
             ->timeout(120)
-            ->post('http://localhost:5678/webhook/Linkedin_profile', ProfileService::getProfile($user_id));
+            ->post('http://localhost:5678/webhook-test/Linkedin_profile', ProfileService::getProfile($user_id));
 
         if ($response->json('code') !== '200') {
-            throw new \Exception("Failed to create LinkedIn profile", $response->getStatusCode());
+            throw new \Exception("Failed to create LinkedIn profile", 500);
         }
 
         return $response->json();
@@ -122,8 +122,8 @@ class LinkedinService
                 'commentary' => $request->text
             ]);
 
-        if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to publish post to LinkedIn", $response->getStatusCode());
+        if (!$response->successful()) {
+            throw new \Exception("Failed to publish post to LinkedIn: ".$response->body(), $response->getStatusCode());
         }
     }
 

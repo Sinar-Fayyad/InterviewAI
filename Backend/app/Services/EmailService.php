@@ -87,8 +87,8 @@ class EmailService
             ->timeout(30)
             ->post('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', ['raw' => $encoded]);
 
-        if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to send email: " . $response->json('error') , 500);
+        if (!$response->successful()) {
+            throw new \Exception("Failed to send email: " . $response->body(), $response->getStatusCode());
         }
     }
 
@@ -108,7 +108,7 @@ class EmailService
             throw new \Exception("Failed to refresh Google access token", 500);
         }
 
-        $emailsResponse = Http::withToken($access_token)
+        $response = Http::withToken($access_token)
             ->timeout(60)
             ->get('https://gmail.googleapis.com/gmail/v1/users/me/messages', [
                 'maxResults' => 50,
@@ -117,11 +117,11 @@ class EmailService
                                             OR recruit OR application OR candidate OR resume OR cv OR talent)'
             ]);
 
-        if (!$emailsResponse->successful()) {
-            throw new \Exception("Failed to fetch emails: " . $emailsResponse->body(), $emailsResponse->getStatusCode());
+        if (!$response->successful()) {
+            throw new \Exception("Failed to fetch emails: " . $response->body(), $response->getStatusCode());
         }
 
-        return collect($emailsResponse->json('messages', []))
+        return collect($response->json('messages', []))
             ->map(function ($msg) use ($access_token) {
                 $detail = Http::withToken($access_token)
                     ->get("https://gmail.googleapis.com/gmail/v1/users/me/messages/{$msg['id']}")
