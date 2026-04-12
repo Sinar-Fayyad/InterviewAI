@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateLinkedinPostRequest;
 use App\Http\Requests\PostToLinkedinRequest;
 use App\Services\LinkedinService;
 use App\Http\Requests\SchedulePostRequest;
 
-class LinkedinController
+class LinkedinController extends Controller
 {
     function getMessages($user_id)
     {

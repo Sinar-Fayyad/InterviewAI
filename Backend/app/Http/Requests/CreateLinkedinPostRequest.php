@@ -21,9 +21,7 @@ class CreateLinkedinPostRequest extends ApiFormRequest
     {
         return [
             'title' => 'required|string|max:255',
-            'body' => 'required|string',
-            'media' => 'nullable|url',
-            'scheduled_at' => 'nullable|date',
+            'description' => 'required|string',
         ];
     }
 
@@ -35,9 +33,8 @@ class CreateLinkedinPostRequest extends ApiFormRequest
         return [
             'title.required' => 'Title is required.',
             'title.max' => 'Title may not be greater than 255 characters.',
-            'body.required' => 'Body is required.',
-            'media.url' => 'Media must be a valid URL.',
-            'scheduled_at.date' => 'Scheduled at must be a valid date.',
+            'description.required' => 'Description is required.',
+            'description.string' => 'Description must be a string.',
         ];
     }
 }

@@ -29,7 +29,7 @@ class QuestionsListService
                     'context_summary' => $data["context_summary"],
                 ]);
 
-            if (!$response->successful()) {
+            if ($response->json(code) !== 200) {
                 throw new \Exception('Failed to generate questions: ' . $response->body(), $response->getStatusCode());
             }
 

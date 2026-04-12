@@ -114,7 +114,7 @@ Route::group(["prefix" => "v0.1"], function () {
         // Linkedin Routes
         Route::get('get_linkedin_messages/{user_id}', [LinkedinController::class, 'getMessages']);
         Route::post('create_linkedin_post', [LinkedinController::class, 'createPost']); // AI call
-        Route::get('linkedin_profile', [LinkedinController::class, 'createProfile']); // AI call
+        Route::get('linkedin_profile/{user_id}', [LinkedinController::class, 'createProfile']); // AI call
         Route::post('post_to_linkedin/{user_id}', [LinkedinController::class, 'postToLinkedin']);
         Route::post('schedule_post/{user_id}', [LinkedinController::class, 'schedulePost']); // AI call
         Route::get('check_linkedin_expiry/{user_id}', [LinkedinController::class, 'checkExpiry']);

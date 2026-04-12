@@ -53,7 +53,7 @@ class PublishLinkedInPost implements ShouldQueue
                     ]
                 ]);
 
-            if ($response->successful()) {
+            if ($response->json(code) !== 200) {
                 $this->post->update(['status' => 'published', 'published_at' => now()]);
             } else {
                 $this->post->update(['status' => 'failed', 'error' => $response->body()]);

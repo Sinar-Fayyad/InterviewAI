@@ -36,20 +36,21 @@ class ChatbotService
         $response = Http::attach('website_guide', file_get_contents($filePath), basename($filePath))
                         ->timeout(120)->post('http://127.0.0.1:5678/webhook/init_memory', [
                             
-                    'user_context' => $user_context,
-                    'collection_name' => $collection_name
+                    'user_context' => json_encode($user_context),
+                    'collection_name' => $collection_name,
                 ]);
 
-        if (!$response->successful()) {
+        if ($response->json(code) !== 200) {
             throw new \Exception($response->body(), $response->getStatusCode());
         }
+
+        return $response->json();
 
         return [
             'is_guest' => !$user_id ? true : false,
             'user_id' => $user_id,
             'status' => 'initialized',
             'collection_name' => $collection_name,
-            'collection_id' => $response->json()['collection_id'],
         ];
 
     }
@@ -60,13 +61,17 @@ class ChatbotService
                           ->post('http://127.0.0.1:5678/webhook/Delete_memory', [
                     'collection_name' => $collection_name,
                 ]);
-        if (!$response->successful()) {
+        if ($response->json(code) !== 200) {
             throw new \Exception($response->body(), $response->getStatusCode());
         }
 
-        return [
-            'message' => 'memory_cleared',
-        ];
+        if ($response->json('code') == '404') {
+            throw new \Exception ('Collection not found', 404);
+        }
+
+        else {
+            return ['status' => 'cleared'];
+        }
     }
     static function sendMessage($request)
     {
@@ -76,7 +81,7 @@ class ChatbotService
         'chat_history' => $request['chat_history'] ?? [], // Frontend sends last 5
     ]);
 
-    if (!$response->successful()) {
+    if ($response->json(code) !== 200) {
         throw new \Exception($response->body(), $response->getStatusCode());
     }
 

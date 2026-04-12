@@ -38,7 +38,7 @@ class EmailService
                     'profile' => $profile
                 ]);
 
-        if (!$response->successful()) {
+        if ($response->json(code) !== 200) {
             throw new \Exception("Failed to generate email: " . $response->body(), $response->getStatusCode());
         }
 
@@ -52,7 +52,7 @@ class EmailService
             'X-N8N-KEY' => config('services.n8n.auth_key'),
         ])->timeout(120)->post('http://127.0.0.1:5678/webhook/ReplyToEmail', $request->all());
 
-        if (!$response->successful()) {
+        if ($response->json(code) !== 200) {
             throw new \Exception("Failed to generate email reply: " . $response->body(), $response->getStatusCode());
         }
 
@@ -87,7 +87,7 @@ class EmailService
             ->timeout(30)
             ->post('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', ['raw' => $encoded]);
 
-        if (!$response->successful()) {
+        if ($response->json(code) !== 200) {
             throw new \Exception("Failed to send email: " . $response->body(), $response->getStatusCode());
         }
     }
@@ -153,7 +153,7 @@ class EmailService
             'refresh_token' => $refresh_token,
             'grant_type' => 'refresh_token'
         ]);
-        return $response->successful() ? $response->json('access_token') : null;
+        return $response->json(code) !== 200 ? $response->json('access_token') : null;
     }
 
     static function disconnectGoogle($user_id)

@@ -79,7 +79,7 @@ class LinkedinService
             ->timeout(120)
             ->post('http://127.0.0.1:5678/webhook/LinkedIn_post', $payload);
 
-        if (!$response->successful()) {
+        if ($response->json(code) !== 200) {
             throw new \Exception("Failed to create LinkedIn post", $response->getStatusCode());
         }
 
@@ -92,9 +92,9 @@ class LinkedinService
             'X-N8N-KEY' => config('services.n8n.auth_key'),
         ])
             ->timeout(120)
-            ->post('http://127.0.0.1:5678/webhook/Linkedin_profile', ProfileService::getProfile($user_id));
+            ->post('http://localhost:5678/webhook/Linkedin_profile', ProfileService::getProfile($user_id));
 
-        if (!$response->successful()) {
+        if ($response->json('code') !== '200') {
             throw new \Exception("Failed to create LinkedIn profile", $response->getStatusCode());
         }
 
@@ -122,7 +122,7 @@ class LinkedinService
                 'commentary' => $request->text
             ]);
 
-        if (!$response->successful()) {
+        if ($response->json(code) !== 200) {
             throw new \Exception("Failed to publish post to LinkedIn", $response->getStatusCode());
         }
     }
