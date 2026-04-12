@@ -34,7 +34,7 @@ class CareerService
         }
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to process career workflow: ". $response->json('error') , 500);
+            throw new \Exception("Failed to process career workflow" , 500);
         }
 
         return $response->json();

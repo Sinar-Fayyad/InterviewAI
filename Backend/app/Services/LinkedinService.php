@@ -92,7 +92,7 @@ class LinkedinService
             'X-N8N-KEY' => config('services.n8n.auth_key'),
         ])
             ->timeout(120)
-            ->post('http://localhost:5678/webhook-test/Linkedin_profile', ProfileService::getProfile($user_id));
+            ->post('http://localhost:5678/webhook/Linkedin_profile', ProfileService::getProfile($user_id));
 
         if ($response->json('code') !== '200') {
             throw new \Exception("Failed to create LinkedIn profile", 500);
