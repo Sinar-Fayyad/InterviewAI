@@ -39,7 +39,7 @@ class EmailService
                 ]);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to generate email: " . $response->body(), $response->getStatusCode());
+            throw new \Exception("Failed to generate email: " . $response->json('error') , 500);
         }
 
         return $response->json();
@@ -53,7 +53,7 @@ class EmailService
         ])->timeout(120)->post('http://127.0.0.1:5678/webhook/ReplyToEmail', $request);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to generate email reply: " . $response->body(), $response->getStatusCode());
+            throw new \Exception("Failed to generate email reply: " . $response->json('error') , 500);
         }
 
         return $response->json();
@@ -88,7 +88,7 @@ class EmailService
             ->post('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', ['raw' => $encoded]);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to send email: " . $response->body(), $response->getStatusCode());
+            throw new \Exception("Failed to send email: " . $response->json('error') , 500);
         }
     }
 

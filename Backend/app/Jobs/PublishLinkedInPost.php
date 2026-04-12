@@ -35,31 +35,27 @@ class PublishLinkedInPost implements ShouldQueue
             return;
         }
 
-        try {
-            $response = Http::withToken($user->linkedin_token)
-                ->post('https://api.linkedin.com/v2/ugcPosts', [
-                    'author' => 'urn:li:person:' . $user->linkedin_id,
-                    'lifecycleState' => 'PUBLISHED',
-                    'specificContent' => [
-                        'com.linkedin.ugc.ShareContent' => [
-                            'shareCommentary' => [
-                                'text' => $this->post->content
-                            ],
-                            'shareMediaCategory' => 'NONE'
-                        ]
-                    ],
-                    'visibility' => [
-                        'com.linkedin.ugc.MemberNetworkVisibility' => 'PUBLIC'
+        $response = Http::withToken($user->linkedin_token)
+            ->post('https://api.linkedin.com/v2/ugcPosts', [
+                'author' => 'urn:li:person:' . $user->linkedin_id,
+                'lifecycleState' => 'PUBLISHED',
+                'specificContent' => [
+                    'com.linkedin.ugc.ShareContent' => [
+                        'shareCommentary' => [
+                            'text' => $this->post->content
+                        ],
+                        'shareMediaCategory' => 'NONE'
                     ]
-                ]);
+                ],
+                'visibility' => [
+                    'com.linkedin.ugc.MemberNetworkVisibility' => 'PUBLIC'
+                ]
+            ]);
 
-            if ($response->json('code') !== 200) {
-                $this->post->update(['status' => 'published', 'published_at' => now()]);
-            } else {
-                $this->post->update(['status' => 'failed', 'error' => $response->body()]);
-            }
-        } catch (\Exception $e) {
-            $this->post->update(['status' => 'failed', 'error' => $e->getMessage()]);
+        if ($response->json('code') !== 200) {
+            $this->post->update(['status' => 'published', 'published_at' => now()]);
+        } else {
+            $this->post->update(['status' => 'failed', 'error' => $response->json('error')]);
         }
     }
 }

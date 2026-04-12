@@ -20,15 +20,21 @@ class CareerService
             throw new \Exception("Profile not found for user", 404);
         }
 
-        $response = Http::withToken(env('N8N_WEBHOOK_SECRET'))
+        $response = Http::withHeaders([
+            'X-N8N-KEY' => config('services.n8n.auth_key'),
+        ])
             ->timeout(120)
             ->post($webhookUrl, [
                 ...$input,
                 'profile' => $profile,
             ]);
 
+        if (!$response->successful()){
+            throw new \Exception("Failet to access career workflow", 500);
+        }
+
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to process career workflow: " . $response->body(), $response->status());
+            throw new \Exception("Failed to process career workflow: ". $response->json('error') , 500);
         }
 
         return $response->json();

@@ -34,7 +34,7 @@ class InterviewAIService
 
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to start interview". $response->body(), $response->getStatusCode());
+            throw new \Exception("Failed to start interview". $response->json('error') , 500);
         }
          
         if ($response->json()['payload.0.question']) {
@@ -114,7 +114,7 @@ class InterviewAIService
                 ]);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to get next question". $response->body(), $response->getStatusCode());
+            throw new \Exception("Failed to get next question". $response->json('error') , 500);
         }
         if ($response->json()['question']) {
             throw new \Exception("Failed to get next question", 500);
@@ -158,7 +158,7 @@ class InterviewAIService
                 ]);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to generate feedback". $response->body(), $response->getStatusCode());
+            throw new \Exception("Failed to generate feedback". $response->json('error') , 500);
         }
 
         return $response->json();

@@ -30,7 +30,7 @@ class QuestionsListService
                 ]);
 
             if ($response->json('code') !== 200) {
-                throw new \Exception('Failed to generate questions: ' . $response->body(), $response->getStatusCode());
+                throw new \Exception('Failed to generate questions: ' . $response->json('error') , 500);
             }
 
             $questions = $response->json('questions');

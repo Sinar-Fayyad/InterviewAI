@@ -41,7 +41,7 @@ class ChatbotService
                 ]);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to initialize memory: ", 500);
+            throw new \Exception("Failed to initialize memory: ". $response->json('error') , 500);
         }
         return $response->json()['message'] ?? 'Memory initialized successfully';
 
@@ -61,7 +61,7 @@ class ChatbotService
                     'collection_name' => $collection_name,
                 ]);
         if ($response->json('code') !== 200) {
-            throw new \Exception($response->body(), $response->getStatusCode());
+            throw new \Exception("Failed to delete memory: ". $response->json('error'), 500);
         }
 
         if ($response->json('code') == '404') {
@@ -81,7 +81,7 @@ class ChatbotService
     ]);
 
     if ($response->json('code') !== 200) {
-        throw new \Exception($response->body(), $response->getStatusCode());
+        throw new \Exception("Failed to get response: ". $response->json('error') , 500);
     }
 
     return [
