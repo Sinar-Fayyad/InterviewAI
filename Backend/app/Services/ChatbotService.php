@@ -40,7 +40,7 @@ class ChatbotService
                     'collection_name' => $collection_name,
                 ]);
 
-        if ($response->json(code) !== 200) {
+        if ($response->json('code') !== 200) {
             throw new \Exception($response->body(), $response->getStatusCode());
         }
 
@@ -61,7 +61,7 @@ class ChatbotService
                           ->post('http://127.0.0.1:5678/webhook/Delete_memory', [
                     'collection_name' => $collection_name,
                 ]);
-        if ($response->json(code) !== 200) {
+        if ($response->json('code') !== 200) {
             throw new \Exception($response->body(), $response->getStatusCode());
         }
 
@@ -81,7 +81,7 @@ class ChatbotService
         'chat_history' => $request['chat_history'] ?? [], // Frontend sends last 5
     ]);
 
-    if ($response->json(code) !== 200) {
+    if ($response->json('code') !== 200) {
         throw new \Exception($response->body(), $response->getStatusCode());
     }
 

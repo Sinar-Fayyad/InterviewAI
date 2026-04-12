@@ -33,7 +33,7 @@ class InterviewAIService
                 ]);
 
 
-        if ($response->json(code) !== 200) {
+        if ($response->json('code') !== 200) {
             throw new \Exception("Failed to start interview". $response->body(), $response->getStatusCode());
         }
          
@@ -113,7 +113,7 @@ class InterviewAIService
                     'emotions' => $parsed['emotions']
                 ]);
 
-        if ($response->json(code) !== 200) {
+        if ($response->json('code') !== 200) {
             throw new \Exception("Failed to get next question". $response->body(), $response->getStatusCode());
         }
         if ($response->json()['question']) {
@@ -157,7 +157,7 @@ class InterviewAIService
                     'emotions' => $parsed['emotions']
                 ]);
 
-        if ($response->json(code) !== 200) {
+        if ($response->json('code') !== 200) {
             throw new \Exception("Failed to generate feedback". $response->body(), $response->getStatusCode());
         }
 

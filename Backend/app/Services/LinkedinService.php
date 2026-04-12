@@ -79,7 +79,7 @@ class LinkedinService
             ->timeout(120)
             ->post('http://127.0.0.1:5678/webhook/LinkedIn_post', $payload);
 
-        if ($response->json(code) !== 200) {
+        if ($response->json('code') !== 200) {
             throw new \Exception("Failed to create LinkedIn post", $response->getStatusCode());
         }
 
@@ -122,7 +122,7 @@ class LinkedinService
                 'commentary' => $request->text
             ]);
 
-        if ($response->json(code) !== 200) {
+        if ($response->json('code') !== 200) {
             throw new \Exception("Failed to publish post to LinkedIn", $response->getStatusCode());
         }
     }
