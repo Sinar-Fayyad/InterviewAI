@@ -44,3 +44,4 @@ class UserService
         $user->save();
     }
 }
+?>
