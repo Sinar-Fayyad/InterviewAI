@@ -160,7 +160,7 @@ class EmailService
     {
         $user = User::find($user_id);
         if (!$user) {
-            return null;
+            throw new \Exception("User not found", 404);
         }
 
         $user->google_id = null;
