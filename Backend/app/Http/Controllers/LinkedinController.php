@@ -91,7 +91,7 @@ class LinkedinController extends Controller
         } catch (\Exception $e) {
             $code = $e->getCode();
             $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
-            return $this->ErrorJSON($e->getMessage(), $httpCode);
+            return $this->ErrorJSON("Disconnection failed", $httpCode);
         }
     }
 }

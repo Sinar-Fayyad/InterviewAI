@@ -67,10 +67,6 @@ class ChatbotService
         if ($response->json('code') == '404') {
             throw new \Exception ('Collection not found', 404);
         }
-
-        else {
-            return ['status' => 'cleared'];
-        }
     }
     static function sendMessage($request)
     {
