@@ -32,7 +32,7 @@ class ProfileService
             throw new \Exception("User not found", 404);
         }
 
-        UserService::updateUser($request->input('user_info.0'), $user_id);
+        UserService::updateUser($request['user_info'], $user_id);
 
         collect($request['education'])->each(fn($edu) => EducationService::addEducation($edu, $user_id));
         collect($request['experience'])->each(fn($exp) => ExperienceService::addExperience($exp, $user_id));
