@@ -11,7 +11,7 @@ import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { Linkedin, Sparkles, Calendar, Send, Upload, X, Edit2, Loader2, CalendarDays } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { createLinkedinPost, postToLinkedin, schedulePost } from "@/services/linkedinService";
+import { createLinkedinPost, postToLinkedin, schedulePost} from "@/services/linkedinService";
 
 export default function LinkedInManager() {
   const navigate = useNavigate();
