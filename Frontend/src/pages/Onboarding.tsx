@@ -218,13 +218,13 @@ export default function Onboarding() {
     setLoading(true);
     try {
       const profileData = {
-        user_info: [{
+        user_info: {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           phone: phone.trim(),
           location: location.trim(),
           summary: summary.trim()
-        }],
+        },
         education: education.map(e => ({
           institution_name: e.institution_name.trim(),
           degree: e.degree.trim(),
