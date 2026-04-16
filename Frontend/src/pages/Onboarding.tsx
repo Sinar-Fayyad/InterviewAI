@@ -217,7 +217,7 @@ export default function Onboarding() {
 
     setLoading(true);
     try {
-      const profileData = {
+const profileData = {
         user_info: {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
@@ -250,10 +250,7 @@ export default function Onboarding() {
           name: s.name.trim(),
           category: s.category,
           proficiency: s.proficiency
-        })),
-        linkedin_connected: linkedinConnected,
-        google_connected: googleConnected,
-        onboarding_completed: true
+        }))
       };
 
       await saveProfile(userId, profileData);
