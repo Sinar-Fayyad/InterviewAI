@@ -13,8 +13,8 @@ export const createLinkedinPost = async (params: { title: string; body: string; 
 };
 
 // GET /linkedin_profile
-export const getLinkedinProfile = async () => {
-  const { data } = await api.get("/linkedin_profile");
+export const getLinkedinProfile = async (userId: string) => {
+  const { data } = await api.get(`/linkedin_profile/${userId}`);
   return data?.payload;
 };
 
