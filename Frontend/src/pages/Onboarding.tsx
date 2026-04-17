@@ -82,6 +82,13 @@ export default function Onboarding() {
   const [newSkill, setNewSkill] = useState({ name: "", category: "technical" as SkillCategory, proficiency: 3 });
   const [selectedCategory, setSelectedCategory] = useState<"all" | SkillCategory>("all");
 
+  // Helper to format month to YYYY-MM-DD with day=01
+  const formatDate = (monthValue: string): string => {
+    if (!monthValue) return '';
+    const date = new Date(monthValue + '-01');
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD
+  };
+
   useEffect(() => {
     const checkProfile = async () => {
       if (authLoading) return;
@@ -92,12 +99,13 @@ export default function Onboarding() {
 
       try {
         const data = await fetchProfile(userId);
-        if (data?.onboarding_completed) { 
+        // Fix: Check if profile is complete based on data presence (since BE doesn't return onboarding_completed flag)
+        if (data && (data.education?.length > 0 || data.experience?.length > 0 || data.certifications?.length > 0 || data.skills?.length > 0)) { 
           navigate("/dashboard"); 
           return; 
         }
         if (data) {
-          const userInfo = Array.isArray(data.user_info) ? data.user_info[0] || {} : {};
+          const userInfo = Array.isArray(data.user_info) ? data.user_info[0] || {} : data.user_info || {};
           setFirstName(userInfo.first_name || "");
           setLastName(userInfo.last_name || "");
           setEmail(userInfo.email || data.email || user?.email || "");
@@ -142,23 +150,35 @@ export default function Onboarding() {
           setLinkedinConnected(data.linkedin_connected || false);
           setGoogleConnected(data.google_connected || false);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error checking profile:", error);
+        toast({
+          title: "Load Error",
+          description: error.response?.data?.message || "Failed to load profile data",
+          variant: "destructive"
+        });
       }
       setIsChecking(false);
     };
     checkProfile();
-  }, [userId, authLoading, navigate, user]);
+  }, [userId, authLoading, navigate, user, toast]);
 
   const handleLinkedInConnect = async () => {
     if (!userId) return;
     setLoading(true);
     try {
       const data = await socialiteRedirect("linkedin-openid", userId);
-      if (data?.url) window.location.href = data.url;
-      setLinkedinConnected(true);
+      if (data?.payload?.url) {
+        window.location.href = data.payload.url;
+      } else {
+        setLinkedinConnected(true);
+      }
     } catch (error: any) {
-      toast({ title: "Connection Failed", description: error.message || "Failed to connect LinkedIn", variant: "destructive" });
+      toast({ 
+        title: "LinkedIn Connection Failed", 
+        description: error.response?.data?.message || "Failed to connect LinkedIn", 
+        variant: "destructive" 
+      });
     } finally {
       setLoading(false);
     }
@@ -169,10 +189,17 @@ export default function Onboarding() {
     setLoading(true);
     try {
       const data = await socialiteRedirect("google", userId);
-      if (data?.url) window.location.href = data.url;
-      setGoogleConnected(true);
+      if (data?.payload?.url) {
+        window.location.href = data.payload.url;
+      } else {
+        setGoogleConnected(true);
+      }
     } catch (error: any) {
-      toast({ title: "Connection Failed", description: error.message || "Failed to connect Google", variant: "destructive" });
+      toast({ 
+        title: "Google Connection Failed", 
+        description: error.response?.data?.message || "Failed to connect Google", 
+        variant: "destructive" 
+      });
     } finally {
       setLoading(false);
     }
@@ -217,7 +244,7 @@ export default function Onboarding() {
 
     setLoading(true);
     try {
-const profileData = {
+      const profileData = {
         user_info: {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
@@ -229,22 +256,21 @@ const profileData = {
           institution_name: e.institution_name.trim(),
           degree: e.degree.trim(),
           field_of_study: e.field_of_study.trim(),
-          start_date: e.start_date,
-          end_date: e.end_date,
+          start_date: formatDate(e.start_date),
+          end_date: formatDate(e.end_date),
           description: e.description.trim()
         })),
         experience: experience.map(ex => ({
           company_name: ex.company_name.trim(),
           position: ex.position.trim(),
-          start_date: ex.start_date,
-          end_date: ex.end_date,
+          start_date: formatDate(ex.start_date),
+          end_date: formatDate(ex.end_date),
           description: ex.description.trim()
         })),
         certifications: certifications.map(c => ({
           certification_name: c.certification_name.trim(),
           organization_name: c.organization_name.trim(),
-          date_obtained: c.date_obtained,
-          url: c.url.trim()
+          date_obtained: formatDate(c.date_obtained)
         })),
         skills: skills.map(s => ({
           name: s.name.trim(),
@@ -254,11 +280,15 @@ const profileData = {
       };
 
       await saveProfile(userId, profileData);
-      toast({ title: "Success!", description: "Profile saved! Welcome to your dashboard.", });
+      toast({ title: "Success!", description: "Profile saved! Welcome to your dashboard." });
       navigate("/dashboard");
     } catch (error: any) {
-      console.error("Onboarding error:", error);
-      toast({ title: "Save Failed", description: error.message || "Failed to save profile. Please try again.", variant: "destructive" });
+      console.error("Onboarding save error:", error);
+      toast({ 
+        title: "Save Failed", 
+        description: error.response?.data?.message || "Failed to save profile. Please try again.", 
+        variant: "destructive" 
+      });
     } finally {
       setLoading(false);
     }
@@ -277,7 +307,7 @@ const profileData = {
   };
 
   const addExperience = () => {
-    setExperience([...experience, { id: crypto.randomUUID(), company_name: "", position:"", start_date: "", end_date:"", description: "" }]);
+    setExperience([...experience, { id: crypto.randomUUID(), company_name: "", position: "", start_date: "", end_date: "", description: "" }]);
   };
 
   const removeExperience = (id: string) => {
@@ -289,7 +319,7 @@ const profileData = {
   };
 
   const addCertification = () => {
-    setCertifications([...certifications, { id: crypto.randomUUID(), certification_name: "", organization_name: "", date_obtained:"", url: "" }]);
+    setCertifications([...certifications, { id: crypto.randomUUID(), certification_name: "", organization_name: "", date_obtained: "", url: "" }]);
   };
 
   const removeCertification = (id: string) => {
@@ -785,9 +815,9 @@ const profileData = {
               </Button>
             )}
           </div>
+
         </Card>
       </div>
     </div>
   );
 }
-
