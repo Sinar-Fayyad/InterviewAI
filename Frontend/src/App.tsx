@@ -49,11 +49,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Auth required, no profile check */}
-            <Route path="/onboarding" element={
-              <ProtectedRoute>
-                {({ user }) => (user?.onboarding_completed ? <Dashboard /> : <Onboarding />)}
-              </ProtectedRoute>
-            } />
+            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
             {/* No login required for generation */}

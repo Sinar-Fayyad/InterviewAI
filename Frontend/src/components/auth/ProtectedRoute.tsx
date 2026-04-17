@@ -2,7 +2,8 @@ import { ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
-export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
+export const ProtectedRoute = ({ children }: { children: ReactNode | ((props: { user: any }) => ReactNode) }) => {
+
   const { token, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -20,5 +21,6 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     );
   }
 
-  return token ? <>{children}</> : null;
+  return token ? <>{typeof children === 'function' ? children({ user: useAuth().user }) : children}</> : null;
+
 };
