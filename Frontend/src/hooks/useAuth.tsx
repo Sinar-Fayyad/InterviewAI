@@ -2,14 +2,15 @@ import { useState, useEffect, createContext, useContext, ReactNode } from "react
 import { useNavigate } from "react-router-dom";
 import api from "@/services/api";
 
-interface AuthUser {
-  id: string;
-  email: string;
-  first_name?: string;
-  last_name?: string;
-  full_name?: string;
-  [key: string]: unknown;
-}
+  interface AuthUser {
+    id: string;
+    email: string;
+    first_name?: string;
+    last_name?: string;
+    full_name?: string;
+    onboarding_completed?: boolean;
+    [key: string]: unknown;
+  }
 
 interface AuthContextType {
   token: string | null;
@@ -54,7 +55,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.setItem("user_id", newUserId);
       setToken(newToken);
       setUserId(newUserId);
-      setUser({ id: newUserId, email });
+      setUser({ 
+        id: newUserId, 
+        email,
+        onboarding_completed: payload?.onboarding_completed ?? false 
+      });
 
       return { error: null };
     } catch (error: any) {
@@ -78,7 +83,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.setItem("user_id", newUserId);
       setToken(newToken);
       setUserId(newUserId);
-      setUser({ id: newUserId, email });
+      setUser({ 
+        id: newUserId, 
+        email,
+        onboarding_completed: payload?.onboarding_completed ?? false 
+      });
 
       return { error: null };
     } catch (error: any) {

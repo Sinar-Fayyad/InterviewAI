@@ -18,7 +18,7 @@ export const ProfileGuard = ({ children }: { children: ReactNode }) => {
     const checkProfile = async () => {
       try {
         const data = await fetchProfile(userId);
-        setIsProfileComplete(!!data?.onboarding_completed);
+        setIsProfileComplete(!!data?.onboarding_completed || (data.education?.length > 0 || data.experience?.length > 0 || data.certifications?.length > 0 || data.skills?.length > 0));
       } catch {
         setIsProfileComplete(false);
       }
