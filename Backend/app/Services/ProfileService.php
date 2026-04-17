@@ -18,12 +18,15 @@ class ProfileService
             throw new \Exception("User not found", 404);
         }
 
+        $user = User::find($user_id);
         return [
             'user_info' => UserService::getUser($user_id),
             'education' => EducationService::getEducations($user_id),
             'experience' => ExperienceService::getExperiences($user_id),
             'certifications' => CertificationService::getCertifications($user_id),
             'skills' => SkillService::getSkills($user_id),
+            'linkedin_connected' => !empty($user->linkedin_id) || !empty($user->linkedin_token),
+            'google_connected' => !empty($user->google_id) || !empty($user->google_token),
         ];
     }
 
@@ -35,7 +38,10 @@ class ProfileService
 
         try {
             DB::transaction(function () use ($request, $user_id) {
-                UserService::updateUser($request['user_info'][0] ?? $request['user_info'], $user_id);
+                $userInfo = is_array($request['user_info']) && isset($request['user_info'][0])? $request['user_info'][0] 
+                                                                                                : $request['user_info'];
+                UserService::updateUser($userInfo, $user_id);
+                
                 $user = User::find($user_id);
                 $user->onboarding_completed = true;
                 $user->save();
