@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('name');
-            $table->enum('category', ['technical','soft skills','tools','languages','others'])->default('technical'); 
+            $table->string('category')->default('technical'); 
             $table->unsignedTinyInteger('proficiency')->default(2);
             $table->timestamps();
         });
