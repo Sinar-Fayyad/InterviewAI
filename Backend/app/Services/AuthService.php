@@ -7,23 +7,27 @@ use Illuminate\Support\Facades\Hash;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 
-class AuthService{
-   
-    static function login($credentials){
+class AuthService
+{
+
+    static function login($credentials)
+    {
         $token = JWTAuth::attempt($credentials);
 
         if (!$token) {
             throw new \Exception("Invalid credentials");
         }
-        
+
         $user = auth('api')->user();
         return [
             'id' => $user->id,
             'token' => $token,
+            'onboarding_completed' => $user->onboarding_completed,
         ];
     }
 
-    static function register($data){
+    static function register($data)
+    {
         $userData = [
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
@@ -32,12 +36,13 @@ class AuthService{
         ];
 
         $user = User::create($userData);
-        $token = self::login($data); 
+        $token = self::login($data);
 
         return $token;
     }
 
-    static function logout (){
+    static function logout()
+    {
         JWTAuth::invalidate(JWTAuth::getToken());
     }
 }

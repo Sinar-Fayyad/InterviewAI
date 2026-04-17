@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -22,19 +21,21 @@ return new class extends Migration
             $table->text('summary')->nullable();
             $table->string('theme')->default("dark")->nullable();
 
+            $table->boolean('onboarding_completed')->default(false);
+
             // Google email
             $table->string('google_email')->nullable()->unique();
-            
+
             // Unique IDs from providers
             $table->string('google_id')->nullable()->unique();
             $table->string('linkedin_id')->nullable()->unique();
-    
+
             // Tokens for API access
             $table->text('google_token')->nullable();
             $table->text('linkedin_token')->nullable();
             $table->text('google_refresh_token')->nullable();
-            $table->timestamp('linkedin_expires_at')->nullable(); 
-            
+            $table->timestamp('linkedin_expires_at')->nullable();
+
             $table->timestamps();
         });
     }

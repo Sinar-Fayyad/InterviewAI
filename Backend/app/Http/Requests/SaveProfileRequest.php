@@ -16,9 +16,9 @@ class SaveProfileRequest extends ApiFormRequest
         // Trim strings in nested arrays if needed
         $input = $this->all();
         if (isset($input['user_info']) && is_array($input['user_info'])) {
-            $input['user_info'] = array_map(function($item) {
+            $input['user_info'] = array_map(function ($item) {
                 if (is_array($item)) {
-                    return array_map(function($field) {
+                    return array_map(function ($field) {
                         return is_string($field) ? trim($field) : $field;
                     }, $item);
                 }
@@ -31,12 +31,12 @@ class SaveProfileRequest extends ApiFormRequest
     public function rules(): array
     {
         return [
-            'user_info' => ['required', 'array', 'min:1'],
-            'user_info.*.first_name' => ['nullable', 'string', 'max:255'],
-            'user_info.*.last_name' => ['nullable', 'string', 'max:255'],
-            'user_info.*.phone' => ['nullable', 'string', 'max:20'],
-            'user_info.*.location' => ['nullable', 'string', 'max:255'],
-            'user_info.*.summary' => ['nullable', 'string'],
+            'user_info' => ['required', 'array'],
+            'user_info.first_name' => ['nullable', 'string', 'max:255'],
+            'user_info.last_name' => ['nullable', 'string', 'max:255'],
+            'user_info.phone' => ['nullable', 'string', 'max:20'],
+            'user_info.location' => ['nullable', 'string', 'max:255'],
+            'user_info.summary' => ['nullable', 'string'],
 
             'education' => ['nullable', 'array'],
             'education.*.institution_name' => ['required_with:education.*', 'string', 'max:255'],

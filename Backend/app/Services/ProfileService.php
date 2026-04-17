@@ -8,6 +8,7 @@ use App\Services\SkillService;
 use App\Services\EducationService;
 use App\Services\ExperienceService;
 use App\Services\CertificationService;
+use Illuminate\Support\Facades\DB;
 
 class ProfileService
 {
@@ -32,12 +33,20 @@ class ProfileService
             throw new \Exception("User not found", 404);
         }
 
-        UserService::updateUser($request['user_info'], $user_id);
+        try {
+            DB::transaction(function () use ($request, $user_id) {
+                UserService::updateUser($request['user_info'][0] ?? $request['user_info'], $user_id);
+                $user = User::find($user_id);
+                $user->onboarding_completed = true;
+                $user->save();
 
-        collect($request['education'])->each(fn($edu) => EducationService::addEducation($edu, $user_id));
-        collect($request['experience'])->each(fn($exp) => ExperienceService::addExperience($exp, $user_id));
-        collect($request['skills'])->each(fn($skill) => SkillService::addSkill($skill, $user_id));
-        collect($request['certifications'])->each(fn($cert) => CertificationService::addCertification($cert, $user_id));
-
+                collect($request['education'] ?? [])->each(fn($edu) => EducationService::addEducation($edu, $user_id));
+                collect($request['experience'] ?? [])->each(fn($exp) => ExperienceService::addExperience($exp, $user_id));
+                collect($request['skills'] ?? [])->each(fn($skill) => SkillService::addSkill($skill, $user_id));
+                collect($request['certifications'] ?? [])->each(fn($cert) => CertificationService::addCertification($cert, $user_id));
+            });
+        } catch (\Exception $e) {
+            throw $e;
+        }
     }
 }
