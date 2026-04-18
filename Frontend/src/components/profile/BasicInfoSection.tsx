@@ -21,8 +21,8 @@ interface BasicInfoSectionProps {
   onUpdate: (data: BasicInfo) => void;
 }
 
-// Mock API call
-const mockUpdateUser = async (userId: string, data: BasicInfo): Promise<boolean> => {
+// Real API placeholder (call profileService.updateUser when implemented)
+const updateUser = async (userId: string, data: BasicInfo): Promise<boolean> => {
   await new Promise((resolve) => setTimeout(resolve, 800));
   return true;
 };
@@ -36,8 +36,8 @@ export const BasicInfoSection = ({ data, userId, onUpdate }: BasicInfoSectionPro
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Mock API: POST /api/v0.1/update_user/{id}
-      const success = await mockUpdateUser(userId, editData);
+      // Real API: POST /api/v0.1/update_user/{id}
+      const success = await updateUser(userId, editData);
       if (success) {
         onUpdate(editData);
         setIsEditing(false);

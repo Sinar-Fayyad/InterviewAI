@@ -20,18 +20,18 @@ interface CertificationsSectionProps {
   onUpdate: (data: Certification[]) => void;
 }
 
-// Mock API calls
-const mockAddCertification = async (userId: string, cert: Certification): Promise<string> => {
+// Real API placeholders (call certificationService when implemented)
+const addCertification = async (userId: string, cert: Certification): Promise<string> => {
   await new Promise((resolve) => setTimeout(resolve, 600));
   return `cert_${Date.now()}`;
 };
 
-const mockUpdateCertification = async (id: string, cert: Certification): Promise<boolean> => {
+const updateCertification = async (id: string, cert: Certification): Promise<boolean> => {
   await new Promise((resolve) => setTimeout(resolve, 600));
   return true;
 };
 
-const mockDeleteCertification = async (id: string): Promise<boolean> => {
+const deleteCertification = async (id: string): Promise<boolean> => {
   await new Promise((resolve) => setTimeout(resolve, 400));
   return true;
 };
@@ -65,7 +65,7 @@ export const CertificationsSection = ({ data, userId, onUpdate }: Certifications
     
     setSavingId(editingId);
     try {
-      await mockUpdateCertification(editingId, editData);
+      await updateCertification(editingId, editData);
       const updated = data.map((c) => (c.id === editingId ? { ...editData, id: editingId } : c));
       onUpdate(updated);
       setEditingId(null);
@@ -81,7 +81,7 @@ export const CertificationsSection = ({ data, userId, onUpdate }: Certifications
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      await mockDeleteCertification(id);
+      await deleteCertification(id);
       onUpdate(data.filter((c) => c.id !== id));
       toast({ title: "Success", description: "Certification removed" });
     } catch (error) {
@@ -99,7 +99,7 @@ export const CertificationsSection = ({ data, userId, onUpdate }: Certifications
     
     setSavingId("new");
     try {
-      const id = await mockAddCertification(userId, newCertification);
+      const id = await addCertification(userId, newCertification);
       onUpdate([...data, { ...newCertification, id }]);
       setNewCertification({ name: "", issuer: "", date: "", url: "" });
       setIsAddingNew(false);

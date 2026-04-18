@@ -78,19 +78,17 @@ export default function Dashboard() {
     fetchDashboard();
   }, [userId]);
 
-  // Generate trend data based on selected date range (placeholder until backend provides this)
+  // Static trends using current averages or 0 (real time-series data pending backend)
   const trendData = useMemo(() => {
     const days = parseInt(dateRange);
     const data = [];
     const now = new Date();
-    let r = readinessScore || 68;
-    let s = avgInterviewScore || 72;
+    const r = readinessScore || 0;
+    const s = avgInterviewScore || 0;
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
-      r = Math.min(100, Math.max(50, r + (Math.random() * 4 - 1.5)));
-      s = Math.min(100, Math.max(50, s + (Math.random() * 4 - 1.5)));
-      data.push({ date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }), readiness: Math.round(r), interview: Math.round(s) });
+      data.push({ date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }), readiness: r, interview: s });
     }
     return data;
   }, [dateRange, readinessScore, avgInterviewScore]);
