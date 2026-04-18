@@ -21,11 +21,7 @@ interface BasicInfoSectionProps {
   onUpdate: (data: BasicInfo) => void;
 }
 
-// Real API placeholder (call profileService.updateUser when implemented)
-const updateUser = async (userId: string, data: BasicInfo): Promise<boolean> => {
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  return true;
-};
+import { updateUser } from "@/services/profileService"; // Real API
 
 export const BasicInfoSection = ({ data, userId, onUpdate }: BasicInfoSectionProps) => {
   const { toast } = useToast();
@@ -37,7 +33,8 @@ export const BasicInfoSection = ({ data, userId, onUpdate }: BasicInfoSectionPro
     setSaving(true);
     try {
       // Real API: POST /api/v0.1/update_user/{id}
-      const success = await updateUser(userId, editData);
+      await updateUser(userId, editData);
+      const success = true;
       if (success) {
         onUpdate(editData);
         setIsEditing(false);

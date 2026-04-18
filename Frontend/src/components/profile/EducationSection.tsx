@@ -23,21 +23,7 @@ interface EducationSectionProps {
   onUpdate: (data: Education[]) => void;
 }
 
-// Mock API calls
-const mockAddEducation = async (userId: string, edu: Education): Promise<string> => {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-  return `edu_${Date.now()}`;
-};
-
-const mockUpdateEducation = async (id: string, edu: Education): Promise<boolean> => {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-  return true;
-};
-
-const mockDeleteEducation = async (id: string): Promise<boolean> => {
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  return true;
-};
+import { addEducation, updateEducation, deleteEducation } from "@/services/profileService";
 
 export const EducationSection = ({ data, userId, onUpdate }: EducationSectionProps) => {
   const { toast } = useToast();
@@ -70,7 +56,7 @@ export const EducationSection = ({ data, userId, onUpdate }: EducationSectionPro
     
     setSavingId(editingId);
     try {
-      await mockUpdateEducation(editingId, editData);
+      await updateEducation(editingId!, editData);
       const updated = data.map((e) => (e.id === editingId ? { ...editData, id: editingId } : e));
       onUpdate(updated);
       setEditingId(null);
@@ -86,7 +72,7 @@ export const EducationSection = ({ data, userId, onUpdate }: EducationSectionPro
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      await mockDeleteEducation(id);
+      await deleteEducation(id);
       onUpdate(data.filter((e) => e.id !== id));
       toast({ title: "Success", description: "Education removed" });
     } catch (error) {
@@ -104,8 +90,8 @@ export const EducationSection = ({ data, userId, onUpdate }: EducationSectionPro
     
     setSavingId("new");
     try {
-      const id = await mockAddEducation(userId, newEducation);
-      onUpdate([...data, { ...newEducation, id }]);
+      const newEdu = await addEducation(userId, newEducation);
+      onUpdate([...data, newEdu]);
       setNewEducation({ school: "", degree: "", field: "", startDate: "", endDate: "", description: "" });
       setIsAddingNew(false);
       toast({ title: "Success", description: "Education added" });
