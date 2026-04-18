@@ -41,6 +41,23 @@ export const EducationSection = ({ data, userId, onUpdate }: EducationSectionPro
     description: "",
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const normalizeDate = (dateStr: string | null): string | null => {
+    if (!dateStr || dateStr.length !== 7) return null;
+    return dateStr + "-01";
+  };
+
+  const validateEducation = (data: Education) => {
+    const issues: string[] = [];
+    if (!data.school.trim()) issues.push("School is required");
+    if (!data.degree.trim()) issues.push("Degree is required");
+    if (data.startDate && data.endDate && data.startDate > data.endDate) {
+      issues.push("Start date must be before end date");
+    }
+    return issues;
+  };
+
   const handleEdit = (edu: Education) => {
     setEditingId(edu.id || null);
     setEditData({ ...edu });
@@ -56,7 +73,15 @@ export const EducationSection = ({ data, userId, onUpdate }: EducationSectionPro
     
     setSavingId(editingId);
     try {
-      await updateEducation(editingId!, editData);
+      const backendData = {
+        institution_name: editData.school,
+        degree: editData.degree,
+        field_of_study: editData.field,
+start_date: editData.startDate || null,
+end_date: editData.endDate || null,
+        description: editData.description,
+      };
+      await updateEducation(editingId!, backendData);
       const updated = data.map((e) => (e.id === editingId ? { ...editData, id: editingId } : e));
       onUpdate(updated);
       setEditingId(null);
@@ -83,20 +108,45 @@ export const EducationSection = ({ data, userId, onUpdate }: EducationSectionPro
   };
 
   const handleAddNew = async () => {
-    if (!newEducation.school.trim()) {
-      toast({ title: "Missing Info", description: "Please enter school name", variant: "destructive" });
+    const trimmed = {
+      ...newEducation,
+      school: newEducation.school.trim(),
+      degree: newEducation.degree.trim(),
+      field: newEducation.field.trim(),
+      description: newEducation.description.trim(),
+    };
+    const validationErrors = validateEducation(trimmed);
+    if (validationErrors.length > 0) {
+      const errorObj: Record<string, string> = {};
+      validationErrors.forEach(err => {
+        if (err.includes("School")) errorObj.school = err;
+        else if (err.includes("Degree")) errorObj.degree = err;
+        else if (err.includes("date")) errorObj.endDate = err;
+      });
+      setErrors(errorObj);
+      toast({ title: "Validation Error", description: validationErrors[0], variant: "destructive" });
       return;
     }
     
+    setErrors({});
     setSavingId("new");
     try {
-      const newEdu = await addEducation(userId, newEducation);
+      const backendData = {
+        institution_name: trimmed.school,
+        degree: trimmed.degree,
+        field_of_study: trimmed.field,
+        start_date: normalizeDate(trimmed.startDate) || null,
+        end_date: normalizeDate(trimmed.endDate) || null,
+        description: trimmed.description,
+      };
+      const newEdu = await addEducation(userId, backendData);
       onUpdate([...data, newEdu]);
       setNewEducation({ school: "", degree: "", field: "", startDate: "", endDate: "", description: "" });
       setIsAddingNew(false);
       toast({ title: "Success", description: "Education added" });
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to add", variant: "destructive" });
+    } catch (error: any) {
+      const msg = error.response?.data?.message || "Failed to add education";
+      toast({ title: "Error", description: msg, variant: "destructive" });
     } finally {
       setSavingId(null);
     }

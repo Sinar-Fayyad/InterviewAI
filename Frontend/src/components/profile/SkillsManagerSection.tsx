@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
+ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import api from "@/services/api";
-import { useAuth } from "@/hooks/useAuth";
+import { addSkill, updateSkill, deleteSkill } from "@/services/profileService";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Loader2, Code, Users, Wrench, Languages, MoreHorizontal, Pencil, Check, X } from "lucide-react";
 
-type SkillCategory = "technical" | "soft_skills" | "tools" | "languages" | "other";
+type SkillCategory = "technical" | "soft skills" | "tools" | "languages" | "others";
 
 interface Skill {
   id: string;
@@ -19,24 +19,30 @@ interface Skill {
   created_at: string;
 }
 
+interface SkillsManagerSectionProps {
+  data: Skill[];
+  userId: string;
+  onUpdate: (skills: Skill[]) => Promise<void>;
+}
+
 const categoryConfig: Record<SkillCategory, { label: string; icon: React.ReactNode; color: string }> = {
   technical: { label: "Technical", icon: <Code className="w-4 h-4" />, color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
-  soft_skills: { label: "Soft Skills", icon: <Users className="w-4 h-4" />, color: "bg-green-500/10 text-green-600 border-green-500/20" },
+  "soft skills": { label: "Soft Skills", icon: <Users className="w-4 h-4" />, color: "bg-green-500/10 text-green-600 border-green-500/20" },
   tools: { label: "Tools", icon: <Wrench className="w-4 h-4" />, color: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
   languages: { label: "Languages", icon: <Languages className="w-4 h-4" />, color: "bg-purple-500/10 text-purple-600 border-purple-500/20" },
-  other: { label: "Other", icon: <MoreHorizontal className="w-4 h-4" />, color: "bg-gray-500/10 text-gray-600 border-gray-500/20" },
+  others: { label: "Other", icon: <MoreHorizontal className="w-4 h-4" />, color: "bg-gray-500/10 text-gray-600 border-gray-500/20" },
 };
 
 
-export const SkillsManagerSection = () => {
-  const { user } = useAuth();
+export const SkillsManagerSection = ({ data, userId, onUpdate }: SkillsManagerSectionProps) => {
   const { toast } = useToast();
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [skills, setSkills] = useState<Skill[]>(data);
+  const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<SkillCategory | "all">("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<{ category: SkillCategory; proficiency: number } | null>(null);
+  const [editName, setEditName] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
   
   const [newSkill, setNewSkill] = useState({
@@ -46,22 +52,10 @@ export const SkillsManagerSection = () => {
   });
 
   useEffect(() => {
-    if (user) {
-      fetchSkills();
-    }
-  }, [user]);
+    setSkills(data);
+  }, [data]);
 
-  const fetchSkills = async () => {
-    try {
-      const { data } = await api.get("/skills");
-      setSkills(data || []);
-    } catch (error) {
-      console.error("Error fetching skills:", error);
-      toast({ title: "Error", description: "Failed to load skills", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const handleAddSkill = async () => {
     if (!newSkill.name.trim()) {
@@ -71,15 +65,17 @@ export const SkillsManagerSection = () => {
 
     setAdding(true);
     try {
-      await api.post("/skills", {
+      const newSkillData = {
         name: newSkill.name.trim(),
         category: newSkill.category,
-        proficiency_level: newSkill.proficiency_level,
-      });
+        proficiency: (newSkill.proficiency_level * 20),
+      };
 
+      await addSkill(userId, newSkillData);
+      const updatedSkills = [...skills, { ...newSkillData, proficiency_level: newSkillData.proficiency, id: Date.now().toString(), created_at: new Date().toISOString() }];
+      await onUpdate(updatedSkills);
       toast({ title: "Skill Added", description: `${newSkill.name} has been added` });
       setNewSkill({ name: "", category: "technical", proficiency_level: 3 });
-      fetchSkills();
     } catch (error) {
       console.error("Error adding skill:", error);
       toast({ title: "Error", description: "Failed to add skill", variant: "destructive" });
@@ -90,9 +86,10 @@ export const SkillsManagerSection = () => {
 
   const handleDeleteSkill = async (id: string, name: string) => {
     try {
-      await api.delete(`/skills/${id}`);
+      await deleteSkill(id);
+      const updatedSkills = skills.filter((s) => s.id !== id);
+      await onUpdate(updatedSkills);
       toast({ title: "Skill Removed", description: `${name} has been removed` });
-      setSkills(skills.filter((s) => s.id !== id));
     } catch (error) {
       console.error("Error deleting skill:", error);
       toast({ title: "Error", description: "Failed to remove skill", variant: "destructive" });
@@ -101,15 +98,17 @@ export const SkillsManagerSection = () => {
 
   const handleEditSkill = (skill: Skill) => {
     setEditingId(skill.id);
+    setEditName(skill.name);
     setEditData({
-      category: skill.category || "other",
-      proficiency: skill.proficiency_level || 3,
+      category: skill.category || "others",
+      proficiency: (skill.proficiency_level || 60) / 20,
     });
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditData(null);
+    setEditName('');
   };
 
   const handleSaveEdit = async (skillId: string) => {
@@ -117,16 +116,24 @@ export const SkillsManagerSection = () => {
     
     setSavingId(skillId);
     try {
-      await api.put(`/skills/${skillId}`, {
+      const updateData = {
+        name: editName || skills.find(s => s.id === skillId)?.name || '',
         category: editData.category,
-        proficiency_level: editData.proficiency,
-      });
+        proficiency: (editData.proficiency * 20),
+      };
+      const backendUpdateData = {
+        proficiency_level: updateData.proficiency,
+        category: updateData.category,
+        name: updateData.name,
+      };
 
-      setSkills(skills.map((s) => 
+      await updateSkill(skillId, updateData);
+      const updatedSkills = skills.map((s) => 
         s.id === skillId 
-          ? { ...s, category: editData.category, proficiency_level: editData.proficiency }
+          ? { ...s, proficiency_level: backendUpdateData.proficiency_level, category: backendUpdateData.category, name: backendUpdateData.name }
           : s
-      ));
+      );
+      await onUpdate(updatedSkills);
       setEditingId(null);
       setEditData(null);
       toast({ title: "Success", description: "Skill updated" });
@@ -142,7 +149,7 @@ export const SkillsManagerSection = () => {
     : skills.filter((s) => s.category === selectedCategory);
 
   const skillsByCategory = skills.reduce((acc, skill) => {
-    const cat = skill.category || "other";
+    const cat = skill.category || "others";
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(skill);
     return acc;
@@ -269,11 +276,7 @@ export const SkillsManagerSection = () => {
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : filteredSkills.length === 0 ? (
+        {filteredSkills.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
               {selectedCategory === "all" 
@@ -294,28 +297,35 @@ export const SkillsManagerSection = () => {
                   key={skill.id}
                   className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors group"
                 >
-                  {isEditing && editData ? (
-                    <div className="flex items-center gap-4 flex-1 pr-4">
-                      <span className="font-medium min-w-[100px]">{skill.name}</span>
-                      <select
-                        value={editData.category}
-                        onChange={(e) => setEditData({ ...editData, category: e.target.value as SkillCategory })}
-                        className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-                      >
-                        {(Object.keys(categoryConfig) as SkillCategory[]).map((c) => (
-                          <option key={c} value={c}>{categoryConfig[c].label}</option>
-                        ))}
-                      </select>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="range"
-                          min="1"
-                          max="5"
-                          value={editData.proficiency}
-                          onChange={(e) => setEditData({ ...editData, proficiency: parseInt(e.target.value) })}
-                          className="w-20"
-                        />
-                        <span className="w-6 text-center text-sm">{editData.proficiency}</span>
+{isEditing && editData ? (
+                    <div className="flex flex-col gap-3 flex-1 pr-4">
+                      <Input 
+                        value={editName} 
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="Skill name"
+                        className="max-w-xs"
+                      />
+                      <div className="flex items-center gap-4">
+                        <select
+                          value={editData.category}
+                          onChange={(e) => setEditData({ ...editData!, category: e.target.value as SkillCategory })}
+                          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-1 max-w-xs"
+                        >
+                          {(Object.keys(categoryConfig) as SkillCategory[]).map((c) => (
+                            <option key={c} value={c}>{categoryConfig[c].label}</option>
+                          ))}
+                        </select>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="1"
+                            max="5"
+                            value={editData.proficiency}
+                            onChange={(e) => setEditData({ ...editData!, proficiency: parseInt(e.target.value) })}
+                            className="w-20"
+                          />
+                          <span className="w-8 text-center font-medium">{editData.proficiency}</span>
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -324,7 +334,7 @@ export const SkillsManagerSection = () => {
                         {config.icon}
                         <span className="ml-1 hidden sm:inline">{config.label}</span>
                       </Badge>
-                      <span className="font-medium truncate">{skill.name}</span>
+                      <span className="font-medium">{skill.name}</span>
                     </div>
                   )}
                   

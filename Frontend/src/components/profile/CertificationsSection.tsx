@@ -8,10 +8,10 @@ import { Pencil, Trash2, Plus, Loader2, Check, X, ExternalLink } from "lucide-re
 
 export interface Certification {
   id?: string;
-  name: string;
-  issuer: string;
-  date: string;
-  url: string;
+  certification_name: string;
+  organization_name: string;
+  date_obtained: string;
+  url?: string;
 }
 
 interface CertificationsSectionProps {
@@ -20,21 +20,7 @@ interface CertificationsSectionProps {
   onUpdate: (data: Certification[]) => void;
 }
 
-// Real API placeholders (call certificationService when implemented)
-const addCertification = async (userId: string, cert: Certification): Promise<string> => {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-  return `cert_${Date.now()}`;
-};
-
-const updateCertification = async (id: string, cert: Certification): Promise<boolean> => {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-  return true;
-};
-
-const deleteCertification = async (id: string): Promise<boolean> => {
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  return true;
-};
+import { addCertification, updateCertification, deleteCertification } from "@/services/profileService";
 
 export const CertificationsSection = ({ data, userId, onUpdate }: CertificationsSectionProps) => {
   const { toast } = useToast();
@@ -44,11 +30,26 @@ export const CertificationsSection = ({ data, userId, onUpdate }: Certifications
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newCertification, setNewCertification] = useState<Certification>({
-    name: "",
-    issuer: "",
-    date: "",
+    certification_name: "",
+    organization_name: "",
+    date_obtained: "",
     url: "",
   });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const normalizeDate = (dateStr: string | null): string | null => {
+    if (!dateStr || dateStr.length !== 7) return null;
+    return dateStr + "-01";
+  };
+
+  const validateCertification = (data: Certification) => {
+    const issues: string[] = [];
+    if (!data.certification_name.trim()) issues.push("Certification name is required");
+    if (!data.organization_name.trim()) issues.push("Organization is required");
+    if (data.url && !data.url.startsWith('http')) issues.push("URL must start with http/https");
+    return issues;
+  };
 
   const handleEdit = (cert: Certification) => {
     setEditingId(cert.id || null);
@@ -65,7 +66,13 @@ export const CertificationsSection = ({ data, userId, onUpdate }: Certifications
     
     setSavingId(editingId);
     try {
-      await updateCertification(editingId, editData);
+      const backendCert = {
+        certification_name: editData!.certification_name || '',
+        organization_name: editData!.organization_name || '',
+        date_obtained: editData!.date_obtained || null,
+        url: editData!.url || null
+      };
+      await updateCertification(editingId, backendCert);
       const updated = data.map((c) => (c.id === editingId ? { ...editData, id: editingId } : c));
       onUpdate(updated);
       setEditingId(null);
@@ -91,21 +98,43 @@ export const CertificationsSection = ({ data, userId, onUpdate }: Certifications
     }
   };
 
-  const handleAddNew = async () => {
-    if (!newCertification.name.trim()) {
-      toast({ title: "Missing Info", description: "Please enter certification name", variant: "destructive" });
+const handleAddNew = async () => {
+    const trimmed = {
+      ...newCertification,
+      certification_name: newCertification.certification_name.trim(),
+      organization_name: newCertification.organization_name.trim(),
+      url: newCertification.url?.trim() || '',
+    };
+    const validationErrors = validateCertification(trimmed);
+    if (validationErrors.length > 0) {
+      const errorObj: Record<string, string> = {};
+      validationErrors.forEach(err => {
+        if (err.includes("Certification")) errorObj.certification_name = err;
+        else if (err.includes("Organization")) errorObj.organization_name = err;
+        else errorObj.url = err;
+      });
+      setErrors(errorObj);
+      toast({ title: "Validation Error", description: validationErrors[0], variant: "destructive" });
       return;
     }
     
+    setErrors({});
     setSavingId("new");
     try {
-      const id = await addCertification(userId, newCertification);
-      onUpdate([...data, { ...newCertification, id }]);
-      setNewCertification({ name: "", issuer: "", date: "", url: "" });
+      const backendCert = {
+        certification_name: trimmed.certification_name,
+        organization_name: trimmed.organization_name,
+        date_obtained: normalizeDate(trimmed.date_obtained) || null,
+        url: trimmed.url || null
+      };
+      const id = await addCertification(userId, backendCert);
+      onUpdate([...data, { ...trimmed, id }]);
+      setNewCertification({ certification_name: "", organization_name: "", date_obtained: "", url: "" });
       setIsAddingNew(false);
       toast({ title: "Success", description: "Certification added" });
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to add", variant: "destructive" });
+    } catch (error: any) {
+      const msg = error.response?.data?.message || "Failed to add certification";
+      toast({ title: "Error", description: msg, variant: "destructive" });
     } finally {
       setSavingId(null);
     }
@@ -157,33 +186,33 @@ export const CertificationsSection = ({ data, userId, onUpdate }: Certifications
                 <div className="grid grid-cols-2 gap-4 pr-16">
                   <div className="space-y-2">
                     <Label>Certification Name</Label>
-                    <Input value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} />
+                    <Input value={editData.certification_name || ''} onChange={(e) => setEditData({ ...editData!, certification_name: e.target.value })} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Issuer</Label>
-                    <Input value={editData.issuer} onChange={(e) => setEditData({ ...editData, issuer: e.target.value })} />
+                    <Label>Organization</Label>
+                    <Input value={editData.organization_name || ''} onChange={(e) => setEditData({ ...editData!, organization_name: e.target.value })} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Date</Label>
-                    <Input type="month" value={editData.date} onChange={(e) => setEditData({ ...editData, date: e.target.value })} />
+                    <Label>Date Obtained</Label>
+                    <Input type="month" value={editData.date_obtained || ''} onChange={(e) => setEditData({ ...editData!, date_obtained: e.target.value })} />
                   </div>
                   <div className="space-y-2">
                     <Label>URL (optional)</Label>
-                    <Input value={editData.url} onChange={(e) => setEditData({ ...editData, url: e.target.value })} placeholder="https://..." />
+                    <Input value={editData.url || ''} onChange={(e) => setEditData({ ...editData!, url: e.target.value })} placeholder="https://..." />
                   </div>
                 </div>
               ) : (
                 <div className="pr-16 space-y-2">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{cert.name || "No name"}</h3>
+                    <h3 className="font-semibold">{cert.certification_name || "No name"}</h3>
                     {cert.url && (
                       <a href={cert.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                         <ExternalLink className="w-4 h-4" />
                       </a>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{cert.issuer}</p>
-                  {cert.date && <p className="text-sm text-muted-foreground">{cert.date}</p>}
+                  <p className="text-sm text-muted-foreground">{cert.organization_name}</p>
+                  {cert.date_obtained && <p className="text-sm text-muted-foreground">{cert.date_obtained}</p>}
                 </div>
               )}
             </div>
@@ -195,19 +224,19 @@ export const CertificationsSection = ({ data, userId, onUpdate }: Certifications
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Certification Name</Label>
-                <Input value={newCertification.name} onChange={(e) => setNewCertification({ ...newCertification, name: e.target.value })} />
+                <Input value={newCertification.certification_name} onChange={(e) => setNewCertification({ ...newCertification, certification_name: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Issuer</Label>
-                <Input value={newCertification.issuer} onChange={(e) => setNewCertification({ ...newCertification, issuer: e.target.value })} />
+                <Label>Organization</Label>
+                <Input value={newCertification.organization_name} onChange={(e) => setNewCertification({ ...newCertification, organization_name: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Date</Label>
-                <Input type="month" value={newCertification.date} onChange={(e) => setNewCertification({ ...newCertification, date: e.target.value })} />
+                <Label>Date Obtained</Label>
+                <Input type="month" value={newCertification.date_obtained} onChange={(e) => setNewCertification({ ...newCertification, date_obtained: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>URL (optional)</Label>
-                <Input value={newCertification.url} onChange={(e) => setNewCertification({ ...newCertification, url: e.target.value })} placeholder="https://..." />
+                <Input value={newCertification.url || ''} onChange={(e) => setNewCertification({ ...newCertification, url: e.target.value })} placeholder="https://..." />
               </div>
             </div>
             <div className="flex gap-2">
@@ -230,3 +259,4 @@ export const CertificationsSection = ({ data, userId, onUpdate }: Certifications
     </Card>
   );
 };
+
