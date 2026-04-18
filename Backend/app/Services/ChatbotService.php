@@ -43,13 +43,11 @@ class ChatbotService
         if ($response->json('code') !== 200) {
             throw new \Exception("Failed to initialize memory" , 500);
         }
-        return $response->json()['message'] ?? 'Memory initialized successfully';
 
         return [
-            'is_guest' => !$user_id ? true : false,
-            'user_id' => $user_id,
             'status' => 'initialized',
             'collection_name' => $collection_name,
+            'collection_id'=>$response->json('collection_id'),
         ];
 
     }
