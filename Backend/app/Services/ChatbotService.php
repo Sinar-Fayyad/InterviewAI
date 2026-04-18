@@ -34,7 +34,7 @@ class ChatbotService
         }
 
         $response = Http::attach('website_guide', file_get_contents($filePath), basename($filePath))
-                        ->timeout(120)->post('http://localhost:5678/webhook-test/init_memory', [
+                        ->timeout(120)->post('http://127.0.0.1:5678/webhook/init_memory', [
                             
                     'user_context' => json_encode($user_context),
                     'collection_name' => $collection_name,
