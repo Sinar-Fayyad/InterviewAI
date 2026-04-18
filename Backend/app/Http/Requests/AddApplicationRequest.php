@@ -20,15 +20,15 @@ class AddApplicationRequest extends ApiFormRequest
         return [
             'company_name' => 'required|string|max:255',
             'job_title' => 'required|string|max:255',
-            'location' => 'required|string|max:255',
-            'salary_range' => 'required|string|max:50',
-            'job_url' => 'required|url|max:500',
-            'job_description' => 'required|string|max:500',
-            'contact_name' => 'required|string|max:255',
-            'contact_email' => 'required|email|max:255',
+            'location' => 'nullable|string|max:255',
+            'salary_range' => 'nullable|string|max:50',
+            'job_url' => 'nullable|url|max:500',
+            'job_description' => 'nullable|string|max:500',
+            'contact_name' => 'nullable|string|max:255',
+            'contact_email' => 'nullable|email|max:255',
             'applied_at' => 'required|date',
-            'notes' => 'required|string|max:1000',
-            'status' => 'required|in:saved,applied,interviewing,offered,rejected',
+            'notes' => 'nullable|string|max:1000',
+            'status' => 'nullable|in:saved,applied,interviewing,offered,rejected',
         ];
     }
 
