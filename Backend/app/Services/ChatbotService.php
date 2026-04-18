@@ -58,12 +58,13 @@ class ChatbotService
                           ->post('http://127.0.0.1:5678/webhook/Delete_memory', [
                     'collection_name' => $collection_name,
                 ]);
-        if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to delete memory", 500);
+
+        if ($response->json('code') == 404) {
+            throw new \Exception("Memory is not found", 404);
         }
 
-        if ($response->json('code') == '404') {
-            throw new \Exception ('Collection not found', 404);
+        if ($response->json('code')!== 200){
+            throw new \Exception("Failed to delete memory", 500);
         }
     }
     static function sendMessage($request)
