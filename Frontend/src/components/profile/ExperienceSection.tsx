@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { addExperience, updateExperience, deleteExperience } from "@/services/profileService";
 import { Pencil, Trash2, Plus, Loader2, Check, X } from "lucide-react";
 
 export interface Experience {
@@ -22,21 +23,8 @@ interface ExperienceSectionProps {
   onUpdate: (data: Experience[]) => void;
 }
 
-// Mock API calls
-const mockAddExperience = async (userId: string, exp: Experience): Promise<string> => {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-  return `exp_${Date.now()}`;
-};
 
-const mockUpdateExperience = async (id: string, exp: Experience): Promise<boolean> => {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-  return true;
-};
 
-const mockDeleteExperience = async (id: string): Promise<boolean> => {
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  return true;
-};
 
 export const ExperienceSection = ({ data, userId, onUpdate }: ExperienceSectionProps) => {
   const { toast } = useToast();
@@ -53,6 +41,26 @@ export const ExperienceSection = ({ data, userId, onUpdate }: ExperienceSectionP
     description: "",
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const normalizeDate = (dateStr: string | null): string | null => {
+    if (!dateStr || dateStr.length !== 7) return null;
+    return dateStr + "-01";
+  };
+
+  const validateExperience = (data: Experience) => {
+    const issues: string[] = [];
+    if (!data.company.trim()) issues.push("Company is required");
+    if (!data.position.trim()) issues.push("Position is required");
+    if (data.startDate && data.endDate && data.startDate > data.endDate) {
+      issues.push("Start date must be before end date");
+    }
+    if (data.description.trim().length < 10 && data.description.trim()) {
+      issues.push("Description should be at least 10 characters");
+    }
+    return issues;
+  };
+
   const handleEdit = (exp: Experience) => {
     setEditingId(exp.id || null);
     setEditData({ ...exp });
@@ -63,28 +71,58 @@ export const ExperienceSection = ({ data, userId, onUpdate }: ExperienceSectionP
     setEditData(null);
   };
 
-  const handleSave = async () => {
+const handleSave = async () => {
     if (!editData || !editingId) return;
     
+    const trimmed = {
+      ...editData,
+      company: editData.company.trim(),
+      position: editData.position.trim(),
+      description: editData.description.trim(),
+    };
+    const validationErrors = validateExperience(trimmed);
+    if (validationErrors.length > 0) {
+      const errorObj: Record<string, string> = {};
+      validationErrors.forEach(err => {
+        if (err.includes("Company")) errorObj.company = err;
+        else if (err.includes("Position")) errorObj.position = err;
+        else if (err.includes("date")) errorObj.endDate = err;
+        else errorObj.description = err;
+      });
+      setErrors(errorObj);
+      toast({ title: "Validation Error", description: validationErrors[0], variant: "destructive" });
+      return;
+    }
+    
+    setErrors({});
     setSavingId(editingId);
     try {
-      await mockUpdateExperience(editingId, editData);
-      const updated = data.map((e) => (e.id === editingId ? { ...editData, id: editingId } : e));
+      const backendExp = {
+        company_name: trimmed.company,
+        position: trimmed.position,
+        start_date: normalizeDate(trimmed.startDate) || null,
+        end_date: normalizeDate(trimmed.endDate) || null,
+        description: trimmed.description,
+      };
+      await updateExperience(editingId, backendExp);
+      const updated = data.map((e) => (e.id === editingId ? { ...trimmed, id: editingId } : e));
       onUpdate(updated);
       setEditingId(null);
       setEditData(null);
       toast({ title: "Success", description: "Experience updated" });
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to update", variant: "destructive" });
+    } catch (error: any) {
+      const msg = error.response?.data?.message || "Failed to update experience";
+      toast({ title: "Error", description: msg, variant: "destructive" });
     } finally {
       setSavingId(null);
     }
   };
 
-  const handleDelete = async (id: string) => {
+
+const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      await mockDeleteExperience(id);
+      await deleteExperience(id);
       onUpdate(data.filter((e) => e.id !== id));
       toast({ title: "Success", description: "Experience removed" });
     } catch (error) {
@@ -94,25 +132,51 @@ export const ExperienceSection = ({ data, userId, onUpdate }: ExperienceSectionP
     }
   };
 
-  const handleAddNew = async () => {
-    if (!newExperience.company.trim()) {
-      toast({ title: "Missing Info", description: "Please enter company name", variant: "destructive" });
+const handleAddNew = async () => {
+    const trimmed = {
+      ...newExperience,
+      company: newExperience.company.trim(),
+      position: newExperience.position.trim(),
+      description: newExperience.description.trim(),
+    };
+    const validationErrors = validateExperience(trimmed);
+    if (validationErrors.length > 0) {
+      const errorObj: Record<string, string> = {};
+      validationErrors.forEach(err => {
+        if (err.includes("Company")) errorObj.company = err;
+        else if (err.includes("Position")) errorObj.position = err;
+        else if (err.includes("date")) errorObj.endDate = err;
+        else errorObj.description = err;
+      });
+      setErrors(errorObj);
+      toast({ title: "Validation Error", description: validationErrors[0], variant: "destructive" });
       return;
     }
     
+    setErrors({});
     setSavingId("new");
     try {
-      const id = await mockAddExperience(userId, newExperience);
-      onUpdate([...data, { ...newExperience, id }]);
+      const backendExp = {
+        company_name: trimmed.company,
+        position: trimmed.position,
+        start_date: normalizeDate(trimmed.startDate) || null,
+        end_date: normalizeDate(trimmed.endDate) || null,
+        description: trimmed.description,
+      };
+
+      const newExp = await addExperience(userId, backendExp);
+      onUpdate([...data, { ...trimmed, id: newExp.id || `exp_${Date.now()}` }]);
       setNewExperience({ company: "", position: "", startDate: "", endDate: "", description: "" });
       setIsAddingNew(false);
       toast({ title: "Success", description: "Experience added" });
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to add", variant: "destructive" });
+    } catch (error: any) {
+      const msg = error.response?.data?.message || "Failed to add experience";
+      toast({ title: "Error", description: msg, variant: "destructive" });
     } finally {
       setSavingId(null);
     }
   };
+
 
   return (
     <Card>
@@ -200,23 +264,66 @@ export const ExperienceSection = ({ data, userId, onUpdate }: ExperienceSectionP
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Company</Label>
-                <Input value={newExperience.company} onChange={(e) => setNewExperience({ ...newExperience, company: e.target.value })} />
+                <Input 
+                  value={newExperience.company} 
+                  onChange={(e) => {
+                    setNewExperience({ ...newExperience, company: e.target.value });
+                    if (errors.company) setErrors({ ...errors, company: '' });
+                  }} 
+                  className={errors.company ? "border-destructive" : ""}
+                />
+                {errors.company && <p className="text-destructive text-xs mt-1">{errors.company}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Position</Label>
-                <Input value={newExperience.position} onChange={(e) => setNewExperience({ ...newExperience, position: e.target.value })} />
+                <Input 
+                  value={newExperience.position} 
+                  onChange={(e) => {
+                    setNewExperience({ ...newExperience, position: e.target.value });
+                    if (errors.position) setErrors({ ...errors, position: '' });
+                  }} 
+                  className={errors.position ? "border-destructive" : ""}
+                />
+                {errors.position && <p className="text-destructive text-xs mt-1">{errors.position}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Start Date</Label>
-                <Input type="month" value={newExperience.startDate} onChange={(e) => setNewExperience({ ...newExperience, startDate: e.target.value })} />
+                <Input 
+                  type="month" 
+                  value={newExperience.startDate} 
+                  onChange={(e) => {
+                    setNewExperience({ ...newExperience, startDate: e.target.value });
+                    if (errors.startDate) setErrors({ ...errors, startDate: '' });
+                  }} 
+                  className={errors.startDate ? "border-destructive" : ""}
+                />
+                {errors.startDate && <p className="text-destructive text-xs mt-1">{errors.startDate}</p>}
               </div>
               <div className="space-y-2">
                 <Label>End Date</Label>
-                <Input type="month" value={newExperience.endDate} onChange={(e) => setNewExperience({ ...newExperience, endDate: e.target.value })} />
+                <Input 
+                  type="month" 
+                  value={newExperience.endDate} 
+                  onChange={(e) => {
+                    setNewExperience({ ...newExperience, endDate: e.target.value });
+                    if (errors.endDate) setErrors({ ...errors, endDate: '' });
+                  }} 
+                  className={errors.endDate ? "border-destructive" : ""}
+                />
+                {errors.endDate && <p className="text-destructive text-xs mt-1">{errors.endDate}</p>}
               </div>
               <div className="col-span-2 space-y-2">
                 <Label>Description</Label>
-                <Textarea value={newExperience.description} onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })} rows={3} />
+                <Textarea 
+                  value={newExperience.description} 
+                  onChange={(e) => {
+                    setNewExperience({ ...newExperience, description: e.target.value });
+                    if (errors.description) setErrors({ ...errors, description: '' });
+                  }} 
+                  rows={3}
+                  className={errors.description ? "border-destructive" : ""}
+                />
+                {errors.description && <p className="text-destructive text-xs mt-1">{errors.description}</p>}
               </div>
             </div>
             <div className="flex gap-2">

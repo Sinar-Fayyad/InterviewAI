@@ -33,7 +33,15 @@ export const BasicInfoSection = ({ data, userId, onUpdate }: BasicInfoSectionPro
     setSaving(true);
     try {
       // Real API: POST /api/v0.1/update_user/{id}
-      await updateUser(userId, editData);
+      const userData = {
+        first_name: editData.full_name.split(' ')[0] || '',
+        last_name: editData.full_name.split(' ').slice(1).join(' ') || '',
+        phone: editData.phone,
+        location: editData.location,
+        summary: editData.summary,
+      };
+      await updateUser(userId, userData);
+
       const success = true;
       if (success) {
         onUpdate(editData);
@@ -153,9 +161,9 @@ export const BasicInfoSection = ({ data, userId, onUpdate }: BasicInfoSectionPro
               rows={4}
             />
           ) : (
-            <p className="text-sm py-2 px-3 bg-muted/50 rounded-md min-h-[80px]">
+            <div className="text-sm py-2 px-3 bg-muted/50 rounded-md max-h-32 overflow-auto min-h-[80px]">
               {data.summary || <span className="text-muted-foreground italic">Not set</span>}
-            </p>
+            </div>
           )}
         </div>
       </CardContent>

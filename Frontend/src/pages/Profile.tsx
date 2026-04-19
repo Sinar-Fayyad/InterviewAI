@@ -22,11 +22,20 @@ interface BasicInfo {
   summary: string;
 }
 
+interface Skill {
+  id: string;
+  name: string;
+  category: "technical" | "soft skills" | "tools" | "languages" | "others" | null;
+  proficiency_level: number | null;
+  created_at: string;
+}
+
 interface ProfileData {
   basicInfo: BasicInfo;
   education: Education[];
   experience: Experience[];
   certifications: Certification[];
+  skills: Skill[];
 }
 
 const Profile = () => {
@@ -34,12 +43,13 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [profileData, setProfileData] = useState<ProfileData>({
-    basicInfo: { full_name: "", email: "", phone: "", location: "", summary: "" },
-    education: [],
-    experience: [],
-    certifications: [],
-  });
+    const [profileData, setProfileData] = useState<ProfileData>({
+      basicInfo: { full_name: "", email: "", phone: "", location: "", summary: "" },
+      education: [],
+      experience: [],
+      certifications: [],
+      skills: [],
+    });
 
   useEffect(() => {
     if (authLoading) return;
@@ -52,26 +62,52 @@ const Profile = () => {
     try {
       const data = await fetchProfile(userId);
       if (data) {
-        const educationWithIds = ((data.education as unknown as Education[]) || []).map((edu, index) => ({
-          ...edu, id: edu.id || `edu_${index}_${Date.now()}`,
+        const userInfo = data.user_info?.[0] || {};
+        const educationWithIds = ((data.education || []) as any[]).map((edu: any, index: number) => ({
+          id: edu.id || `edu_${index}_${Date.now()}`,
+          school: edu.institution_name || '',
+          degree: edu.degree || '',
+          field: edu.field_of_study || '',
+          startDate: edu.start_date || '',
+          endDate: edu.end_date || '',
+          description: edu.description || ''
         }));
-        const experienceWithIds = ((data.experience as unknown as Experience[]) || []).map((exp, index) => ({
-          ...exp, id: exp.id || `exp_${index}_${Date.now()}`,
+        const experienceWithIds = ((data.experience || []) as any[]).map((exp: any, index: number) => ({
+          id: exp.id || `exp_${index}_${Date.now()}`,
+          company: exp.company_name || exp.organization_name || '',
+          position: exp.job_title || exp.position || '',
+          startDate: exp.start_date || '',
+          endDate: exp.end_date || '',
+          description: exp.description || ''
         }));
-        const certificationsWithIds = ((data.certifications as unknown as Certification[]) || []).map((cert, index) => ({
-          ...cert, id: cert.id || `cert_${index}_${Date.now()}`,
+        const certificationsWithIds = ((data.certifications || []) as any[]).map((cert: any, index: number) => ({
+          id: cert.id || `cert_${index}_${Date.now()}`,
+          certification_name: cert.certification_name || cert.credential_name || cert.name || '',
+          organization_name: cert.organization_name || cert.issuer || '',
+          date_obtained: cert.date_obtained || cert.date || '',
+          url: cert.url || ''
+        })); 
+
+        const skillsData = (data.skills || []).map((skill: any) => ({
+          id: skill.id,
+          name: skill.name,
+          category: skill.category,
+          proficiency_level: skill.proficiency,
+          created_at: skill.created_at || ''
         }));
+
         setProfileData({
           basicInfo: {
-            full_name: data.full_name || "",
-            email: data.email || "",
-            phone: data.phone || "",
-            location: data.location || "",
-            summary: data.summary || "",
+            full_name: `${userInfo.first_name || ''} ${userInfo.last_name || ''}`.trim() || '',
+            email: userInfo.email || '',
+            phone: userInfo.phone || '',
+            location: userInfo.location || '',
+            summary: userInfo.summary || ''
           },
           education: educationWithIds,
           experience: experienceWithIds,
           certifications: certificationsWithIds,
+          skills: skillsData
         });
       }
     } catch (error) {
@@ -82,45 +118,27 @@ const Profile = () => {
     }
   };
 
+  // Removed batch API calls - sections handle individual updates
   const handleBasicInfoUpdate = async (data: BasicInfo) => {
-    if (!userId) return;
-    try {
-      await updateUser(userId, data);
-      setProfileData({ ...profileData, basicInfo: data });
-    } catch (error) {
-      console.error("Error updating basic info:", error);
-    }
+    setProfileData({ ...profileData, basicInfo: data });
   };
 
   const handleEducationUpdate = async (data: Education[]) => {
-    if (!userId) return;
-    try {
-      await updateUser(userId, { education: data });
-      setProfileData({ ...profileData, education: data });
-    } catch (error) {
-      console.error("Error updating education:", error);
-    }
+    setProfileData({ ...profileData, education: data });
   };
 
   const handleExperienceUpdate = async (data: Experience[]) => {
-    if (!userId) return;
-    try {
-      await updateUser(userId, { experience: data });
-      setProfileData({ ...profileData, experience: data });
-    } catch (error) {
-      console.error("Error updating experience:", error);
-    }
+    setProfileData({ ...profileData, experience: data });
   };
 
   const handleCertificationsUpdate = async (data: Certification[]) => {
-    if (!userId) return;
-    try {
-      await updateUser(userId, { certifications: data });
-      setProfileData({ ...profileData, certifications: data });
-    } catch (error) {
-      console.error("Error updating certifications:", error);
-    }
+    setProfileData({ ...profileData, certifications: data });
   };
+
+  const handleSkillsUpdate = async (data: Skill[]) => {
+    setProfileData({ ...profileData, skills: data });
+  };
+
 
   if (loading) {
     return (
@@ -146,23 +164,23 @@ const Profile = () => {
               <TabsTrigger value="skills">Skills</TabsTrigger>
               <TabsTrigger value="certifications">Certifications</TabsTrigger>
             </TabsList>
-            <TabsContent value="basic">
+<TabsContent value="connections" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+              <AccountConnectionsSection userId={userId || ""} />
+            </TabsContent>
+<TabsContent value="basic" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
               <BasicInfoSection data={profileData.basicInfo} userId={userId || ""} onUpdate={handleBasicInfoUpdate} />
             </TabsContent>
-            <TabsContent value="education">
+<TabsContent value="education" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
               <EducationSection data={profileData.education} userId={userId || ""} onUpdate={handleEducationUpdate} />
             </TabsContent>
-            <TabsContent value="experience">
+<TabsContent value="experience" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
               <ExperienceSection data={profileData.experience} userId={userId || ""} onUpdate={handleExperienceUpdate} />
             </TabsContent>
-            <TabsContent value="skills">
-              <SkillsManagerSection />
+<TabsContent value="skills" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+              <SkillsManagerSection data={profileData.skills} userId={userId || ""} onUpdate={handleSkillsUpdate} />
             </TabsContent>
-            <TabsContent value="certifications">
+<TabsContent value="certifications" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
               <CertificationsSection data={profileData.certifications} userId={userId || ""} onUpdate={handleCertificationsUpdate} />
-            </TabsContent>
-            <TabsContent value="connections">
-              <AccountConnectionsSection userId={userId || ""} />
             </TabsContent>
           </Tabs>
         </div>
