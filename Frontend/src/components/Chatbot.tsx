@@ -9,7 +9,6 @@ import { initChatMemory, sendChat, clearChatMemory } from "@/services/chatServic
 
 export const Chatbot = () => {
   const { userId } = useAuth();
-  const initRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -29,15 +28,8 @@ export const Chatbot = () => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  useEffect(() => {
-    if (isOpen && !collectionId && !initRef.current) {
-      initRef.current = true;
-      setIsInitializing(true);
-      initChat();
-    }
-  }, [isOpen]);
-
   const initChat = async () => {
+    setIsInitializing(true);
     try {
       const result = await initChatMemory(userId || undefined);
       console.log("Init result:", result);
@@ -55,7 +47,7 @@ export const Chatbot = () => {
     }
   };
 
-  const handleClear = async () => {
+  const handleDeleteHistory = async () => {
     if (collectionName) {
       try {
         await clearChatMemory(collectionName);
@@ -68,6 +60,19 @@ export const Chatbot = () => {
     setMessages([
       { role: "bot", content: "Hi! I'm your InterviewAI assistant. How can I help you today?" }
     ]);
+  };
+
+  const handleClose = async () => {
+    if (collectionName) {
+      try {
+        await clearChatMemory(collectionName);
+      } catch (error) {
+        console.error("Failed to clear memory:", error);
+      }
+    }
+    setCollectionId(null);
+    setCollectionName(null);
+    setIsOpen(false);
   };
 
   const handleSend = async () => {
@@ -102,13 +107,14 @@ export const Chatbot = () => {
     }
   };
 
-  const toggleChat = () => {
-    setIsOpen(prev => !prev);
+  const handleOpen = async () => {
+    await initChat();
+    setIsOpen(true);
   };
 
   return (
     <>
-      <Button onClick={toggleChat} className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-glow bg-primary hover:bg-primary/90 z-50" size="icon">
+      <Button onClick={isOpen ? handleClose : handleOpen} className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-glow bg-primary hover:bg-primary/90 z-50" size="icon">
         {isOpen ? <X className="w-6 h-6 text-primary-foreground" /> : <MessageCircle className="w-6 h-6 text-primary-foreground" />}
       </Button>
       {isOpen && (
@@ -118,7 +124,7 @@ export const Chatbot = () => {
               <h3 className="font-semibold">InterviewAI Assistant</h3>
               <p className="text-xs text-muted-foreground">Ask me anything!</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleClear} className="h-8 w-8">
+            <Button variant="ghost" size="icon" onClick={handleDeleteHistory} className="h-8 w-8">
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
