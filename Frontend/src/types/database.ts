@@ -79,7 +79,8 @@ export interface Application {
   job_description: string | null;
   contact_name: string | null;
   contact_email: string | null;
-  applied_date: string | null;
+  applied_at: string ;
+  updated_at: string | null;
   notes: string | null;
   status: string | null;
   created_at: string;
