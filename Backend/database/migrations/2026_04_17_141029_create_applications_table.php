@@ -17,14 +17,14 @@ return new class extends Migration
             $table->string('job_title');
             $table->string('company_name');
             $table->string('location');
-            $table->string('salary_range');
-            $table->string('job_url');
-            $table->string('job_description');
-            $table->string('contact_name');
-            $table->string('contact_email');
+            $table->string('salary_range')->nullable();
+            $table->string('job_url')->nullable();
+            $table->string('job_description')->nullable();
+            $table->string('contact_name')->nullable();
+            $table->string('contact_email')->nullable();
             $table->date('applied_at');
-            $table->text('notes');
-            $table->enum('status', ['saved', 'applied', 'interviewing', 'offered', 'rejected'])->default('applied');
+            $table->text('notes')->nullable();
+            $table->enum('status', ['saved', 'applied', 'interviewing', 'offered', 'rejected'])->default('saved');
             $table->timestamps();
         });
     }
