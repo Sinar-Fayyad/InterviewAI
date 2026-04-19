@@ -14,6 +14,7 @@ export const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
   const [collectionId, setCollectionId] = useState<string | null>(null);
   const [collectionName, setCollectionName] = useState<string | null>(null);
   const [messages, setMessages] = useState<Array<{ role: "user" | "bot"; content: string }>>([
@@ -31,6 +32,7 @@ export const Chatbot = () => {
   useEffect(() => {
     if (isOpen && !collectionId && !initRef.current) {
       initRef.current = true;
+      setIsInitializing(true);
       initChat();
     }
   }, [isOpen]);
@@ -48,6 +50,8 @@ export const Chatbot = () => {
     } catch (error) {
       console.error("Failed to init chat:", error);
       setMessages(prev => [...prev, { role: "bot", content: "Failed to initialize. Please refresh and try again. Check console." }]);
+    } finally {
+      setIsInitializing(false);
     }
   };
 
@@ -99,11 +103,7 @@ export const Chatbot = () => {
   };
 
   const toggleChat = () => {
-    if (isOpen) {
-      setIsOpen(false);
-    } else {
-      setIsOpen(true);
-    }
+    setIsOpen(prev => !prev);
   };
 
   return (
@@ -131,7 +131,7 @@ export const Chatbot = () => {
                   </div>
                 </div>
               ))}
-              {isLoading && (
+              {(isLoading || isInitializing) && (
                 <div className="flex justify-start">
                   <div className="bg-muted p-3 rounded-lg">
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -146,12 +146,12 @@ export const Chatbot = () => {
               <Input 
                 value={message} 
                 onChange={(e) => setMessage(e.target.value)} 
-                onKeyPress={(e) => e.key === "Enter" && handleSend()} 
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
                 placeholder="Type a message..." 
                 className="flex-1" 
-                disabled={isLoading} 
+                disabled={isLoading || isInitializing} 
               />
-              <Button onClick={handleSend} size="icon" variant="default" disabled={isLoading || !collectionId}>
+              <Button onClick={handleSend} size="icon" variant="default" disabled={isLoading || isInitializing || !collectionId}>
                 <Send className="w-4 h-4" />
               </Button>
             </div>
