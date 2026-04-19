@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { MessageCircle, X, Send, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { MessageCircle, X, Send, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { initChatMemory, sendChat, clearChatMemory } from "@/services/chatServic
 
 export const Chatbot = () => {
   const { userId } = useAuth();
+  const initRef = useRef(false);
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -19,38 +20,77 @@ export const Chatbot = () => {
   ]);
 
   useEffect(() => {
-    if (isOpen && !collectionId) {
+    if (isOpen && !collectionId && !initRef.current) {
+      initRef.current = true;
       initChat();
     }
-  }, [isOpen, userId]);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen && collectionName) {
+      handleClear();
+      initRef.current = false;
+    }
+  }, [isOpen]);
 
   const initChat = async () => {
     try {
       const result = await initChatMemory(userId || undefined);
-      setCollectionId(result?.collection_id || null);
-      setCollectionName(result?.collection_name || null);
+      console.log("Init result:", result);
+      const payload = result.payload || result;
+      setCollectionId(payload.collection_id || null);
+      setCollectionName(payload.collection_name || null);
+      if (!payload.collection_id) {
+        setMessages(prev => [...prev, { role: "bot", content: "Failed to initialize chat memory. Backend or AI server may be down." }]);
+      }
     } catch (error) {
       console.error("Failed to init chat:", error);
+      setMessages(prev => [...prev, { role: "bot", content: "Failed to initialize. Please refresh and try again. Check console." }]);
     }
+  };
+
+  const handleClear = async () => {
+    if (collectionName) {
+      try {
+        await clearChatMemory(collectionName);
+      } catch (error) {
+        console.error("Failed to clear memory:", error);
+      }
+    }
+    setCollectionId(null);
+    setCollectionName(null);
+    setMessages([
+      { role: "bot", content: "Hi! I'm your InterviewAI assistant. How can I help you today?" }
+    ]);
   };
 
   const handleSend = async () => {
     if (!message.trim() || isLoading) return;
+    if (!collectionId) {
+      setMessages(prev => [...prev, { role: "bot", content: "Chat not initialized. Click to open again." }]);
+      setIsLoading(false);
+      return;
+    }
     const userMsg = message;
-    setMessages(prev => [...prev, { role: "user", content: userMsg }]);
+    const newMessages = [...messages, { role: "user" as const, content: userMsg }];
+    setMessages(newMessages);
     setMessage("");
     setIsLoading(true);
 
     try {
-      const chatHistory = messages.map(m => `${m.role}: ${m.content}`).join("\n");
+      const chatHistory = newMessages.slice(-5).map(m => ({ role: m.role, content: m.content }));
+      console.log("Sending:", { collection_id: collectionId, message: userMsg, chat_history: chatHistory });
       const result = await sendChat({
-        collection_id: collectionId || "",
+        collection_id: collectionId,
         message: userMsg,
         chat_history: chatHistory,
       });
-      setMessages(prev => [...prev, { role: "bot", content: result?.response || result?.message || "I couldn't process that. Please try again." }]);
-    } catch {
-      setMessages(prev => [...prev, { role: "bot", content: "Sorry, something went wrong. Please try again." }]);
+      console.log("Send result:", result);
+      const responsePayload = result.payload || result;
+      setMessages(newMessages.concat({ role: "bot" as const, content: responsePayload.response || "No response from AI." }));
+    } catch (error) {
+      console.error("Send error:", error);
+      setMessages(newMessages.concat({ role: "bot" as const, content: "Sorry, API error. Check console/server status." }));
     } finally {
       setIsLoading(false);
     }
@@ -63,9 +103,14 @@ export const Chatbot = () => {
       </Button>
       {isOpen && (
         <Card className="fixed bottom-24 right-6 w-80 sm:w-96 h-[500px] shadow-elegant border-border z-50 flex flex-col">
-          <div className="p-4 border-b border-border bg-primary/5">
-            <h3 className="font-semibold">InterviewAI Assistant</h3>
-            <p className="text-xs text-muted-foreground">Ask me anything!</p>
+          <div className="p-4 border-b border-border bg-primary/5 flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold">InterviewAI Assistant</h3>
+              <p className="text-xs text-muted-foreground">Ask me anything!</p>
+            </div>
+            <Button variant="ghost" size="icon" onClick={handleClear} className="h-8 w-8">
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
@@ -77,14 +122,27 @@ export const Chatbot = () => {
                 </div>
               ))}
               {isLoading && (
-                <div className="flex justify-start"><div className="bg-muted p-3 rounded-lg"><Loader2 className="w-4 h-4 animate-spin" /></div></div>
+                <div className="flex justify-start">
+                  <div className="bg-muted p-3 rounded-lg">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </div>
+                </div>
               )}
             </div>
           </ScrollArea>
           <div className="p-4 border-t border-border">
             <div className="flex gap-2">
-              <Input value={message} onChange={(e) => setMessage(e.target.value)} onKeyPress={(e) => e.key === "Enter" && handleSend()} placeholder="Type a message..." className="flex-1" disabled={isLoading} />
-              <Button onClick={handleSend} size="icon" variant="default" disabled={isLoading}><Send className="w-4 h-4" /></Button>
+              <Input 
+                value={message} 
+                onChange={(e) => setMessage(e.target.value)} 
+                onKeyPress={(e) => e.key === "Enter" && handleSend()} 
+                placeholder="Type a message..." 
+                className="flex-1" 
+                disabled={isLoading} 
+              />
+              <Button onClick={handleSend} size="icon" variant="default" disabled={isLoading || !collectionId}>
+                <Send className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </Card>

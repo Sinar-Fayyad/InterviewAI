@@ -10,7 +10,9 @@ const api = axios.create({
 // Request interceptor: attach JWT token
 api.interceptors.request.use((config) => {
   const token = sessionStorage.getItem("token");
-  if (token) {
+  const chatbotPaths = ["/initChatMemory", "/sendChat", "/clearChatMemory"];
+  const isChatbot = chatbotPaths.some(path => config.url?.includes(path));
+  if (token && !isChatbot) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

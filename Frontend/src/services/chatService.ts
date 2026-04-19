@@ -8,7 +8,11 @@ export const initChatMemory = async (userId?: string) => {
 };
 
 // POST /sendChat
-export const sendChat = async (params: { collection_id: string; message: string; chat_history: string }) => {
+export const sendChat = async (params: { 
+  collection_id: string; 
+  message: string; 
+  chat_history: Array<{ role: string; content: string }>; 
+}) => {
   const { data } = await api.post("/sendChat", params);
   return data;
 };
