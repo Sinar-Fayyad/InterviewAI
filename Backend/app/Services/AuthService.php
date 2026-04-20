@@ -15,7 +15,7 @@ class AuthService
         $token = JWTAuth::attempt($credentials);
 
         if (!$token) {
-            throw new \Exception("Invalid credentials");
+            throw new \Exception("Invalid credentials", 401);
         }
 
         $user = auth('api')->user();
@@ -28,6 +28,7 @@ class AuthService
 
     static function register($data)
     {
+        
         $userData = [
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],

@@ -1,24 +1,25 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/services/api";
+import { getUserFriendlyMessage } from "./useErrorHandler";
 
-  interface AuthUser {
-    id: string;
-    email: string;
-    first_name?: string;
-    last_name?: string;
-    full_name?: string;
-    onboarding_completed?: boolean;
-    [key: string]: unknown;
-  }
+interface AuthUser {
+  id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  full_name?: string;
+  onboarding_completed?: boolean;
+  [key: string]: unknown;
+}
 
 interface AuthContextType {
   token: string | null;
   userId: string | null;
   user: AuthUser | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -63,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return { error: null };
     } catch (error: any) {
-      return { error: error.response?.data?.message || error.message || "Login failed" };
+      return { error: getUserFriendlyMessage(error) };
     }
   };
 
@@ -91,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return { error: null };
     } catch (error: any) {
-      return { error: error.response?.data?.message || error.message || "Signup failed" };
+      return { error: getUserFriendlyMessage(error, undefined, true) };
     }
   };
 

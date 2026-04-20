@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileText, Upload, Sparkles, CheckCircle, Wand2, Loader2, Linkedin, Github } from "lucide-react";
 import { extractTextFromPdf } from "@/utils/pdfTextExtract";
 import { useToast } from "@/hooks/use-toast";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchProfile } from "@/services/profileService";
 import { generateResume, optimizeResume } from "@/services/documentService";
@@ -23,7 +24,6 @@ export default function CVGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isExtractingText, setIsExtractingText] = useState(false);
-  const { toast } = useToast();
   const { userId } = useAuth();
   const navigate = useNavigate();
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
@@ -62,6 +62,9 @@ export default function CVGenerator() {
     }
   };
 
+  const { handleError } = useErrorHandler();
+  const { toast } = useToast();
+
   const handleGenerateCV = async () => {
     if (!hasProfile) {
       toast({ title: "Complete Your Profile", description: "Please fill out your profile information to generate documents.", variant: "destructive" });
@@ -80,7 +83,7 @@ export default function CVGenerator() {
       navigate("/cv-output", { state: { cvData: result } });
     } catch (error) {
       console.error("Error generating CV:", error);
-      toast({ title: "Generation Failed", description: "Failed to generate resume. Please try again.", variant: "destructive" });
+      handleError(error, "Resume Generation");
     } finally {
       setIsGenerating(false);
     }
@@ -104,7 +107,7 @@ export default function CVGenerator() {
       navigate("/cv-output", { state: { cvData: result } });
     } catch (error) {
       console.error("Error optimizing CV:", error);
-      toast({ title: "Optimization Failed", description: "Failed to optimize resume. Please try again.", variant: "destructive" });
+      handleError(error, "Resume Optimization");
     } finally {
       setIsOptimizing(false);
     }

@@ -33,7 +33,7 @@ const Auth = () => {
     if (token) {
       navigate("/");
     }
-  }, [token, navigate]);
+  }, [token]);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,30 +99,16 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const { error } = isLogin 
+      const result = isLogin 
         ? await signIn(email, password)
         : await signUp(email, password, firstName, lastName);
 
-      if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          toast({
-            variant: "destructive",
-            title: "Login Failed",
-            description: "Invalid email or password. Please try again."
-          });
-        } else if (error.message.includes("User already registered")) {
-          toast({
-            variant: "destructive",
-            title: "Sign Up Failed",
-            description: "This email is already registered. Please sign in instead."
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: isLogin ? "Login Failed" : "Sign Up Failed",
-            description: error.message
-          });
-        }
+      if (result.error) {
+        toast({
+          variant: "destructive",
+          title: isLogin ? "Login Failed" : "Sign Up Failed",
+          description: result.error
+        });
       } else {
         if (isLogin) {
           toast({
