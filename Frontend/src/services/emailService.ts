@@ -5,6 +5,8 @@ export const generateEmail = async (params: {
   job_title: string;
   company_name: string;
   job_description?: string;
+  tone: string;
+  recipient_name?: string;
 }, userId?: string) => {
   const url = userId ? `/generate_email/${userId}` : "/generate_email";
   const { data } = await api.post(url, params);
