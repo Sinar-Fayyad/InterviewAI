@@ -13,9 +13,10 @@ class GenerateEmailRequest extends ApiFormRequest
     {
         return [
             'job_title' => 'required|string',
-            'company' => 'sometimes|string',
-            'job_description' => 'required|string',
-            'resume' => 'sometimes|file|mimes:pdf,doc,docx|max:2048',
+            'company_name' => 'required|string',
+            'tone'=>'required|string',
+            'recipient_name'=>'nullable|string',
+            'job_description' => 'nullable|string',
         ];
     }
 

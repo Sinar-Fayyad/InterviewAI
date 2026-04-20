@@ -39,7 +39,7 @@ class EmailService
                 ]);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to generate email: " . $response->json('error') , 500);
+            throw new \Exception("Failed to generate email " , 500);
         }
 
         return $response->json();

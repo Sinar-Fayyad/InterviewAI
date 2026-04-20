@@ -32,6 +32,8 @@ Route::group(["prefix" => "v0.1"], function () {
     Route::post('/sendChat', [ChatbotController::class, 'sendMessage']); // AI call
     Route::post('/clearChatMemory/{collection_name}', [ChatbotController::class, 'clearMemory']); // AI call
 
+    Route::post('generate_email/{user_id?}', [EmailController::class, 'generateEmail']); // AI call
+
     Route::middleware('jwt.auth')->group(function () {
 
         Route::post('/logout', [AuthController::class, 'logout']);
@@ -104,7 +106,6 @@ Route::group(["prefix" => "v0.1"], function () {
         Route::post('/delete_post/{id}', [PostController::class, 'deletePost']);
 
         // Email Routes
-        Route::post('generate_email/{user_id?}', [EmailController::class, 'generateEmail']); // AI call
         Route::post('reply_to_email', [EmailController::class, 'replyToEmail']); // AI call
         Route::post('send_email/{user_id}', [EmailController::class, 'sendEmail']);
         Route::get('get_job_emails/{user_id}', [EmailController::class, 'getJobEmails']);
