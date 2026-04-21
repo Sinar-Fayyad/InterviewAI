@@ -147,13 +147,14 @@ const handleAddNew = async () => {
         <CardDescription>Your professional certifications</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {data.map((cert) => {
+{data.map((cert, index) => {
           const isEditing = editingId === cert.id;
           const isSaving = savingId === cert.id;
           const isDeleting = deletingId === cert.id;
 
           return (
-            <div key={cert.id} className="p-4 border rounded-lg space-y-4 relative">
+            <div key={cert.id ?? index} className="p-4 border rounded-lg space-y-4 relative">
+
               <div className="absolute top-2 right-2 flex gap-1">
                 {isEditing ? (
                   <>
