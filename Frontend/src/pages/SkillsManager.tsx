@@ -54,7 +54,12 @@ const SkillsManager = () => {
       const { data } = await api.get(`/profile/${userId}`);
       const profileData = data?.payload || data;
       // Skills might be in user_skills or skills array
-      setSkills(profileData?.user_skills || profileData?.skills || []);
+      const rawSkills = profileData?.user_skills || profileData?.skills || [];
+      const skillsData = rawSkills.map((skill: any) => ({
+        ...skill,
+        proficiency_level: Math.round((skill.proficiency || 60) / 20)
+      }));
+      setSkills(skillsData);
     } catch (error) {
       console.error("Error fetching skills:", error);
       toast({ title: "Error", description: "Failed to load skills", variant: "destructive" });

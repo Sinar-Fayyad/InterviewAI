@@ -72,7 +72,7 @@ export const SkillsManagerSection = ({ data, userId, onUpdate }: SkillsManagerSe
       };
 
       await addSkill(userId, newSkillData);
-      const updatedSkills = [...skills, { ...newSkillData, proficiency_level: newSkillData.proficiency, id: Date.now().toString(), created_at: new Date().toISOString() }];
+      const updatedSkills = [...skills, { ...newSkillData, proficiency_level: newSkill.proficiency_level, id: Date.now().toString(), created_at: new Date().toISOString() }];
       await onUpdate(updatedSkills);
       toast({ title: "Skill Added", description: `${newSkill.name} has been added` });
       setNewSkill({ name: "", category: "technical", proficiency_level: 3 });
@@ -114,6 +114,7 @@ export const SkillsManagerSection = ({ data, userId, onUpdate }: SkillsManagerSe
   const handleSaveEdit = async (skillId: string) => {
     if (!editData) return;
     
+    const userProficiency = editData.proficiency;
     setSavingId(skillId);
     try {
       const updateData = {
@@ -130,7 +131,7 @@ export const SkillsManagerSection = ({ data, userId, onUpdate }: SkillsManagerSe
       await updateSkill(skillId, updateData);
       const updatedSkills = skills.map((s) => 
         s.id === skillId 
-          ? { ...s, proficiency_level: backendUpdateData.proficiency_level, category: backendUpdateData.category, name: backendUpdateData.name }
+          ? { ...s, proficiency_level: userProficiency, category: editData.category, name: updateData.name }
           : s
       );
       await onUpdate(updatedSkills);
@@ -143,6 +144,7 @@ export const SkillsManagerSection = ({ data, userId, onUpdate }: SkillsManagerSe
       setSavingId(null);
     }
   };
+
 
   const filteredSkills = selectedCategory === "all" 
     ? skills 
