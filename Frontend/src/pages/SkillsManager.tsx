@@ -11,7 +11,7 @@ import { addSkill as addSkillApi, deleteSkill as deleteSkillApi } from "@/servic
 import api from "@/services/api";
 import { Plus, Trash2, Loader2, Code, Users, Wrench, Languages, MoreHorizontal } from "lucide-react";
 
-type SkillCategory = "technical" | "soft_skills" | "tools" | "languages" | "other";
+type SkillCategory = "technical" | "soft skills" | "tools" | "languages" | "others";
 
 interface Skill {
   id: string;
@@ -23,10 +23,10 @@ interface Skill {
 
 const categoryConfig: Record<SkillCategory, { label: string; icon: React.ReactNode; color: string }> = {
   technical: { label: "Technical", icon: <Code className="w-4 h-4" />, color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
-  soft_skills: { label: "Soft Skills", icon: <Users className="w-4 h-4" />, color: "bg-green-500/10 text-green-600 border-green-500/20" },
+  "soft skills": { label: "Soft Skills", icon: <Users className="w-4 h-4" />, color: "bg-green-500/10 text-green-600 border-green-500/20" },
   tools: { label: "Tools", icon: <Wrench className="w-4 h-4" />, color: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
   languages: { label: "Languages", icon: <Languages className="w-4 h-4" />, color: "bg-purple-500/10 text-purple-600 border-purple-500/20" },
-  other: { label: "Other", icon: <MoreHorizontal className="w-4 h-4" />, color: "bg-gray-500/10 text-gray-600 border-gray-500/20" },
+  others: { label: "Other", icon: <MoreHorizontal className="w-4 h-4" />, color: "bg-gray-500/10 text-gray-600 border-gray-500/20" },
 };
 
 const SkillsManager = () => {
@@ -80,7 +80,7 @@ const SkillsManager = () => {
       const result = await addSkillApi(userId, {
         name: newSkill.name.trim(),
         category: newSkill.category,
-        proficiency_level: newSkill.proficiency_level,
+        proficiency: newSkill.proficiency_level * 20,
       });
 
       toast({ title: "Skill Added", description: `${newSkill.name} has been added` });
