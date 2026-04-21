@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,11 @@ export const BasicInfoSection = ({ data, userId, onUpdate }: BasicInfoSectionPro
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editData, setEditData] = useState<BasicInfo>(data);
+
+  // Sync email for read-only display
+  useEffect(() => {
+    setEditData(prev => ({ ...prev, email: data.email }));
+  }, [data.email]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -110,18 +115,13 @@ export const BasicInfoSection = ({ data, userId, onUpdate }: BasicInfoSectionPro
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          {isEditing ? (
-            <Input
-              id="email"
-              type="email"
-              value={editData.email}
-              onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-            />
-          ) : (
-            <p className="text-sm py-2 px-3 bg-muted/50 rounded-md min-h-[40px] flex items-center">
-              {data.email || <span className="text-muted-foreground italic">Not set</span>}
-            </p>
-          )}
+          <p 
+            className="text-sm py-2 px-3 bg-muted/50 rounded-md min-h-[40px] flex items-center font-mono border border-border/50"
+            aria-label="Email address (read-only for security)"
+          >
+            {data.email || <span className="text-muted-foreground italic">Not set</span>}
+           
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">Phone</Label>
