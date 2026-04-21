@@ -28,7 +28,7 @@ class UpdateApplicationRequest extends ApiFormRequest
             'contact_email' => 'sometimes|nullable|email|max:255',
             'applied_at' => 'sometimes|nullable|date',
             'notes' => 'sometimes|nullable|string|max:1000',
-            'status' => 'sometimes|nullable|in:saved,applied,interviewing,offered,rejected',
+           'status' => 'sometimes|nullable|in:saved,applied,interviewing,offered,rejected',
         ];
     }
 
