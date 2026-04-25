@@ -92,7 +92,7 @@ const Profile = () => {
           id: skill.id,
           name: skill.name,
           category: skill.category,
-          proficiency_level: skill.proficiency,
+proficiency_level: Math.round((skill.proficiency || 60) / 20),
           created_at: skill.created_at || ''
         }));
 
