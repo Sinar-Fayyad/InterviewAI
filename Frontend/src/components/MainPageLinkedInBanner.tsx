@@ -25,7 +25,6 @@ export const MainPageLinkedInBanner = () => {
       sessionStorage.removeItem("linkedin_banner_dismissed");
       
       const result = await checkLinkedinExpiry(user.id);
-      console.log("LinkedIn expiry check result:", result); // DEBUG
       
       if (result?.is_expired) {
         setShowBanner(true);
@@ -33,8 +32,7 @@ export const MainPageLinkedInBanner = () => {
         setShowBanner(false);
       }
     } catch (error) {
-      console.error("Error checking LinkedIn expiry:", error);
-      setShowBanner(false); // Hide on error
+      setShowBanner(false);
     }
   };
 
