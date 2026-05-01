@@ -3,10 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Linkedin, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import api from "@/services/api";
 
 export const AccountConnectionsSection = () => {
   const { toast } = useToast();
+  const { userId } = useAuth();
   const [linkedInConnected, setLinkedInConnected] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [linkedInLoading, setLinkedInLoading] = useState(false);
@@ -16,11 +18,11 @@ export const AccountConnectionsSection = () => {
     setLinkedInLoading(true);
     try {
       if (linkedInConnected) {
-        await api.post("/auth/linkedin/disconnect");
+        await api.post(`/auth/disconnect_linkedin/${userId}`);
         setLinkedInConnected(false);
         toast({ title: "LinkedIn Disconnected", description: "Your LinkedIn account has been disconnected." });
       } else {
-        const { data } = await api.get("/auth/linkedin/redirect");
+        const { data } = await api.get(`/auth/linkedin-openid/redirect/${userId}`);
         if (data?.url) window.location.href = data.url;
         else {
           setLinkedInConnected(true);
@@ -38,11 +40,11 @@ export const AccountConnectionsSection = () => {
     setGoogleLoading(true);
     try {
       if (googleConnected) {
-        await api.post("/auth/google/disconnect");
+        await api.post(`/auth/disconnect_google/${userId}`);
         setGoogleConnected(false);
         toast({ title: "Google Disconnected", description: "Your Google account has been disconnected." });
       } else {
-        const { data } = await api.get("/auth/google/redirect");
+        const { data } = await api.get(`/auth/google/redirect/${userId}`);
         if (data?.url) window.location.href = data.url;
         else {
           setGoogleConnected(true);
