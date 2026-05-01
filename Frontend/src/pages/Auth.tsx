@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/services/api";
@@ -29,12 +29,6 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (token) {
-      navigate("/");
-    }
-  }, [token, navigate]);
-
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -50,7 +44,7 @@ const Auth = () => {
     setIsResetLoading(true);
 
     try {
-      const response = await api.post("/auth/forgot-password", { email });
+      const response = await api.post("/forgot-password", { email });
       const error = response.data?.error;
 
       if (error) {
@@ -99,30 +93,16 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const { error } = isLogin 
+      const authResult = isLogin 
         ? await signIn(email, password)
         : await signUp(email, password, firstName, lastName);
 
-      if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          toast({
-            variant: "destructive",
-            title: "Login Failed",
-            description: "Invalid email or password. Please try again."
-          });
-        } else if (error.message.includes("User already registered")) {
-          toast({
-            variant: "destructive",
-            title: "Sign Up Failed",
-            description: "This email is already registered. Please sign in instead."
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: isLogin ? "Login Failed" : "Sign Up Failed",
-            description: error.message
-          });
-        }
+      if (authResult.error) {
+        toast({
+          variant: "destructive",
+          title: isLogin ? "Login Failed" : "Sign Up Failed",
+          description: authResult.error
+        });
       } else {
         if (isLogin) {
           toast({

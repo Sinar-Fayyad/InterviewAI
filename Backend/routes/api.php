@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
@@ -27,17 +26,26 @@ Route::group(["prefix" => "v0.1"], function () {
 
     Route::post("/login", [AuthController::class, "login"]);
     Route::post("/register", [AuthController::class, "register"]);
+    Route::post("/forgot-password", [AuthController::class, "forgotPassword"]);
+    Route::post("/reset-password", [AuthController::class, "resetPassword"]);
 
     // Chatbot Routes
     Route::post('/initChatMemory/{user_id?}', [ChatbotController::class, 'initializeMemory']); // AI call
     Route::post('/sendChat', [ChatbotController::class, 'sendMessage']); // AI call
     Route::post('/clearChatMemory/{collection_name}', [ChatbotController::class, 'clearMemory']); // AI call
 
+    Route::post('generate_email/{user_id?}', [EmailController::class, 'generateEmail']); // AI call
+
     Route::middleware('jwt.auth')->group(function () {
 
         Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/auth/{provider}/redirect/{user_id}', [SocialiteController::class, "redirect"]);
-        Route::get('/auth/{provider}/callback', [SocialiteController::class, "callback"]);
+
+        Route::group(["prefix" => "auth"], function () {
+            Route::get('/{provider}/redirect/{user_id}', [SocialiteController::class, "redirect"]);
+            Route::get('/{provider}/callback', [SocialiteController::class, "callback"]);
+            Route::post('/disconnect_google/{user_id}', [EmailController::class, 'disconnectGoogle']);
+            Route::post('/disconnect_linkedin/{user_id}', [LinkedinController::class, 'disconnectLinkedin']);
+        });
 
         // Profile Routes
         Route::get('/profile/{user_id}', [ProfileController::class, 'getProfile']);
@@ -105,25 +113,22 @@ Route::group(["prefix" => "v0.1"], function () {
         Route::post('/delete_post/{id}', [PostController::class, 'deletePost']);
 
         // Email Routes
-        Route::post('generate_email/{user_id?}', [EmailController::class, 'generateEmail']); // AI call
-        Route::post('reply_to_email', [EmailController::class, 'replyToEmail']); // AI call
-        Route::post('send_email/{user_id}', [EmailController::class, 'sendEmail']);
-        Route::get('get_job_emails/{user_id}', [EmailController::class, 'getJobEmails']);
-        Route::post('disconnect_google/{user_id}', [EmailController::class, 'disconnectGoogle']);
+        Route::post('/reply_to_email', [EmailController::class, 'replyToEmail']); // AI call
+        Route::post('/send_email/{user_id}', [EmailController::class, 'sendEmail']);
+        Route::get('/get_job_emails/{user_id}', [EmailController::class, 'getJobEmails']);
 
         // Linkedin Routes
-        Route::get('get_linkedin_messages/{user_id}', [LinkedinController::class, 'getMessages']);
-        Route::post('create_linkedin_post', [LinkedinController::class, 'createPost']); // AI call
-        Route::get('linkedin_profile/{user_id}', [LinkedinController::class, 'createProfile']); // AI call
-        Route::post('post_to_linkedin/{user_id}', [LinkedinController::class, 'postToLinkedin']);
-        Route::post('schedule_post/{user_id}', [LinkedinController::class, 'schedulePost']); // AI call
-        Route::get('check_linkedin_expiry/{user_id}', [LinkedinController::class, 'checkExpiry']);
-        Route::post('disconnect_linkedin/{user_id}', [LinkedinController::class, 'disconnectLinkedin']);
+        Route::get('/get_linkedin_messages/{user_id}', [LinkedinController::class, 'getMessages']);
+        Route::post('/create_linkedin_post', [LinkedinController::class, 'createPost']); // AI call
+        Route::get('/linkedin_profile/{user_id}', [LinkedinController::class, 'createProfile']); // AI call
+        Route::post('/post_to_linkedin/{user_id}', [LinkedinController::class, 'postToLinkedin']);
+        Route::post('/schedule_post/{user_id}', [LinkedinController::class, 'schedulePost']); // AI call
+        Route::get('/check_linkedin_expiry/{user_id}', [LinkedinController::class, 'checkExpiry']);
 
         // Career Routes
-        Route::post('resume_generation/{user_id}', [CareerController::class, 'resumeGeneration']); // AI call
-        Route::post('resume_optimization/{user_id}', [CareerController::class, 'resumeOptimization']); // AI call
-        Route::post('cover_letter_generation/{user_id}', [CareerController::class, 'coverLetterGeneration']); // AI call
-        Route::post('cover_letter_optimization/{user_id}', [CareerController::class, 'coverLetterOptimization']); // AI call
+        Route::post('/resume_generation/{user_id}', [CareerController::class, 'resumeGeneration']); // AI call
+        Route::post('/resume_optimization/{user_id}', [CareerController::class, 'resumeOptimization']); // AI call
+        Route::post('/cover_letter_generation/{user_id}', [CareerController::class, 'coverLetterGeneration']); // AI call
+        Route::post('/cover_letter_optimization/{user_id}', [CareerController::class, 'coverLetterOptimization']); // AI call
     });
 });

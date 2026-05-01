@@ -6,13 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ErrorPopup } from "@/components/ui/error-popup";
-import { useErrorHandler } from "@/hooks/useErrorHandler";
+
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Sparkles, Copy, Check, Loader2, Edit2 } from "lucide-react";
 import { generateEmail } from "@/services/emailService";
 import { fetchProfile } from "@/services/profileService";
+
+interface EmailOutput {
+  subject: string;
+  body: string;
+}
 
 const EmailGenerator = () => {
   const { userId } = useAuth();
@@ -21,10 +25,11 @@ const EmailGenerator = () => {
   const [copied, setCopied] = useState(false);
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const { error, hideError, handleError } = useErrorHandler();
+  const [emailOutput, setEmailOutput] = useState<EmailOutput | null>(null);
+  const [editContent, setEditContent] = useState("");
+
   
   const [formData, setFormData] = useState({ company: "", jobTitle: "", jobDescription: "", recipientName: "", tone: "professional" });
-  const [generatedEmail, setGeneratedEmail] = useState("");
 
   useEffect(() => {
     if (userId) {
@@ -43,12 +48,24 @@ const EmailGenerator = () => {
         job_title: formData.jobTitle,
         company_name: formData.company,
         job_description: formData.jobDescription || undefined,
+        tone: formData.tone,
+        recipient_name: formData.recipientName || undefined,
       }, userId || undefined);
-      setGeneratedEmail(result?.email || result || "");
+
+      const emailData = result?.email || result || {};
+      const subject = emailData.subject || emailData.Subject || emailData.email_subject || 'No Subject';
+      const body = emailData.body || emailData.Body || emailData.content || emailData.html || emailData.text || JSON.stringify(emailData);
+      
+      setEmailOutput({ subject, body });
+      setEditContent(`Subject: ${subject}\n\n${body}`);
       setIsEditing(false);
       toast({ title: "Email Generated", description: "Your application email has been generated" });
     } catch (err) {
-      handleError(err, "Failed to generate email. Please try again.");
+      toast({
+        title: "Failed to generate email",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -56,13 +73,29 @@ const EmailGenerator = () => {
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(generatedEmail);
+      let contentToCopy = '';
+      if (emailOutput) {
+        contentToCopy = `Subject: ${emailOutput.subject}\n\n${emailOutput.body}`;
+      } else if (editContent) {
+        contentToCopy = editContent;
+      }
+      if (!contentToCopy) return;
+      
+      await navigator.clipboard.writeText(contentToCopy);
       setCopied(true);
       toast({ title: "Copied!", description: "Email copied to clipboard" });
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      handleError(err, "Failed to copy to clipboard");
+      toast({
+        title: "Failed to copy",
+        description: "Please try copying manually.",
+        variant: "destructive"
+      });
     }
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEditContent(e.target.value);
   };
 
   return (
@@ -113,30 +146,49 @@ const EmailGenerator = () => {
               </div>
             </Card>
 
-            {generatedEmail && (
+            {emailOutput && (
               <Card className="bg-secondary/80 border-primary/20 shadow-card p-6 w-full">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold flex items-center gap-2"><Sparkles className="w-5 h-5 text-accent" />Generated Email</h2>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setIsEditing(!isEditing)}><Edit2 className="w-4 h-4 mr-2" />{isEditing ? "Preview" : "Edit"}</Button>
+                    <Button variant="outline" size="sm" onClick={() => setIsEditing(!isEditing)}>
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      {isEditing ? "Preview" : "Edit"}
+                    </Button>
                     <Button variant="outline" size="sm" onClick={copyToClipboard}>
                       {copied ? (<><Check className="w-4 h-4 mr-2" />Copied!</>) : (<><Copy className="w-4 h-4 mr-2" />Copy</>)}
                     </Button>
                   </div>
                 </div>
                 {isEditing ? (
-                  <Textarea value={generatedEmail} onChange={(e) => setGeneratedEmail(e.target.value)} className="min-h-[300px] resize-none" />
+                  <Textarea 
+                    value={editContent} 
+                    onChange={handleEditChange}
+                    className="min-h-[300px] resize-none font-sans text-sm leading-relaxed" 
+                    placeholder="Edit your email content here..."
+                  />
                 ) : (
-                  <div className="bg-muted/50 rounded-lg p-4 min-h-[300px]"><pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{generatedEmail}</pre></div>
+                  <div className="space-y-6">
+                    <div className="border-b border-border pb-3">
+                      <h3 className="font-bold text-xl text-foreground bg-gradient-to-r from-primary to-accent bg-clip-text">
+                        {emailOutput.subject}
+                      </h3>
+                    </div>
+                    <div className="prose prose-sm max-w-none leading-relaxed bg-muted/30 p-6 rounded-xl border">
+                      <div className="whitespace-pre-wrap font-sans text-sm">
+                        {emailOutput.body}
+                      </div>
+                    </div>
+                  </div>
                 )}
               </Card>
             )}
           </div>
         </div>
       </main>
-      <ErrorPopup isOpen={error.isOpen} onClose={hideError} title={error.title} message={error.message} onRetry={error.onRetry} />
     </div>
   );
 };
 
 export default EmailGenerator;
+

@@ -39,8 +39,8 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
+<Sonner />
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
           <Routes>
             {/* Public routes */}
@@ -75,7 +75,6 @@ const App = () => (
             <Route path="/skills" element={<ProfileGuard><SkillsManager /></ProfileGuard>} />
             <Route path="/question-history" element={<ProfileGuard><QuestionHistory /></ProfileGuard>} />
 
-            {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Chatbot />

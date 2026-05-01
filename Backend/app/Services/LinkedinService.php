@@ -154,7 +154,7 @@ class LinkedinService
         }
 
         if (!$user->linkedin_expires_at) {
-            throw new \Exception("LinkedIn token expiry not set", 400);
+            return ['is_expired' => false];
         }
 
         if (now()->greaterThan($user->linkedin_expires_at)) {

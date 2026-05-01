@@ -33,13 +33,13 @@ class EmailService
 
         $response = Http::withHeaders([
             'X-N8N-KEY' => config('services.n8n.auth_key'),
-        ])->timeout(120)->post('http://127.0.0.1:5678/webhook/generate_email', [
+        ])->timeout(120)->post('http://127.0.0.1:5678/webhook-test/generate_email', [
                     'input' => $request,
                     'profile' => $profile
                 ]);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to generate email: " . $response->json('error') , 500);
+            throw new \Exception("Failed to generate email " , 500);
         }
 
         return $response->json();

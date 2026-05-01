@@ -5,17 +5,21 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\PasswordResetMail;
 
 
 class AuthService
 {
-
     static function login($credentials)
     {
         $token = JWTAuth::attempt($credentials);
 
         if (!$token) {
-            throw new \Exception("Invalid credentials");
+            throw new \Exception("Invalid credentials", 401);
         }
 
         $user = auth('api')->user();
@@ -28,6 +32,7 @@ class AuthService
 
     static function register($data)
     {
+
         $userData = [
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
@@ -45,4 +50,61 @@ class AuthService
     {
         JWTAuth::invalidate(JWTAuth::getToken());
     }
+
+    static function forgotPassword($email)
+    {
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            throw new \Exception("No user found with that email", 404);
+        }
+
+        DB::table('password_reset_tokens')->where('email', $email)->delete();
+
+        $token = Str::random(60);
+        DB::table('password_reset_tokens')->insert([
+            'email' => $email,
+            'token' => $token,
+            'created_at' => now(),
+        ]);
+
+        $resetUrl = 'http://localhost:8080/reset-password?token=' . $token;
+
+        Log::info("Password reset URL for {$email}: " . $resetUrl);
+
+        Mail::to($email)->send(new PasswordResetMail($resetUrl));
+
+        return ['message' => 'Password reset link sent!'];
+    }
+
+    static function resetPassword($token, $password)
+    {
+        // Find the token
+        $record = DB::table('password_reset_tokens')->where('token', $token)->first();
+
+        if (!$record) {
+            throw new \Exception("Invalid or expired reset token", 400);
+        }
+
+        // Check if token is older than 60 minutes
+        if (now()->diffInMinutes($record->created_at) > 60) {
+            DB::table('password_reset_tokens')->where('token', $token)->delete();
+            throw new \Exception("Reset token has expired", 400);
+        }
+
+        // Find the user and update password
+        $user = User::where('email', $record->email)->first();
+
+        if (!$user) {
+            throw new \Exception("User not found", 404);
+        }
+
+        $user->password = Hash::make($password);
+        $user->save();
+
+        // Delete the token so it can't be reused
+        DB::table('password_reset_tokens')->where('token', $token)->delete();
+
+        return ['message' => 'Password reset successfully!'];
+    }
 }
+?>
