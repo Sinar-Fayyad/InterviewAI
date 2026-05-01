@@ -32,6 +32,32 @@ export type Certification = {
 
 export type SkillCategory = "technical" | "soft_skills" | "tools" | "languages" | "other";
 
+export const backendToFrontendSkillCategory = (category: string | null | undefined): SkillCategory => {
+  switch (category) {
+    case "soft skills":
+      return "soft_skills";
+    case "others":
+      return "other";
+    case "tools":
+      return "tools";
+    case "languages":
+      return "languages";
+    default:
+      return "technical";
+  }
+};
+
+export const frontendToBackendSkillCategory = (category: SkillCategory): string => {
+  switch (category) {
+    case "soft_skills":
+      return "soft skills";
+    case "other":
+      return "others";
+    default:
+      return category;
+  }
+};
+
 export type Skill = {
   id: string;
   name: string;

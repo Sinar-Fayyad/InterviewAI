@@ -6,8 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Code, Plus, Trash2, Pencil, Loader2, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Skill, SkillCategory, categoryConfig, ComponentMode } from "./types";
-import { addSkill, updateSkill, deleteSkill } from "@/services/profileService";
+import { Skill, SkillCategory, categoryConfig, ComponentMode, backendToFrontendSkillCategory, frontendToBackendSkillCategory } from "./types";
+import { addSkill as addSkillAPI, updateSkill as updateSkillAPI, deleteSkill as deleteSkillAPI } from "@/services/profileService";
 
 interface SkillsStepProps {
   skills: Skill[];
@@ -22,6 +22,13 @@ interface SkillsStepProps {
   userId?: string;
   onUpdateList?: (data: Skill[]) => void;
 }
+
+const mapBackendSkill = (backendSkill: any): Skill => ({
+  id: String(backendSkill.id ?? ''),
+  name: backendSkill.name || '',
+  category: backendToFrontendSkillCategory(backendSkill.category),
+  proficiency_level: Math.round((backendSkill.proficiency || 60) / 20),
+});
 
 export const SkillsStep = ({
   skills, newSkill, setNewSkill, addSkill, removeSkill,
@@ -59,16 +66,13 @@ const handleSave = async () => {
     try {
       const skillData = {
         name: editData.name,
-        category: editData.category,
+        category: frontendToBackendSkillCategory(editData.category),
         proficiency: editData.proficiency_level * 20,
       };
-      // Convert string ID to number for backend API
-      const backendId = parseInt(editingId, 10);
-      await updateSkill(backendId, skillData);
+      const result = await updateSkillAPI(editingId, skillData);
       
-      const updated = skills.map((s) => 
-        s.id === editingId ? { ...s, name: editData.name, category: editData.category, proficiency_level: editData.proficiency_level } : s
-      );
+      const mappedSkill = result ? mapBackendSkill(result) : { id: editingId, ...editData };
+      const updated = skills.map((s) => (s.id === editingId ? mappedSkill : s));
       onUpdateList?.(updated);
       
       setEditingId(null);
@@ -84,9 +88,7 @@ const handleSave = async () => {
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      // Convert string ID to number for backend API
-      const backendId = parseInt(id, 10);
-      await deleteSkill(backendId);
+      await deleteSkillAPI(id);
       removeSkill(id);
       toast({ title: "Success", description: "Skill removed" });
     } catch (error) {
@@ -103,18 +105,13 @@ const handleSave = async () => {
     try {
       const skillData = {
         name: newSkill.name.trim(),
-        category: newSkill.category,
+        category: frontendToBackendSkillCategory(newSkill.category),
         proficiency: newSkill.proficiency_level * 20,
       };
-      const result = await addSkill(userId, skillData);
+      const result = await addSkillAPI(userId || '', skillData);
       
-      const newSkillWithId: Skill = {
-        id: result.id,
-        name: newSkill.name,
-        category: newSkill.category,
-        proficiency_level: newSkill.proficiency_level
-      };
-      onUpdateList?.([...skills, newSkillWithId]);
+      const mappedSkill = result ? mapBackendSkill(result) : { id: Date.now().toString(), ...newSkill };
+      onUpdateList?.([...skills, mappedSkill]);
       
       setNewSkill({ name: "", category: "technical", proficiency_level: 3 });
       toast({ title: "Success", description: "Skill added" });
@@ -217,7 +214,7 @@ const handleSave = async () => {
           </div>
           <div className="space-y-2">
             {filteredSkills.map((skill) => {
-              const config = categoryConfig[skill.category];
+              const config = categoryConfig[skill.category] ?? categoryConfig.technical;
               const isEditing = editingId === skill.id;
               const isSaving = savingId === skill.id;
               const isDeleting = deletingId === skill.id;
