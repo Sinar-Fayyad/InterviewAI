@@ -26,20 +26,6 @@ export default function CVGenerator() {
   const [isExtractingText, setIsExtractingText] = useState(false);
   const { userId } = useAuth();
   const navigate = useNavigate();
-  const [hasProfile, setHasProfile] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const checkProfile = async () => {
-      if (!userId) return;
-      try {
-        const data = await fetchProfile(userId);
-        setHasProfile(!!(data && data.full_name && data.email));
-      } catch {
-        setHasProfile(false);
-      }
-    };
-    checkProfile();
-  }, [userId]);
 
   const handleFileUpload = async (file: File | null) => {
     if (!file) return;
@@ -66,11 +52,6 @@ export default function CVGenerator() {
   const { toast } = useToast();
 
   const handleGenerateCV = async () => {
-    if (!hasProfile) {
-      toast({ title: "Complete Your Profile", description: "Please fill out your profile information to generate documents.", variant: "destructive" });
-      navigate("/profile");
-      return;
-    }
     if (!userId) return;
 
     setIsGenerating(true);

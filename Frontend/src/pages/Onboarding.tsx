@@ -82,6 +82,8 @@ export default function Onboarding() {
   const [newSkill, setNewSkill] = useState({ name: "", category: "technical" as SkillCategory, proficiency: 3 });
   const [selectedCategory, setSelectedCategory] = useState<"all" | SkillCategory>("all");
 
+  const isOnboardingComplete = education.length >= 1 && experience.length >= 1 && certifications.length >= 1 && skills.length >= 1;
+
   // Helper to format month to YYYY-MM-DD with day=01
   const formatDate = (monthValue: string): string => {
     if (!monthValue) return '';
@@ -100,7 +102,7 @@ export default function Onboarding() {
       try {
         const data = await fetchProfile(userId);
         // Fix: Check if profile is complete based on data presence (since BE doesn't return onboarding_completed flag)
-        if (data && (data.education?.length > 0 || data.experience?.length > 0 || data.certifications?.length > 0 || data.skills?.length > 0)) { 
+        if (data && data.education?.length >= 1 && data.experience?.length >= 1 && data.certifications?.length >= 1 && data.skills?.length >= 1) { 
           navigate("/dashboard"); 
           return; 
         }
@@ -213,9 +215,17 @@ export default function Onboarding() {
       case 3:
         if (education.length === 0) return "Please add at least one education entry.";
         break;
-      case 6:
-        if (skills.length === 0) return "Please add at least one skill.";
+  case 6:
+        if (!isOnboardingComplete) {
+          const missing = [];
+          if (education.length === 0) missing.push("Education");
+          if (experience.length === 0) missing.push("Experience");
+          if (certifications.length === 0) missing.push("Certifications");
+          if (skills.length === 0) missing.push("Skills");
+          return `Please add at least one item to: ${missing.join(", ")}.`;
+        }
         break;
+
     }
     return null;
   };
@@ -224,6 +234,14 @@ export default function Onboarding() {
     const validationError = validateCurrentStep();
     if (validationError) {
       toast({ title: "Validation Error", description: validationError, variant: "destructive" });
+      return;
+    }
+    if (!isOnboardingComplete) {
+      toast({ 
+        title: "Incomplete Profile", 
+        description: "Please ensure you have at least one entry in Education, Experience, Certifications, and Skills before completing onboarding.", 
+        variant: "destructive" 
+      });
       return;
     }
     setCurrentStep((prev) => Math.min(prev + 1, 6));
@@ -810,7 +828,7 @@ export default function Onboarding() {
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             ) : (
-              <Button onClick={handleComplete} className="flex-1" disabled={loading}>
+              <Button onClick={handleComplete} className="flex-1" disabled={loading || !isOnboardingComplete}>
                 {loading ? "Saving..." : "Complete Onboarding"}
               </Button>
             )}
