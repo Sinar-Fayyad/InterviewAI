@@ -71,10 +71,40 @@ class AuthService
 
         Log::info("Password reset URL for {$email}: " . $resetUrl);
 
-       Mail::to($email)->send(new PasswordResetMail($resetUrl));
+        Mail::to($email)->send(new PasswordResetMail($resetUrl));
 
         return ['message' => 'Password reset link sent!'];
     }
-}
 
+    static function resetPassword($token, $password)
+    {
+        // Find the token
+        $record = DB::table('password_reset_tokens')->where('token', $token)->first();
+
+        if (!$record) {
+            throw new \Exception("Invalid or expired reset token", 400);
+        }
+
+        // Check if token is older than 60 minutes
+        if (now()->diffInMinutes($record->created_at) > 60) {
+            DB::table('password_reset_tokens')->where('token', $token)->delete();
+            throw new \Exception("Reset token has expired", 400);
+        }
+
+        // Find the user and update password
+        $user = User::where('email', $record->email)->first();
+
+        if (!$user) {
+            throw new \Exception("User not found", 404);
+        }
+
+        $user->password = Hash::make($password);
+        $user->save();
+
+        // Delete the token so it can't be reused
+        DB::table('password_reset_tokens')->where('token', $token)->delete();
+
+        return ['message' => 'Password reset successfully!'];
+    }
+}
 ?>

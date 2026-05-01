@@ -26,7 +26,8 @@ Route::group(["prefix" => "v0.1"], function () {
 
     Route::post("/login", [AuthController::class, "login"]);
     Route::post("/register", [AuthController::class, "register"]);
-    Route::post("forgot-password", [AuthController::class, "forgotPassword"]);
+    Route::post("/forgot-password", [AuthController::class, "forgotPassword"]);
+    Route::post("/reset-password", [AuthController::class, "resetPassword"]);
 
     // Chatbot Routes
     Route::post('/initChatMemory/{user_id?}', [ChatbotController::class, 'initializeMemory']); // AI call
