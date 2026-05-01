@@ -6,17 +6,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Sparkles, Copy, Check, Loader2, Edit2 } from "lucide-react";
-import { generateEmail } from "@/services/emailService";
+import { Mail, Sparkles, Copy, Check, Loader2, Edit2, Send } from "lucide-react";
+import { generateEmail, sendEmail } from "@/services/emailService";
 import { fetchProfile } from "@/services/profileService";
 
 interface EmailOutput {
   subject: string;
   body: string;
 }
+
+interface EmailResponse {
+  subject?: string;
+  email?: string;
+  [key: string]: unknown;
+}
+
+const parseEmailResponse = (response: unknown): { subject: string; body: string } => {
+  if (!response || typeof response !== 'object') {
+    console.warn('Invalid email response format:', response);
+    return { subject: '', body: '' };
+  }
+
+  const data = response as EmailResponse;
+
+  const subject = String(data.subject || '').trim();
+  const body = String(data.email || '').trim();
+
+  console.debug('Parsed email response:', { subject, body });
+
+  return { subject, body };
+};
 
 const EmailGenerator = () => {
   const { userId } = useAuth();
@@ -28,8 +51,69 @@ const EmailGenerator = () => {
   const [emailOutput, setEmailOutput] = useState<EmailOutput | null>(null);
   const [editContent, setEditContent] = useState("");
 
-  
   const [formData, setFormData] = useState({ company: "", jobTitle: "", jobDescription: "", recipientName: "", tone: "professional" });
+  const [sendModalOpen, setSendModalOpen] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);
+  const [sendFormData, setSendFormData] = useState({ to: "", subject: "", body: "" });
+
+  const openSendModal = () => {
+    if (emailOutput) {
+      setSendFormData({
+        to: "",
+        subject: emailOutput.subject,
+        body: emailOutput.body
+      });
+    }
+    setSendModalOpen(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!sendFormData.to) {
+      toast({ title: "Missing Information", description: "Please enter recipient email", variant: "destructive" });
+      return;
+    }
+    if (!sendFormData.subject) {
+      toast({ title: "Missing Information", description: "Please enter subject", variant: "destructive" });
+      return;
+    }
+    if (!sendFormData.body) {
+      toast({ title: "Missing Information", description: "Please enter body", variant: "destructive" });
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(sendFormData.to)) {
+      toast({ title: "Invalid Email", description: "Please enter a valid email address", variant: "destructive" });
+      return;
+    }
+    if (sendFormData.subject.length > 255) {
+      toast({ title: "Subject Too Long", description: "Subject must be 255 characters or less", variant: "destructive" });
+      return;
+    }
+
+    if (!userId) {
+      toast({ title: "Not Authenticated", description: "Please log in to send email", variant: "destructive" });
+      return;
+    }
+
+    setSendLoading(true);
+    try {
+      await sendEmail(userId, {
+        to: sendFormData.to,
+        subject: sendFormData.subject,
+        body: sendFormData.body
+      });
+      toast({ title: "Email Sent", description: "Your email has been sent successfully" });
+      setSendModalOpen(false);
+    } catch (err) {
+      toast({
+        title: "Failed to send email",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSendLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (userId) {
@@ -52,10 +136,20 @@ const EmailGenerator = () => {
         recipient_name: formData.recipientName || undefined,
       }, userId || undefined);
 
-      const emailData = result?.email || result || {};
-      const subject = emailData.subject || emailData.Subject || emailData.email_subject || 'No Subject';
-      const body = emailData.body || emailData.Body || emailData.content || emailData.html || emailData.text || JSON.stringify(emailData);
+      console.debug('Raw email generation response:', result);
+
+      const { subject, body } = parseEmailResponse(result);
       
+      if (!body) {
+        toast({ 
+          title: "Warning", 
+          description: "Email body is empty. Please try again.",
+          variant: "destructive" 
+        });
+        setLoading(false);
+        return;
+      }
+
       setEmailOutput({ subject, body });
       setEditContent(`Subject: ${subject}\n\n${body}`);
       setIsEditing(false);
@@ -158,6 +252,10 @@ const EmailGenerator = () => {
                     <Button variant="outline" size="sm" onClick={copyToClipboard}>
                       {copied ? (<><Check className="w-4 h-4 mr-2" />Copied!</>) : (<><Copy className="w-4 h-4 mr-2" />Copy</>)}
                     </Button>
+                    <Button variant="hero" size="sm" onClick={openSendModal}>
+                      <Send className="w-4 h-4 mr-2" />
+                      Send
+                    </Button>
                   </div>
                 </div>
                 {isEditing ? (
@@ -186,9 +284,60 @@ const EmailGenerator = () => {
           </div>
         </div>
       </main>
+
+      <Dialog open={sendModalOpen} onOpenChange={setSendModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Send Email</DialogTitle>
+            <DialogDescription>
+              Fill in the details below to send your generated email.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="sendTo">To *</Label>
+              <Input
+                id="sendTo"
+                type="email"
+                placeholder="recipient@example.com"
+                value={sendFormData.to}
+                onChange={(e) => setSendFormData({ ...sendFormData, to: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sendSubject">Subject *</Label>
+              <Input
+                id="sendSubject"
+                placeholder="Email subject"
+                value={sendFormData.subject}
+                onChange={(e) => setSendFormData({ ...sendFormData, subject: e.target.value })}
+                maxLength={255}
+              />
+              <p className="text-xs text-muted-foreground">{sendFormData.subject.length}/255</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sendBody">Body *</Label>
+              <Textarea
+                id="sendBody"
+                rows={10}
+                value={sendFormData.body}
+                onChange={(e) => setSendFormData({ ...sendFormData, body: e.target.value })}
+                className="resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSendModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="hero" onClick={handleSendEmail} disabled={sendLoading}>
+              {sendLoading ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Sending...</>) : (<><Send className="w-4 h-4 mr-2" />Send Email</>)}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 export default EmailGenerator;
-
