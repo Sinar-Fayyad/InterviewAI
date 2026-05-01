@@ -37,7 +37,7 @@ const ApplicationTracker = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingApp, setEditingApp] = useState<JobApplication | null>(null);
   const [filterStatus, setFilterStatus] = useState<ApplicationStatus | "all">("all");
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     job_title: "",
     company_name: "",
     job_description: "",
@@ -45,6 +45,7 @@ const ApplicationTracker = () => {
     salary_range: "",
     location: "",
     status: "saved" as ApplicationStatus,
+    applied_at: "",
     notes: "",
     contact_name: "",
     contact_email: "",
@@ -67,11 +68,12 @@ const ApplicationTracker = () => {
     }
   };
 
-  const getAppliedAt = () => {
+const getAppliedAt = () => {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}-01`;
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,7 +85,7 @@ const ApplicationTracker = () => {
       return;
     }
 
-    const appliedAt = getAppliedAt();
+const appliedAt = formData.applied_at || getAppliedAt();
     const backendData = {
       job_title: formData.job_title,
       company_name: formData.company_name,
@@ -117,7 +119,7 @@ const ApplicationTracker = () => {
     }
   };
 
-  const handleEdit = (app: JobApplication) => {
+const handleEdit = (app: JobApplication) => {
     setEditingApp(app);
     setFormData({
       job_title: app.job_title,
@@ -127,6 +129,7 @@ const ApplicationTracker = () => {
       salary_range: app.salary_range || "",
       location: app.location || "",
       status: (app.status as ApplicationStatus) || "saved",
+      applied_at: app.applied_at || "",
       notes: app.notes || "",
       contact_name: app.contact_name || "",
       contact_email: app.contact_email || "",
@@ -144,7 +147,7 @@ const ApplicationTracker = () => {
     }
   };
 
-  const resetForm = () => {
+const resetForm = () => {
     setFormData({
       job_title: "",
       company_name: "",
@@ -153,6 +156,7 @@ const ApplicationTracker = () => {
       salary_range: "",
       location: "",
       status: "saved" as ApplicationStatus,
+      applied_at: "",
       notes: "",
       contact_name: "",
       contact_email: "",
@@ -235,7 +239,7 @@ const ApplicationTracker = () => {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+<div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Job URL</Label>
                       <Input
@@ -244,6 +248,17 @@ const ApplicationTracker = () => {
                         onChange={(e) => setFormData({ ...formData, job_url: e.target.value })}
                       />
                     </div>
+                    <div className="space-y-2">
+<Label>Applied Date</Label>
+                      <Input
+                        type="date"
+                        value={formData.applied_at}
+                        onChange={(e) => setFormData({ ...formData, applied_at: e.target.value })}
+                        placeholder="YYYY-MM-DD"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Status</Label>
                       <Select
