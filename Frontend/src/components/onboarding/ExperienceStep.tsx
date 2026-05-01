@@ -51,37 +51,41 @@ export const ExperienceStep = ({
     setEditData(null);
   };
 
-  const handleSave = async () => {
-    if (!editData || !editingId || !userId) return;
+const handleSave = async () => {
+  if (!editData || !editingId || !userId) return;
+  
+  setSavingId(editingId);
+  try {
+    const backendData = {
+      company_name: editData.company,
+      position: editData.position,
+      start_date: normalizeDate(editData.startDate) || null,
+      end_date: normalizeDate(editData.endDate) || null,
+      description: editData.description,
+    };
+    // Convert string ID to number for backend API
+    const backendId = parseInt(editingId, 10);
+    await updateExperience(backendId, backendData);
     
-    setSavingId(editingId);
-    try {
-      const backendData = {
-        company_name: editData.company,
-        position: editData.position,
-        start_date: normalizeDate(editData.startDate) || null,
-        end_date: normalizeDate(editData.endDate) || null,
-        description: editData.description,
-      };
-      await updateExperience(editingId, backendData);
-      
-      const updated = experience.map((e) => (e.id === editingId ? { ...editData } : e));
-      onUpdateList?.(updated);
-      
-      setEditingId(null);
-      setEditData(null);
-      toast({ title: "Success", description: "Experience updated" });
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to update", variant: "destructive" });
-    } finally {
-      setSavingId(null);
-    }
-  };
+    const updated = experience.map((e) => (e.id === editingId ? { ...editData } : e));
+    onUpdateList?.(updated);
+    
+    setEditingId(null);
+    setEditData(null);
+    toast({ title: "Success", description: "Experience updated" });
+  } catch (error) {
+    toast({ title: "Error", description: "Failed to update", variant: "destructive" });
+  } finally {
+    setSavingId(null);
+  }
+};
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      await deleteExperience(id);
+      // Convert string ID to number for backend API
+      const backendId = parseInt(id, 10);
+      await deleteExperience(backendId);
       removeExperience(id);
       toast({ title: "Success", description: "Experience removed" });
     } catch (error) {

@@ -51,7 +51,7 @@ export const EducationStep = ({
     setEditData(null);
   };
 
-  const handleSave = async () => {
+const handleSave = async () => {
     if (!editData || !editingId || !userId) return;
     
     setSavingId(editingId);
@@ -64,7 +64,9 @@ export const EducationStep = ({
         end_date: normalizeDate(editData.endDate) || null,
         description: editData.description,
       };
-      await updateEducation(editingId, backendData);
+      // Convert string ID to number for backend API
+      const backendId = parseInt(editingId, 10);
+      await updateEducation(backendId, backendData);
       
       const updated = education.map((e) => (e.id === editingId ? { ...editData } : e));
       onUpdateList?.(updated);
@@ -82,7 +84,9 @@ export const EducationStep = ({
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      await deleteEducation(id);
+      // Convert string ID to number for backend API
+      const backendId = parseInt(id, 10);
+      await deleteEducation(backendId);
       removeEducation(id);
       toast({ title: "Success", description: "Education removed" });
     } catch (error) {

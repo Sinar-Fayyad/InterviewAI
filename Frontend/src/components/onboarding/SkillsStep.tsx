@@ -52,7 +52,7 @@ export const SkillsStep = ({
     setEditData(null);
   };
 
-  const handleSave = async () => {
+const handleSave = async () => {
     if (!editData || !editingId || !userId) return;
     
     setSavingId(editingId);
@@ -62,7 +62,9 @@ export const SkillsStep = ({
         category: editData.category,
         proficiency: editData.proficiency_level * 20,
       };
-      await updateSkill(editingId, skillData);
+      // Convert string ID to number for backend API
+      const backendId = parseInt(editingId, 10);
+      await updateSkill(backendId, skillData);
       
       const updated = skills.map((s) => 
         s.id === editingId ? { ...s, name: editData.name, category: editData.category, proficiency_level: editData.proficiency_level } : s
@@ -82,7 +84,9 @@ export const SkillsStep = ({
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      await deleteSkill(id);
+      // Convert string ID to number for backend API
+      const backendId = parseInt(id, 10);
+      await deleteSkill(backendId);
       removeSkill(id);
       toast({ title: "Success", description: "Skill removed" });
     } catch (error) {
@@ -105,7 +109,7 @@ export const SkillsStep = ({
       const result = await addSkill(userId, skillData);
       
       const newSkillWithId: Skill = {
-        id: result.id || `skill_${Date.now()}`,
+        id: result.id,
         name: newSkill.name,
         category: newSkill.category,
         proficiency_level: newSkill.proficiency_level

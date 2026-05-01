@@ -50,36 +50,40 @@ export const CertificationsStep = ({
     setEditData(null);
   };
 
-  const handleSave = async () => {
-    if (!editData || !editingId || !userId) return;
+const handleSave = async () => {
+  if (!editData || !editingId || !userId) return;
+  
+  setSavingId(editingId);
+  try {
+    const backendCert = {
+      certification_name: editData.name,
+      organization_name: editData.issuer,
+      date_obtained: normalizeDate(editData.date) || null,
+      url: editData.url || null
+    };
+    // Convert string ID to number for backend API
+    const backendId = parseInt(editingId, 10);
+    await updateCertification(backendId, backendCert);
     
-    setSavingId(editingId);
-    try {
-      const backendCert = {
-        certification_name: editData.name,
-        organization_name: editData.issuer,
-        date_obtained: normalizeDate(editData.date) || null,
-        url: editData.url || null
-      };
-      await updateCertification(editingId, backendCert);
-      
-      const updated = certifications.map((c) => (c.id === editingId ? { ...editData } : c));
-      onUpdateList?.(updated);
-      
-      setEditingId(null);
-      setEditData(null);
-      toast({ title: "Success", description: "Certification updated" });
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to update", variant: "destructive" });
-    } finally {
-      setSavingId(null);
-    }
-  };
+    const updated = certifications.map((c) => (c.id === editingId ? { ...editData } : c));
+    onUpdateList?.(updated);
+    
+    setEditingId(null);
+    setEditData(null);
+    toast({ title: "Success", description: "Certification updated" });
+  } catch (error) {
+    toast({ title: "Error", description: "Failed to update", variant: "destructive" });
+  } finally {
+    setSavingId(null);
+  }
+};
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      await deleteCertification(id);
+      // Convert string ID to number for backend API
+      const backendId = parseInt(id, 10);
+      await deleteCertification(backendId);
       removeCertification(id);
       toast({ title: "Success", description: "Certification removed" });
     } catch (error) {

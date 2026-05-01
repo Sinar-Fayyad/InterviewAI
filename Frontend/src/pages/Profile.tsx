@@ -194,12 +194,11 @@ const Profile = () => {
     setProfileData({ ...profileData, skills: data });
   };
 
-  // Education handlers
+// Education handlers
   const addEducation = () => {
     setEducation([...education, { id: `new_${Date.now()}`, school: "", degree: "", field: "", startDate: "", endDate: "", description: "" }]);
   };
   const removeEducation = (id: string) => {
-    setEducation(education.filter((e) => e.id !== id));
     setEducation(education.filter((e) => e.id !== id));
   };
   const updateEducation = (id: string, field: keyof Education, value: string) => {
