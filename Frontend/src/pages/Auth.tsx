@@ -50,7 +50,7 @@ const Auth = () => {
     setIsResetLoading(true);
 
     try {
-      const response = await api.post("/auth/forgot-password", { email });
+      const response = await api.post("/forgot-password", { email });
       const error = response.data?.error;
 
       if (error) {
