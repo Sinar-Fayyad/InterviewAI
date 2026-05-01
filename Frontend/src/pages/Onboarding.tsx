@@ -46,17 +46,54 @@ export default function Onboarding() {
       if (!userId) { navigate("/auth"); return; }
 
       try {
-        const data = await fetchProfile(userId);
-        if (data?.onboarding_completed) { navigate("/dashboard"); return; }
-        if (data) {
-          setFullName(data.full_name || "");
-          setEmail(data.email || user?.email || "");
-          setPhone(data.phone || "");
-          setLocation(data.location || "");
-          setSummary(data.summary || "");
-          setEducation(data.education as Education[] || []);
-          setExperience(data.experience as Experience[] || []);
-          setCertifications(data.certifications as Certification[] || []);
+const data = await fetchProfile(userId);
+        if (data?.user_info?.onboarding_completed) { navigate("/dashboard"); return; }
+        if (data?.user_info) {
+          const userInfo = Array.isArray(data.user_info) ? data.user_info[0] : data.user_info;
+          setFullName(`${userInfo.first_name || ""} ${userInfo.last_name || ""}`.trim());
+          setEmail(userInfo.email || user?.email || "");
+          setPhone(userInfo.phone || "");
+          setLocation(userInfo.location || "");
+          setSummary(userInfo.summary || "");
+          
+          // Transform backend education data to frontend format
+          setEducation((data.education || []).map((edu: any) => ({
+            id: crypto.randomUUID(),
+            school: edu.institution_name || "",
+            degree: edu.degree || "",
+            field: edu.field_of_study || "",
+            startDate: edu.start_date ? edu.start_date.substring(0, 7) : "", // YYYY-MM-DD -> YYYY-MM
+            endDate: edu.end_date ? edu.end_date.substring(0, 7) : "",
+            description: edu.description || "",
+          })));
+          
+          // Transform backend experience data to frontend format
+          setExperience((data.experience || []).map((exp: any) => ({
+            id: crypto.randomUUID(),
+            company: exp.company_name || "",
+            position: exp.position || "",
+            startDate: exp.start_date ? exp.start_date.substring(0, 7) : "",
+            endDate: exp.end_date ? exp.end_date.substring(0, 7) : "",
+            description: exp.description || "",
+          })));
+          
+// Transform backend certifications data to frontend format
+          setCertifications((data.certifications || []).map((cert: any) => ({
+            id: crypto.randomUUID(),
+            name: cert.certification_name || "",
+            issuer: cert.organization_name || "",
+            date: cert.date_obtained ? cert.date_obtained.substring(0, 7) : "",
+            url: cert.url || "",
+          })));
+          
+          // Transform backend skills data to frontend format
+          setSkills((data.skills || []).map((skill: any) => ({
+            id: crypto.randomUUID(),
+            name: skill.name || "",
+            category: skill.category as SkillCategory || "technical",
+            proficiency_level: skill.proficiency || 3,
+          })));
+          
           setLinkedinConnected(data.linkedin_connected || false);
           setGoogleConnected(data.google_connected || false);
         }
@@ -128,6 +165,66 @@ export default function Onboarding() {
 
   const handleBack = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
+// Helper function to convert YYYY-MM to YYYY-MM-01 format for backend
+  const formatDateForBackend = (dateStr: string): string => {
+    if (!dateStr) return "";
+    // If already in YYYY-MM-DD format, return as is
+    if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) return dateStr;
+    // If in YYYY-MM format (from month input), add -01 day
+    if (dateStr.match(/^\d{4}-\d{2}$/)) return `${dateStr}-01`;
+    return dateStr;
+  };
+
+  // Transform frontend data to backend expected format
+  const transformDataForBackend = () => {
+    const transformEducation = education.map(edu => ({
+      institution_name: edu.school,
+      degree: edu.degree,
+      field_of_study: edu.field,
+      start_date: formatDateForBackend(edu.startDate),
+      end_date: formatDateForBackend(edu.endDate),
+      description: edu.description,
+    }));
+
+    const transformExperience = experience.map(exp => ({
+      company_name: exp.company,
+      position: exp.position,
+      start_date: formatDateForBackend(exp.startDate),
+      end_date: formatDateForBackend(exp.endDate),
+      description: exp.description,
+    }));
+
+    const transformCertifications = certifications.map(cert => ({
+      certification_name: cert.name,
+      organization_name: cert.issuer,
+      date_obtained: formatDateForBackend(cert.date),
+    }));
+
+    const transformSkills = skills.map(s => ({
+      name: s.name,
+      category: s.category,
+      proficiency: s.proficiency_level,
+    }));
+
+    return {
+      user_info: [{
+        first_name: fullName.split(" ")[0],
+        last_name: fullName.split(" ").slice(1).join(" ") || "",
+        email,
+        phone,
+        location,
+        summary,
+      }],
+      education: transformEducation,
+      experience: transformExperience,
+      certifications: transformCertifications,
+      skills: transformSkills,
+      linkedin_connected: linkedinConnected,
+      google_connected: googleConnected,
+      onboarding_completed: true,
+    };
+  };
+
   const handleComplete = async () => {
     const validationError = validateCurrentStep();
     if (validationError) {
@@ -138,20 +235,7 @@ export default function Onboarding() {
 
     setLoading(true);
     try {
-      const profileData = {
-        full_name: fullName,
-        email,
-        phone,
-        location,
-        summary,
-        education,
-        experience,
-        certifications,
-        skills: skills.map(s => ({ name: s.name, category: s.category, proficiency_level: s.proficiency_level })),
-        linkedin_connected: linkedinConnected,
-        google_connected: googleConnected,
-        onboarding_completed: true,
-      };
+      const profileData = transformDataForBackend();
 
       await saveProfile(userId, profileData);
 
