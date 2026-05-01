@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Briefcase, Pencil, Trash2, Loader2, Check, X, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Experience, ComponentMode } from "./types";
-import { addExperience, updateExperience, deleteExperience } from "@/services/profileService";
+import { addExperience as addExperienceAPI, updateExperience as updateExperienceAPI, deleteExperience as deleteExperienceAPI } from "@/services/profileService";
 
 interface ExperienceStepProps {
   experience: Experience[];
@@ -22,6 +22,33 @@ const normalizeDate = (dateStr: string | null): string | null => {
   if (!dateStr || dateStr.length !== 7) return null;
   return dateStr + "-01";
 };
+
+const extractDateYearMonth = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return '';
+  // Handle various date formats
+  if (typeof dateStr === 'string') {
+    // If it's already in YYYY-MM format, return as-is
+    if (dateStr.length === 7 && dateStr[4] === '-') {
+      return dateStr;
+    }
+    // If it's in YYYY-MM-DD format, extract first 7 chars
+    if (dateStr.length >= 10 && dateStr[4] === '-' && dateStr[7] === '-') {
+      return dateStr.substring(0, 7);
+    }
+  }
+  return '';
+};
+
+const mapBackendExperience = (backendExp: any): Experience => ({
+  id: String(backendExp.id || ''),
+  company: backendExp.company_name || '',
+  position: backendExp.position || '',
+  startDate: extractDateYearMonth(backendExp.start_date),
+  endDate: extractDateYearMonth(backendExp.end_date),
+  description: backendExp.description || '',
+});
+
+const isNewExperienceId = (id: unknown): id is string => typeof id === 'string' && id.startsWith('new_');
 
 export const ExperienceStep = ({
   experience,
@@ -63,11 +90,10 @@ const handleSave = async () => {
       end_date: normalizeDate(editData.endDate) || null,
       description: editData.description,
     };
-    // Convert string ID to number for backend API
-    const backendId = parseInt(editingId, 10);
-    await updateExperience(backendId, backendData);
+    const result = await updateExperienceAPI(editingId, backendData);
     
-    const updated = experience.map((e) => (e.id === editingId ? { ...editData } : e));
+    const mappedExperience = result ? mapBackendExperience(result) : editData;
+    const updated = experience.map((e) => (e.id === editingId ? mappedExperience : e));
     onUpdateList?.(updated);
     
     setEditingId(null);
@@ -83,9 +109,7 @@ const handleSave = async () => {
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      // Convert string ID to number for backend API
-      const backendId = parseInt(id, 10);
-      await deleteExperience(backendId);
+      await deleteExperienceAPI(id);
       removeExperience(id);
       toast({ title: "Success", description: "Experience removed" });
     } catch (error) {
@@ -98,7 +122,7 @@ const handleSave = async () => {
   const handleAddNew = async () => {
     if (!userId || !isAddingNew) return;
     
-    const newExp = experience.find(e => e.id.startsWith('new_'));
+    const newExp = experience.find(e => isNewExperienceId(e.id));
     if (!newExp || !newExp.company || !newExp.position) return;
     
     setSavingId("new");
@@ -110,11 +134,12 @@ const handleSave = async () => {
         end_date: normalizeDate(newExp.endDate) || null,
         description: newExp.description,
       };
-      const result = await addExperience(userId, backendData);
+      const result = await addExperienceAPI(userId || '', backendData);
       
+      const mappedExperience = result ? mapBackendExperience(result) : newExp;
       const updated = experience.map(e => {
-        if (e.id.startsWith('new_')) {
-          return { ...e, id: result.id || e.id };
+        if (isNewExperienceId(e.id)) {
+          return mappedExperience;
         }
         return e;
       });
@@ -158,7 +183,7 @@ const handleSave = async () => {
           const isEditing = editingId === exp.id;
           const isSaving = savingId === exp.id;
           const isDeleting = deletingId === exp.id;
-          const isNewItem = exp.id.startsWith('new_');
+          const isNewItem = isNewExperienceId(exp.id);
           
           return (
             <Card key={exp.id} className="p-4 border-border">

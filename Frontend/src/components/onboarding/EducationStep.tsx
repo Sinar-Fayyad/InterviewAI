@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { GraduationCap, Pencil, Trash2, Loader2, Check, X, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Education, ComponentMode } from "./types";
-import { addEducation, updateEducation, deleteEducation } from "@/services/profileService";
+import { addEducation as addEducationAPI, updateEducation as updateEducationAPI, deleteEducation as deleteEducationAPI } from "@/services/profileService";
 
 interface EducationStepProps {
   education: Education[];
@@ -22,6 +22,34 @@ const normalizeDate = (dateStr: string | null): string | null => {
   if (!dateStr || dateStr.length !== 7) return null;
   return dateStr + "-01";
 };
+
+const extractDateYearMonth = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return '';
+  // Handle various date formats
+  if (typeof dateStr === 'string') {
+    // If it's already in YYYY-MM format, return as-is
+    if (dateStr.length === 7 && dateStr[4] === '-') {
+      return dateStr;
+    }
+    // If it's in YYYY-MM-DD format, extract first 7 chars
+    if (dateStr.length >= 10 && dateStr[4] === '-' && dateStr[7] === '-') {
+      return dateStr.substring(0, 7);
+    }
+  }
+  return '';
+};
+
+const mapBackendEducation = (backendEdu: any): Education => ({
+  id: String(backendEdu.id ?? ''),
+  school: backendEdu.institution_name || '',
+  degree: backendEdu.degree || '',
+  field: backendEdu.field_of_study || '',
+  startDate: extractDateYearMonth(backendEdu.start_date),
+  endDate: extractDateYearMonth(backendEdu.end_date),
+  description: backendEdu.description || '',
+});
+
+const isNewEducationId = (id: unknown): id is string => typeof id === 'string' && id.startsWith('new_');
 
 export const EducationStep = ({
   education,
@@ -64,11 +92,11 @@ const handleSave = async () => {
         end_date: normalizeDate(editData.endDate) || null,
         description: editData.description,
       };
-      // Convert string ID to number for backend API
-      const backendId = parseInt(editingId, 10);
-      await updateEducation(backendId, backendData);
+      const result = await updateEducationAPI(editingId, backendData);
       
-      const updated = education.map((e) => (e.id === editingId ? { ...editData } : e));
+      // Map the API response back to component format
+      const mappedEducation = result ? mapBackendEducation(result) : editData;
+      const updated = education.map((e) => (e.id === editingId ? mappedEducation : e));
       onUpdateList?.(updated);
       
       setEditingId(null);
@@ -84,9 +112,7 @@ const handleSave = async () => {
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      // Convert string ID to number for backend API
-      const backendId = parseInt(id, 10);
-      await deleteEducation(backendId);
+      await deleteEducationAPI(id);
       removeEducation(id);
       toast({ title: "Success", description: "Education removed" });
     } catch (error) {
@@ -99,7 +125,7 @@ const handleSave = async () => {
   const handleAddNew = async () => {
     if (!userId || !isAddingNew) return;
     
-    const newEdu = education.find(e => e.id.startsWith('new_'));
+    const newEdu = education.find(e => isNewEducationId(e.id));
     if (!newEdu || !newEdu.school || !newEdu.degree) return;
     
     setSavingId("new");
@@ -112,12 +138,13 @@ const handleSave = async () => {
         end_date: normalizeDate(newEdu.endDate) || null,
         description: newEdu.description,
       };
-      const result = await addEducation(userId, backendData);
+      const result = await addEducationAPI(userId || '', backendData);
       
-      // Create updated list with real ID
+      // Map the API response back to component format
+      const mappedEducation = result ? mapBackendEducation(result) : newEdu;
       const updated = education.map(e => {
-        if (e.id.startsWith('new_')) {
-          return { ...e, id: result.id || e.id };
+        if (isNewEducationId(e.id)) {
+          return mappedEducation;
         }
         return e;
       });
@@ -161,7 +188,7 @@ const handleSave = async () => {
           const isEditing = editingId === edu.id;
           const isSaving = savingId === edu.id;
           const isDeleting = deletingId === edu.id;
-          const isNewItem = edu.id.startsWith('new_');
+          const isNewItem = isNewEducationId(edu.id);
           
           return (
             <Card key={edu.id} className="p-4 border-border">
@@ -262,17 +289,23 @@ const handleSave = async () => {
               ) : (
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold">{edu.school || "No school"}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {edu.degree}{edu.field && ` in ${edu.field}`}
-                      </p>
-                      {(edu.startDate || edu.endDate) && (
+                    <div className="space-y-2 flex-1">
+                      <div>
+                        <h3 className="font-semibold text-base">{edu.school && edu.school.trim() ? edu.school : "No institution"}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {edu.startDate} - {edu.endDate || "Present"}
+                          {edu.degree && edu.degree.trim() ? edu.degree : "No degree specified"}{edu.field && edu.field.trim() ? ` in ${edu.field}` : ""}
                         </p>
-                      )}
-                      {edu.description && <p className="text-sm mt-2">{edu.description}</p>}
+                      </div>
+                      <div>
+                        {(edu.startDate || edu.endDate) && (
+                          <p className="text-xs text-muted-foreground font-medium">
+                            {edu.startDate && edu.startDate.trim() ? edu.startDate : "Unknown"} 
+                            {" - "}
+                            {edu.endDate && edu.endDate.trim() ? edu.endDate : "Present"}
+                          </p>
+                        )}
+                      </div>
+                      {edu.description && edu.description.trim() && <p className="text-sm mt-2 text-foreground">{edu.description}</p>}
                     </div>
                     
                     {isProfileMode && (

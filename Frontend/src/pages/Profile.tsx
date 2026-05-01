@@ -13,7 +13,7 @@ import { EducationStep } from "@/components/onboarding/EducationStep";
 import { ExperienceStep } from "@/components/onboarding/ExperienceStep";
 import { CertificationsStep } from "@/components/onboarding/CertificationsStep";
 import { SkillsStep } from "@/components/onboarding/SkillsStep";
-import { Education, Experience, Certification, Skill, SkillCategory } from "@/components/onboarding/types";
+import { Education, Experience, Certification, Skill, SkillCategory, backendToFrontendSkillCategory } from "@/components/onboarding/types";
 
 interface BasicInfo {
   full_name: string;
@@ -30,6 +30,22 @@ interface ProfileData {
   certifications: Certification[];
   skills: Skill[];
 }
+
+const extractDateYearMonth = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return '';
+  // Handle various date formats
+  if (typeof dateStr === 'string') {
+    // If it's already in YYYY-MM format, return as-is
+    if (dateStr.length === 7 && dateStr[4] === '-') {
+      return dateStr;
+    }
+    // If it's in YYYY-MM-DD format, extract first 7 chars
+    if (dateStr.length >= 10 && dateStr[4] === '-' && dateStr[7] === '-') {
+      return dateStr.substring(0, 7);
+    }
+  }
+  return '';
+};
 
 const Profile = () => {
   const { userId, loading: authLoading } = useAuth();
@@ -88,69 +104,69 @@ const Profile = () => {
             summary: userInfo.summary || ''
           },
           education: (data.education || []).map((edu: any, index: number) => ({
-            id: edu.id || `edu_${index}_${Date.now()}`,
+            id: edu.id != null ? String(edu.id) : `edu_${index}_${Date.now()}`,
             school: edu.institution_name || '',
             degree: edu.degree || '',
             field: edu.field_of_study || '',
-            startDate: edu.start_date ? edu.start_date.substring(0, 7) : '',
-            endDate: edu.end_date ? edu.end_date.substring(0, 7) : '',
+            startDate: extractDateYearMonth(edu.start_date),
+            endDate: extractDateYearMonth(edu.end_date),
             description: edu.description || ''
           })),
           experience: (data.experience || []).map((exp: any, index: number) => ({
-            id: exp.id || `exp_${index}_${Date.now()}`,
+            id: exp.id != null ? String(exp.id) : `exp_${index}_${Date.now()}`,
             company: exp.company_name || '',
             position: exp.position || '',
-            startDate: exp.start_date ? exp.start_date.substring(0, 7) : '',
-            endDate: exp.end_date ? exp.end_date.substring(0, 7) : '',
+            startDate: extractDateYearMonth(exp.start_date),
+            endDate: extractDateYearMonth(exp.end_date),
             description: exp.description || ''
           })),
           certifications: (data.certifications || []).map((cert: any, index: number) => ({
-            id: cert.id || `cert_${index}_${Date.now()}`,
+            id: cert.id != null ? String(cert.id) : `cert_${index}_${Date.now()}`,
             name: cert.certification_name || '',
             issuer: cert.organization_name || '',
-            date: cert.date_obtained ? cert.date_obtained.substring(0, 7) : '',
+            date: extractDateYearMonth(cert.date_obtained),
             url: cert.url || ''
           })),
           skills: (data.skills || []).map((skill: any) => ({
-            id: skill.id,
+            id: String(skill.id ?? ''),
             name: skill.name,
-            category: (skill.category as SkillCategory) || "technical",
+            category: backendToFrontendSkillCategory(skill.category),
             proficiency_level: Math.round((skill.proficiency || 60) / 20)
           }))
         });
 
         // Also update the individual state variables
         setEducation((data.education || []).map((edu: any, index: number) => ({
-          id: edu.id || `edu_${index}_${Date.now()}`,
+          id: edu.id != null ? String(edu.id) : `edu_${index}_${Date.now()}`,
           school: edu.institution_name || '',
           degree: edu.degree || '',
           field: edu.field_of_study || '',
-          startDate: edu.start_date ? edu.start_date.substring(0, 7) : '',
-          endDate: edu.end_date ? edu.end_date.substring(0, 7) : '',
+          startDate: extractDateYearMonth(edu.start_date),
+          endDate: extractDateYearMonth(edu.end_date),
           description: edu.description || ''
         })));
 
         setExperience((data.experience || []).map((exp: any, index: number) => ({
-          id: exp.id || `exp_${index}_${Date.now()}`,
+          id: exp.id != null ? String(exp.id) : `exp_${index}_${Date.now()}`,
           company: exp.company_name || '',
           position: exp.position || '',
-          startDate: exp.start_date ? exp.start_date.substring(0, 7) : '',
-          endDate: exp.end_date ? exp.end_date.substring(0, 7) : '',
+          startDate: extractDateYearMonth(exp.start_date),
+          endDate: extractDateYearMonth(exp.end_date),
           description: exp.description || ''
         })));
 
         setCertifications((data.certifications || []).map((cert: any, index: number) => ({
-          id: cert.id || `cert_${index}_${Date.now()}`,
+          id: cert.id != null ? String(cert.id) : `cert_${index}_${Date.now()}`,
           name: cert.certification_name || '',
           issuer: cert.organization_name || '',
-          date: cert.date_obtained ? cert.date_obtained.substring(0, 7) : '',
+          date: extractDateYearMonth(cert.date_obtained),
           url: cert.url || ''
         })));
 
         setSkills((data.skills || []).map((skill: any) => ({
-          id: skill.id,
+          id: String(skill.id ?? ''),
           name: skill.name,
-          category: (skill.category as SkillCategory) || "technical",
+          category: backendToFrontendSkillCategory(skill.category),
           proficiency_level: Math.round((skill.proficiency || 60) / 20)
         })));
 

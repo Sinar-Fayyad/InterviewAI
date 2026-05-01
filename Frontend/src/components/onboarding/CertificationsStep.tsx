@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Award, Pencil, Trash2, Loader2, Check, X, Plus, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Certification, ComponentMode } from "./types";
-import { addCertification, updateCertification, deleteCertification } from "@/services/profileService";
+import { addCertification as addCertificationAPI, updateCertification as updateCertificationAPI, deleteCertification as deleteCertificationAPI } from "@/services/profileService";
 
 interface CertificationsStepProps {
   certifications: Certification[];
@@ -21,6 +21,32 @@ const normalizeDate = (dateStr: string | null): string | null => {
   if (!dateStr || dateStr.length !== 7) return null;
   return dateStr + "-01";
 };
+
+const extractDateYearMonth = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return '';
+  // Handle various date formats
+  if (typeof dateStr === 'string') {
+    // If it's already in YYYY-MM format, return as-is
+    if (dateStr.length === 7 && dateStr[4] === '-') {
+      return dateStr;
+    }
+    // If it's in YYYY-MM-DD format, extract first 7 chars
+    if (dateStr.length >= 10 && dateStr[4] === '-' && dateStr[7] === '-') {
+      return dateStr.substring(0, 7);
+    }
+  }
+  return '';
+};
+
+const mapBackendCertification = (backendCert: any): Certification => ({
+  id: String(backendCert.id ?? ''),
+  name: backendCert.certification_name || '',
+  issuer: backendCert.organization_name || '',
+  date: extractDateYearMonth(backendCert.date_obtained),
+  url: backendCert.url || '',
+});
+
+const isNewCertificationId = (id: unknown): id is string => typeof id === 'string' && id.startsWith('new_');
 
 export const CertificationsStep = ({
   certifications,
@@ -61,11 +87,10 @@ const handleSave = async () => {
       date_obtained: normalizeDate(editData.date) || null,
       url: editData.url || null
     };
-    // Convert string ID to number for backend API
-    const backendId = parseInt(editingId, 10);
-    await updateCertification(backendId, backendCert);
+    const result = await updateCertificationAPI(editingId, backendCert);
     
-    const updated = certifications.map((c) => (c.id === editingId ? { ...editData } : c));
+    const mappedCertification = result ? mapBackendCertification(result) : editData;
+    const updated = certifications.map((c) => (c.id === editingId ? mappedCertification : c));
     onUpdateList?.(updated);
     
     setEditingId(null);
@@ -81,9 +106,7 @@ const handleSave = async () => {
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      // Convert string ID to number for backend API
-      const backendId = parseInt(id, 10);
-      await deleteCertification(backendId);
+      await deleteCertificationAPI(id);
       removeCertification(id);
       toast({ title: "Success", description: "Certification removed" });
     } catch (error) {
@@ -96,7 +119,7 @@ const handleSave = async () => {
   const handleAddNew = async () => {
     if (!userId || !isAddingNew) return;
     
-    const newCert = certifications.find(c => c.id.startsWith('new_'));
+    const newCert = certifications.find(c => isNewCertificationId(c.id));
     if (!newCert || !newCert.name || !newCert.issuer) return;
     
     setSavingId("new");
@@ -107,11 +130,12 @@ const handleSave = async () => {
         date_obtained: normalizeDate(newCert.date) || null,
         url: newCert.url || null
       };
-      const result = await addCertification(userId, backendCert);
+      const result = await addCertificationAPI(userId || '', backendCert);
       
+      const mappedCertification = result ? mapBackendCertification(result) : newCert;
       const updated = certifications.map(c => {
-        if (c.id.startsWith('new_')) {
-          return { ...c, id: result.id || c.id };
+        if (isNewCertificationId(c.id)) {
+          return mappedCertification;
         }
         return c;
       });
@@ -155,7 +179,7 @@ const handleSave = async () => {
           const isEditing = editingId === cert.id;
           const isSaving = savingId === cert.id;
           const isDeleting = deletingId === cert.id;
-          const isNewItem = cert.id.startsWith('new_');
+          const isNewItem = isNewCertificationId(cert.id);
           
           return (
             <Card key={cert.id} className="p-4 border-border">

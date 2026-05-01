@@ -13,7 +13,7 @@ import { EducationStep } from "@/components/onboarding/EducationStep";
 import { ExperienceStep } from "@/components/onboarding/ExperienceStep";
 import { CertificationsStep } from "@/components/onboarding/CertificationsStep";
 import { SkillsStep } from "@/components/onboarding/SkillsStep";
-import { Education, Experience, Certification, Skill, SkillCategory } from "@/components/onboarding/types";
+import { backendToFrontendSkillCategory, Education, Experience, Certification, Skill, SkillCategory } from "@/components/onboarding/types";
 
 export default function Onboarding() {
   const { user, userId, loading: authLoading } = useAuth();
@@ -90,7 +90,7 @@ const data = await fetchProfile(userId);
           setSkills((data.skills || []).map((skill: any) => ({
             id: crypto.randomUUID(),
             name: skill.name || "",
-            category: skill.category as SkillCategory || "technical",
+            category: backendToFrontendSkillCategory(skill.category),
             proficiency_level: skill.proficiency || 3,
           })));
           
