@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Linkedin, Mail, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { socialiteRedirect } from "@/services/profileService";
+import {
+  socialiteRedirect,
+  disconnectGoogle,
+  disconnectLinkedin,
+} from "@/services/profileService";
 import { ComponentMode } from "./types";
 import api from "@/services/api";
 
@@ -36,20 +40,23 @@ export const ConnectAccountsStep = ({
     if (isProfileMode && userId) {
       setLoading(true);
       try {
-        const url = await socialiteRedirect("linkedin-openid", userId);
-        if (url) window.location.href = url;
-        else {
-          onUpdate?.(true, googleConnected);
+        if (linkedinConnected) {
+          // ✅ disconnect
+          await disconnectLinkedin(userId);
+          onUpdate?.(false, googleConnected);
           toast({
-            title: "LinkedIn Connected",
-            description:
-              "Your LinkedIn account has been connected successfully.",
+            title: "LinkedIn Disconnected",
+            description: "Your LinkedIn account has been disconnected.",
           });
+        } else {
+          // connect
+          const url = await socialiteRedirect("linkedin-openid", userId);
+          if (url) window.location.href = url;
         }
       } catch (error: any) {
         toast({
-          title: "Connection Failed",
-          description: error.message || "Failed to connect LinkedIn",
+          title: "Failed",
+          description: error.message || "Something went wrong",
           variant: "destructive",
         });
       } finally {
@@ -64,19 +71,23 @@ export const ConnectAccountsStep = ({
     if (isProfileMode && userId) {
       setLoading(true);
       try {
-        const url = await socialiteRedirect("google", userId);
-        if (url) window.location.href = url;
-        else {
-          onUpdate?.(linkedinConnected, true);
+        if (googleConnected) {
+          // ✅ disconnect
+          await disconnectGoogle(userId);
+          onUpdate?.(linkedinConnected, false);
           toast({
-            title: "Google Connected",
-            description: "Your Google account has been connected successfully.",
+            title: "Google Disconnected",
+            description: "Your Google account has been disconnected.",
           });
+        } else {
+          // connect
+          const url = await socialiteRedirect("google", userId);
+          if (url) window.location.href = url;
         }
       } catch (error: any) {
         toast({
-          title: "Connection Failed",
-          description: error.message || "Failed to connect Google",
+          title: "Failed",
+          description: error.message || "Something went wrong",
           variant: "destructive",
         });
       } finally {

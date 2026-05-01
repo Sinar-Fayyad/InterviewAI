@@ -35,17 +35,13 @@ Route::group(["prefix" => "v0.1"], function () {
     Route::post('/clearChatMemory/{collection_name}', [ChatbotController::class, 'clearMemory']); // AI call
 
     Route::post('generate_email/{user_id?}', [EmailController::class, 'generateEmail']); // AI call
+
     Route::get('/auth/{provider}/callback', [SocialiteController::class, "callback"]);
 
     Route::middleware('jwt.auth')->group(function () {
 
         Route::post('/logout', [AuthController::class, 'logout']);
-
-        Route::group(["prefix" => "auth"], function () {
-            Route::get('/{provider}/redirect/{user_id}', [SocialiteController::class, "redirect"]);
-            Route::post('/disconnect_google/{user_id}', [EmailController::class, 'disconnectGoogle']);
-            Route::post('/disconnect_linkedin/{user_id}', [LinkedinController::class, 'disconnectLinkedin']);
-        });
+        Route::get('auth/{provider}/redirect/{user_id}', [SocialiteController::class, "redirect"]);
 
         // Profile Routes
         Route::get('/profile/{user_id}', [ProfileController::class, 'getProfile']);
@@ -116,6 +112,7 @@ Route::group(["prefix" => "v0.1"], function () {
         Route::post('/reply_to_email', [EmailController::class, 'replyToEmail']); // AI call
         Route::post('/send_email/{user_id}', [EmailController::class, 'sendEmail']);
         Route::get('/get_job_emails/{user_id}', [EmailController::class, 'getJobEmails']);
+        Route::post('/disconnect_google/{user_id}', [EmailController::class, 'disconnectGoogle']);
 
         // Linkedin Routes
         Route::get('/get_linkedin_messages/{user_id}', [LinkedinController::class, 'getMessages']);
@@ -124,6 +121,7 @@ Route::group(["prefix" => "v0.1"], function () {
         Route::post('/post_to_linkedin/{user_id}', [LinkedinController::class, 'postToLinkedin']);
         Route::post('/schedule_post/{user_id}', [LinkedinController::class, 'schedulePost']); // AI call
         Route::get('/check_linkedin_expiry/{user_id}', [LinkedinController::class, 'checkExpiry']);
+        Route::post('/disconnect_linkedin/{user_id}', [LinkedinController::class, 'disconnectLinkedin']);
 
         // Career Routes
         Route::post('/resume_generation/{user_id}', [CareerController::class, 'resumeGeneration']); // AI call
