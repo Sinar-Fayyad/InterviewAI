@@ -1,41 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Linkedin, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/services/api";
 
-interface AccountConnectionsSectionProps {
-  userId: string;
-}
-
-const checkConnectionStatus = async (): Promise<{ linkedin: boolean; google: boolean }> => {
-  try {
-    const { data } = await api.get("/profile/connections");
-    return { linkedin: data?.linkedin_connected || false, google: data?.google_connected || false };
-  } catch {
-    return { linkedin: false, google: false };
-  }
-};
-
-export const AccountConnectionsSection = ({ userId }: AccountConnectionsSectionProps) => {
+export const AccountConnectionsSection = () => {
   const { toast } = useToast();
   const [linkedInConnected, setLinkedInConnected] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [linkedInLoading, setLinkedInLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-
-  useEffect(() => {
-    if (userId) {
-      fetchConnectionStatus();
-    }
-  }, [userId]);
-
-  const fetchConnectionStatus = async () => {
-    const { linkedin, google } = await checkConnectionStatus();
-    setLinkedInConnected(linkedin);
-    setGoogleConnected(google);
-  };
 
   const handleLinkedInAction = async () => {
     setLinkedInLoading(true);
@@ -84,7 +59,6 @@ export const AccountConnectionsSection = ({ userId }: AccountConnectionsSectionP
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-4">
-        {/* LinkedIn Card */}
         <Card className="p-6 border-border hover:border-primary transition-colors">
           <div className="flex flex-col items-center text-center space-y-4">
             <div className="w-16 h-16 rounded-full bg-[#0077B5] flex items-center justify-center">
@@ -107,7 +81,6 @@ export const AccountConnectionsSection = ({ userId }: AccountConnectionsSectionP
           </div>
         </Card>
 
-        {/* Gmail Card */}
         <Card className="p-6 border-border hover:border-primary transition-colors">
           <div className="flex flex-col items-center text-center space-y-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-red-500 to-yellow-500 flex items-center justify-center">

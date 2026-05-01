@@ -165,7 +165,7 @@ proficiency_level: Math.round((skill.proficiency || 60) / 20),
               <TabsTrigger value="certifications">Certifications</TabsTrigger>
             </TabsList>
 <TabsContent value="connections" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
-              <AccountConnectionsSection userId={userId || ""} />
+<AccountConnectionsSection />
             </TabsContent>
 <TabsContent value="basic" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
               <BasicInfoSection data={profileData.basicInfo} userId={userId || ""} onUpdate={handleBasicInfoUpdate} />
