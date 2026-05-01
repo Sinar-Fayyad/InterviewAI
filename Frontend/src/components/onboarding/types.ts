@@ -1,6 +1,8 @@
 import { Code, Users, Wrench, Languages, MoreHorizontal } from "lucide-react";
 import React from "react";
 
+export type ComponentMode = "onboarding" | "profile";
+
 export type Education = {
   id: string;
   school: string;

@@ -1,28 +1,107 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Linkedin, Mail } from "lucide-react";
+import { Linkedin, Mail, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { socialiteRedirect } from "@/services/profileService";
+import { ComponentMode } from "./types";
+import api from "@/services/api";
 
 interface ConnectAccountsStepProps {
-  loading: boolean;
+  loading?: boolean;
   linkedinConnected: boolean;
   googleConnected: boolean;
-  onLinkedInConnect: () => void;
-  onGoogleConnect: () => void;
+  onLinkedInConnect?: () => void;
+  onGoogleConnect?: () => void;
+  mode?: ComponentMode;
+  userId?: string;
+  onUpdate?: (linkedinConnected: boolean, googleConnected: boolean) => void;
 }
 
 export const ConnectAccountsStep = ({
-  loading,
+  loading: initialLoading,
   linkedinConnected,
   googleConnected,
   onLinkedInConnect,
   onGoogleConnect,
+  mode = "onboarding",
+  userId,
+  onUpdate,
 }: ConnectAccountsStepProps) => {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(initialLoading || false);
+  const isProfileMode = mode === "profile";
+
+  const handleLinkedInConnect = async () => {
+    if (isProfileMode && userId) {
+      setLoading(true);
+      try {
+        const data = await socialiteRedirect("linkedin", userId);
+        if (data?.url) window.location.href = data.url;
+        else {
+          onUpdate?.(true, googleConnected);
+          toast({ title: "LinkedIn Connected", description: "Your LinkedIn account has been connected successfully." });
+        }
+      } catch (error: any) {
+        toast({ title: "Connection Failed", description: error.message || "Failed to connect LinkedIn", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      onLinkedInConnect?.();
+    }
+  };
+
+  const handleGoogleConnect = async () => {
+    if (isProfileMode && userId) {
+      setLoading(true);
+      try {
+        const data = await socialiteRedirect("google", userId);
+        if (data?.url) window.location.href = data.url;
+        else {
+          onUpdate?.(linkedinConnected, true);
+          toast({ title: "Google Connected", description: "Your Google account has been connected successfully." });
+        }
+      } catch (error: any) {
+        toast({ title: "Connection Failed", description: error.message || "Failed to connect Google", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      onGoogleConnect?.();
+    }
+  };
+
+  const getButtonVariant = (connected: boolean) => {
+    if (!isProfileMode) {
+      return connected ? "outline" : "default";
+    }
+    return connected ? "destructive" : "default";
+  };
+
+  const getButtonText = (connected: boolean, service: string) => {
+    if (isProfileMode) {
+      return loading ? "..." : connected ? `Disconnect ${service}` : `Connect ${service}`;
+    }
+    return loading ? "..." : connected ? "✓ Connected" : `Connect ${service}`;
+  };
+
   return (
     <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold mb-2">Connect Your Accounts</h2>
-        <p className="text-muted-foreground">Connect your LinkedIn and Gmail to enhance your experience (optional)</p>
-      </div>
+      {!isProfileMode && (
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold mb-2">Connect Your Accounts</h2>
+          <p className="text-muted-foreground">Connect your LinkedIn and Gmail to enhance your experience (optional)</p>
+        </div>
+      )}
+      
+      {isProfileMode && (
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-2">Social Login</h2>
+          <p className="text-muted-foreground">Connect your LinkedIn and Gmail accounts</p>
+        </div>
+      )}
+      
       <div className="grid md:grid-cols-2 gap-4">
         <Card className="p-6 border-border hover:border-primary transition-colors">
           <div className="flex flex-col items-center text-center space-y-4">
@@ -33,8 +112,14 @@ export const ConnectAccountsStep = ({
               <h3 className="font-semibold mb-1">LinkedIn</h3>
               <p className="text-sm text-muted-foreground">Import your professional profile</p>
             </div>
-            <Button onClick={onLinkedInConnect} disabled={loading || linkedinConnected} className="w-full" variant={linkedinConnected ? "outline" : "default"}>
-              {linkedinConnected ? "✓ Connected" : "Connect LinkedIn"}
+            <Button 
+              onClick={handleLinkedInConnect} 
+              disabled={loading} 
+              className="w-full" 
+              variant={getButtonVariant(linkedinConnected)}
+            >
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {getButtonText(linkedinConnected, "LinkedIn")}
             </Button>
           </div>
         </Card>
@@ -47,8 +132,14 @@ export const ConnectAccountsStep = ({
               <h3 className="font-semibold mb-1">Gmail</h3>
               <p className="text-sm text-muted-foreground">Connect your email account</p>
             </div>
-            <Button onClick={onGoogleConnect} disabled={loading || googleConnected} className="w-full" variant={googleConnected ? "outline" : "default"}>
-              {googleConnected ? "✓ Connected" : "Connect Gmail"}
+            <Button 
+              onClick={handleGoogleConnect} 
+              disabled={loading} 
+              className="w-full" 
+              variant={getButtonVariant(googleConnected)}
+            >
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {getButtonText(googleConnected, "Gmail")}
             </Button>
           </div>
         </Card>

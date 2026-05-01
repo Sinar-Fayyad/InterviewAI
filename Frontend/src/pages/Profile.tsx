@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchProfile, updateUser } from "@/services/profileService";
+import { fetchProfile, saveProfile } from "@/services/profileService";
 import { Navigation } from "@/components/layout/Navigation";
 import { BackButton } from "@/components/layout/BackButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { BasicInfoSection } from "@/components/profile/BasicInfoSection";
-import { EducationSection, Education } from "@/components/profile/EducationSection";
-import { ExperienceSection, Experience } from "@/components/profile/ExperienceSection";
-import { CertificationsSection, Certification } from "@/components/profile/CertificationsSection";
-import { SkillsManagerSection } from "@/components/profile/SkillsManagerSection";
-import { AccountConnectionsSection } from "@/components/profile/AccountConnectionsSection";
+import { ConnectAccountsStep } from "@/components/onboarding/ConnectAccountsStep";
+import { BasicInfoStep } from "@/components/onboarding/BasicInfoStep";
+import { EducationStep } from "@/components/onboarding/EducationStep";
+import { ExperienceStep } from "@/components/onboarding/ExperienceStep";
+import { CertificationsStep } from "@/components/onboarding/CertificationsStep";
+import { SkillsStep } from "@/components/onboarding/SkillsStep";
+import { Education, Experience, Certification, Skill, SkillCategory } from "@/components/onboarding/types";
 
 interface BasicInfo {
   full_name: string;
@@ -20,14 +21,6 @@ interface BasicInfo {
   phone: string;
   location: string;
   summary: string;
-}
-
-interface Skill {
-  id: string;
-  name: string;
-  category: "technical" | "soft skills" | "tools" | "languages" | "others" | null;
-  proficiency_level: number | null;
-  created_at: string;
 }
 
 interface ProfileData {
@@ -43,13 +36,35 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-    const [profileData, setProfileData] = useState<ProfileData>({
-      basicInfo: { full_name: "", email: "", phone: "", location: "", summary: "" },
-      education: [],
-      experience: [],
-      certifications: [],
-      skills: [],
-    });
+  const [linkedinConnected, setLinkedinConnected] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(false);
+
+  const [profileData, setProfileData] = useState<ProfileData>({
+    basicInfo: { full_name: "", email: "", phone: "", location: "", summary: "" },
+    education: [],
+    experience: [],
+    certifications: [],
+    skills: [],
+  });
+
+  // Aliases for the component props
+  const fullName = profileData.basicInfo.full_name;
+  const email = profileData.basicInfo.email;
+  const phone = profileData.basicInfo.phone;
+  const location = profileData.basicInfo.location;
+  const summary = profileData.basicInfo.summary;
+
+  const setFullName = (v: string) => setProfileData(p => ({ ...p, basicInfo: { ...p.basicInfo, full_name: v } }));
+  const setPhone = (v: string) => setProfileData(p => ({ ...p, basicInfo: { ...p.basicInfo, phone: v } }));
+  const setLocation = (v: string) => setProfileData(p => ({ ...p, basicInfo: { ...p.basicInfo, location: v } }));
+  const setSummary = (v: string) => setProfileData(p => ({ ...p, basicInfo: { ...p.basicInfo, summary: v } }));
+
+  const [education, setEducation] = useState<Education[]>([]);
+  const [experience, setExperience] = useState<Experience[]>([]);
+  const [certifications, setCertifications] = useState<Certification[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [newSkill, setNewSkill] = useState({ name: "", category: "technical" as SkillCategory, proficiency_level: 3 });
+  const [selectedCategory, setSelectedCategory] = useState<SkillCategory | "all">("all");
 
   useEffect(() => {
     if (authLoading) return;
@@ -63,39 +78,7 @@ const Profile = () => {
       const data = await fetchProfile(userId);
       if (data) {
         const userInfo = data.user_info?.[0] || {};
-        const educationWithIds = ((data.education || []) as any[]).map((edu: any, index: number) => ({
-          id: edu.id || `edu_${index}_${Date.now()}`,
-          school: edu.institution_name || '',
-          degree: edu.degree || '',
-          field: edu.field_of_study || '',
-          startDate: edu.start_date || '',
-          endDate: edu.end_date || '',
-          description: edu.description || ''
-        }));
-        const experienceWithIds = ((data.experience || []) as any[]).map((exp: any, index: number) => ({
-          id: exp.id || `exp_${index}_${Date.now()}`,
-          company: exp.company_name || exp.organization_name || '',
-          position: exp.job_title || exp.position || '',
-          startDate: exp.start_date || '',
-          endDate: exp.end_date || '',
-          description: exp.description || ''
-        }));
-        const certificationsWithIds = ((data.certifications || []) as any[]).map((cert: any, index: number) => ({
-          id: cert.id || `cert_${index}_${Date.now()}`,
-          certification_name: cert.certification_name || cert.credential_name || cert.name || '',
-          organization_name: cert.organization_name || cert.issuer || '',
-          date_obtained: cert.date_obtained || cert.date || '',
-          url: cert.url || ''
-        })); 
-
-        const skillsData = (data.skills || []).map((skill: any) => ({
-          id: skill.id,
-          name: skill.name,
-          category: skill.category,
-proficiency_level: Math.round((skill.proficiency || 60) / 20),
-          created_at: skill.created_at || ''
-        }));
-
+        
         setProfileData({
           basicInfo: {
             full_name: `${userInfo.first_name || ''} ${userInfo.last_name || ''}`.trim() || '',
@@ -104,11 +87,75 @@ proficiency_level: Math.round((skill.proficiency || 60) / 20),
             location: userInfo.location || '',
             summary: userInfo.summary || ''
           },
-          education: educationWithIds,
-          experience: experienceWithIds,
-          certifications: certificationsWithIds,
-          skills: skillsData
+          education: (data.education || []).map((edu: any, index: number) => ({
+            id: edu.id || `edu_${index}_${Date.now()}`,
+            school: edu.institution_name || '',
+            degree: edu.degree || '',
+            field: edu.field_of_study || '',
+            startDate: edu.start_date ? edu.start_date.substring(0, 7) : '',
+            endDate: edu.end_date ? edu.end_date.substring(0, 7) : '',
+            description: edu.description || ''
+          })),
+          experience: (data.experience || []).map((exp: any, index: number) => ({
+            id: exp.id || `exp_${index}_${Date.now()}`,
+            company: exp.company_name || '',
+            position: exp.position || '',
+            startDate: exp.start_date ? exp.start_date.substring(0, 7) : '',
+            endDate: exp.end_date ? exp.end_date.substring(0, 7) : '',
+            description: exp.description || ''
+          })),
+          certifications: (data.certifications || []).map((cert: any, index: number) => ({
+            id: cert.id || `cert_${index}_${Date.now()}`,
+            name: cert.certification_name || '',
+            issuer: cert.organization_name || '',
+            date: cert.date_obtained ? cert.date_obtained.substring(0, 7) : '',
+            url: cert.url || ''
+          })),
+          skills: (data.skills || []).map((skill: any) => ({
+            id: skill.id,
+            name: skill.name,
+            category: (skill.category as SkillCategory) || "technical",
+            proficiency_level: Math.round((skill.proficiency || 60) / 20)
+          }))
         });
+
+        // Also update the individual state variables
+        setEducation((data.education || []).map((edu: any, index: number) => ({
+          id: edu.id || `edu_${index}_${Date.now()}`,
+          school: edu.institution_name || '',
+          degree: edu.degree || '',
+          field: edu.field_of_study || '',
+          startDate: edu.start_date ? edu.start_date.substring(0, 7) : '',
+          endDate: edu.end_date ? edu.end_date.substring(0, 7) : '',
+          description: edu.description || ''
+        })));
+
+        setExperience((data.experience || []).map((exp: any, index: number) => ({
+          id: exp.id || `exp_${index}_${Date.now()}`,
+          company: exp.company_name || '',
+          position: exp.position || '',
+          startDate: exp.start_date ? exp.start_date.substring(0, 7) : '',
+          endDate: exp.end_date ? exp.end_date.substring(0, 7) : '',
+          description: exp.description || ''
+        })));
+
+        setCertifications((data.certifications || []).map((cert: any, index: number) => ({
+          id: cert.id || `cert_${index}_${Date.now()}`,
+          name: cert.certification_name || '',
+          issuer: cert.organization_name || '',
+          date: cert.date_obtained ? cert.date_obtained.substring(0, 7) : '',
+          url: cert.url || ''
+        })));
+
+        setSkills((data.skills || []).map((skill: any) => ({
+          id: skill.id,
+          name: skill.name,
+          category: (skill.category as SkillCategory) || "technical",
+          proficiency_level: Math.round((skill.proficiency || 60) / 20)
+        })));
+
+        setLinkedinConnected(data.linkedin_connected || false);
+        setGoogleConnected(data.google_connected || false);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -118,27 +165,83 @@ proficiency_level: Math.round((skill.proficiency || 60) / 20),
     }
   };
 
-  // Removed batch API calls - sections handle individual updates
-  const handleBasicInfoUpdate = async (data: BasicInfo) => {
+  const handleConnectionsUpdate = (linkedin: boolean, google: boolean) => {
+    setLinkedinConnected(linkedin);
+    setGoogleConnected(google);
+  };
+
+  const handleBasicInfoSave = (data: BasicInfo) => {
     setProfileData({ ...profileData, basicInfo: data });
   };
 
-  const handleEducationUpdate = async (data: Education[]) => {
+  const handleEducationUpdate = (data: Education[]) => {
+    setEducation(data);
     setProfileData({ ...profileData, education: data });
   };
 
-  const handleExperienceUpdate = async (data: Experience[]) => {
+  const handleExperienceUpdate = (data: Experience[]) => {
+    setExperience(data);
     setProfileData({ ...profileData, experience: data });
   };
 
-  const handleCertificationsUpdate = async (data: Certification[]) => {
+  const handleCertificationsUpdate = (data: Certification[]) => {
+    setCertifications(data);
     setProfileData({ ...profileData, certifications: data });
   };
 
-  const handleSkillsUpdate = async (data: Skill[]) => {
+  const handleSkillsUpdate = (data: Skill[]) => {
+    setSkills(data);
     setProfileData({ ...profileData, skills: data });
   };
 
+  // Education handlers
+  const addEducation = () => {
+    setEducation([...education, { id: `new_${Date.now()}`, school: "", degree: "", field: "", startDate: "", endDate: "", description: "" }]);
+  };
+  const removeEducation = (id: string) => {
+    setEducation(education.filter((e) => e.id !== id));
+    setEducation(education.filter((e) => e.id !== id));
+  };
+  const updateEducation = (id: string, field: keyof Education, value: string) => {
+    setEducation(education.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
+  };
+
+  // Experience handlers
+  const addExperience = () => {
+    setExperience([...experience, { id: `new_${Date.now()}`, company: "", position: "", startDate: "", endDate: "", description: "" }]);
+  };
+  const removeExperience = (id: string) => {
+    setExperience(experience.filter((e) => e.id !== id));
+  };
+  const updateExperience = (id: string, field: keyof Experience, value: string) => {
+    setExperience(experience.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
+  };
+
+  // Certification handlers
+  const addCertification = () => {
+    setCertifications([...certifications, { id: `new_${Date.now()}`, name: "", issuer: "", date: "", url: "" }]);
+  };
+  const removeCertification = (id: string) => {
+    setCertifications(certifications.filter((c) => c.id !== id));
+  };
+  const updateCertification = (id: string, field: keyof Certification, value: string) => {
+    setCertifications(certifications.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
+  };
+
+  // Skills handlers
+  const addSkill = () => {
+    if (!newSkill.name.trim()) {
+      toast({ title: "Missing Information", description: "Please enter a skill name", variant: "destructive" });
+      return;
+    }
+    setSkills([...skills, { id: `new_${Date.now()}`, name: newSkill.name.trim(), category: newSkill.category, proficiency_level: newSkill.proficiency_level }]);
+    setNewSkill({ name: "", category: "technical", proficiency_level: 3 });
+  };
+  const removeSkill = (id: string) => {
+    setSkills(skills.filter((s) => s.id !== id));
+  };
+
+  const filteredSkills = selectedCategory === "all" ? skills : skills.filter((s) => s.category === selectedCategory);
 
   if (loading) {
     return (
@@ -164,23 +267,85 @@ proficiency_level: Math.round((skill.proficiency || 60) / 20),
               <TabsTrigger value="skills">Skills</TabsTrigger>
               <TabsTrigger value="certifications">Certifications</TabsTrigger>
             </TabsList>
-<TabsContent value="connections" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
-<AccountConnectionsSection />
+
+            <TabsContent value="connections" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+              <ConnectAccountsStep
+                linkedinConnected={linkedinConnected}
+                googleConnected={googleConnected}
+                mode="profile"
+                userId={userId || ""}
+                onUpdate={handleConnectionsUpdate}
+              />
             </TabsContent>
-<TabsContent value="basic" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
-              <BasicInfoSection data={profileData.basicInfo} userId={userId || ""} onUpdate={handleBasicInfoUpdate} />
+
+            <TabsContent value="basic" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+              <BasicInfoStep
+                fullName={fullName}
+                email={email}
+                phone={phone}
+                location={location}
+                summary={summary}
+                setFullName={setFullName}
+                setEmail={() => {}}
+                setPhone={setPhone}
+                setLocation={setLocation}
+                setSummary={setSummary}
+                mode="profile"
+                userId={userId || ""}
+                onSave={handleBasicInfoSave}
+              />
             </TabsContent>
-<TabsContent value="education" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
-              <EducationSection data={profileData.education} userId={userId || ""} onUpdate={handleEducationUpdate} />
+
+            <TabsContent value="education" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+              <EducationStep
+                education={education}
+                addEducation={addEducation}
+                removeEducation={removeEducation}
+                updateEducation={updateEducation}
+                mode="profile"
+                userId={userId || ""}
+                onUpdateList={handleEducationUpdate}
+              />
             </TabsContent>
-<TabsContent value="experience" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
-              <ExperienceSection data={profileData.experience} userId={userId || ""} onUpdate={handleExperienceUpdate} />
+
+            <TabsContent value="experience" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+              <ExperienceStep
+                experience={experience}
+                addExperience={addExperience}
+                removeExperience={removeExperience}
+                updateExperience={updateExperience}
+                mode="profile"
+                userId={userId || ""}
+                onUpdateList={handleExperienceUpdate}
+              />
             </TabsContent>
-<TabsContent value="skills" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
-              <SkillsManagerSection data={profileData.skills} userId={userId || ""} onUpdate={handleSkillsUpdate} />
+
+            <TabsContent value="skills" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+              <SkillsStep
+                skills={skills}
+                newSkill={newSkill}
+                setNewSkill={setNewSkill}
+                addSkill={addSkill}
+                removeSkill={removeSkill}
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+                filteredSkills={filteredSkills}
+                mode="profile"
+                userId={userId || ""}
+                onUpdateList={handleSkillsUpdate}
+              />
             </TabsContent>
-<TabsContent value="certifications" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
-              <CertificationsSection data={profileData.certifications} userId={userId || ""} onUpdate={handleCertificationsUpdate} />
+
+            <TabsContent value="certifications" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+              <CertificationsStep
+                certifications={certifications}
+                addCertification={addCertification}
+                removeCertification={removeCertification}
+                updateCertification={updateCertification}
+                mode="profile"
+                userId={userId || ""}
+                onUpdateList={handleCertificationsUpdate}
+              />
             </TabsContent>
           </Tabs>
         </div>
