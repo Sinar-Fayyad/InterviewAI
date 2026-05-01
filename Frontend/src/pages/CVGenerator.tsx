@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/layout/Navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -12,7 +12,6 @@ import { extractTextFromPdf } from "@/utils/pdfTextExtract";
 import { useToast } from "@/hooks/use-toast";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchProfile } from "@/services/profileService";
 import { generateResume, optimizeResume } from "@/services/documentService";
 
 export default function CVGenerator() {
@@ -26,6 +25,8 @@ export default function CVGenerator() {
   const [isExtractingText, setIsExtractingText] = useState(false);
   const { userId } = useAuth();
   const navigate = useNavigate();
+  const { handleError } = useErrorHandler();
+  const { toast } = useToast();
 
   const handleFileUpload = async (file: File | null) => {
     if (!file) return;
@@ -48,51 +49,74 @@ export default function CVGenerator() {
     }
   };
 
-  const { handleError } = useErrorHandler();
-  const { toast } = useToast();
+ const handleGenerateCV = async () => {
+  if (!userId) return;
 
-  const handleGenerateCV = async () => {
-    if (!userId) return;
+  setIsGenerating(true);
 
-    setIsGenerating(true);
-    try {
-      const result = await generateResume(userId, {
-        linkedin_account: linkedinUrl || undefined,
-        github_account: githubUrl || undefined,
-      });
-      toast({ title: "Resume Generated", description: "Your Resume has been generated successfully." });
-      navigate("/cv-output", { state: { cvData: result } });
-    } catch (error) {
-      console.error("Error generating CV:", error);
-      handleError(error, "Resume Generation");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  try {
+    const result = await generateResume(userId, {
+     linkedin_account: linkedinUrl || "",
+  github_account: githubUrl || "",
+    });
+
+    console.log("Mapped CV result:", result);
+
+    toast({
+      title: "Resume Generated",
+      description: "Your Resume has been generated successfully.",
+    });
+
+    navigate("/cv-output", {
+      state: { cvData: result },
+    });
+  } catch (error) {
+    console.error("Error generating CV:", error);
+    handleError(error, "Resume Generation");
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
   const handleOptimizeCV = async () => {
-    if (!cvText && !cvFile) {
-      toast({ title: "Missing Content", description: "Please upload a PDF or paste your Resume text.", variant: "destructive" });
-      return;
-    }
-    if (!userId) return;
+  if (!cvText.trim()) {
+    toast({
+      title: "Missing Content",
+      description: "Please paste your Resume text before optimizing.",
+      variant: "destructive",
+    });
+    return;
+  }
 
-    setIsOptimizing(true);
-    try {
-      const result = await optimizeResume(userId, {
-        old_resume: cvText,
-        linkedin_account: linkedinUrl || undefined,
-        github_account: githubUrl || undefined,
-      });
-      toast({ title: "Resume Optimized", description: "Your Resume has been enhanced with AI-powered improvements." });
-      navigate("/cv-output", { state: { cvData: result } });
-    } catch (error) {
-      console.error("Error optimizing CV:", error);
-      handleError(error, "Resume Optimization");
-    } finally {
-      setIsOptimizing(false);
-    }
-  };
+  if (!userId) return;
+
+  setIsOptimizing(true);
+
+  try {
+    const result = await optimizeResume(userId, {
+      old_resume: cvText.trim(),
+      linkedin_account: linkedinUrl || undefined,
+      github_account: githubUrl || undefined,
+    });
+
+    toast({
+      title: "Resume Optimized",
+      description: "Your Resume has been enhanced with AI-powered improvements.",
+    });
+
+    navigate("/cv-output", {
+      state: {
+        cvData: result,
+        mode: "optimization",
+      },
+    });
+  } catch (error) {
+    console.error("Error optimizing CV:", error);
+    handleError(error, "Resume Optimization");
+  } finally {
+    setIsOptimizing(false);
+  }
+};
 
   const OptionalProfilesSection = () => (
     <div className="border border-border rounded-lg p-4 space-y-4">
@@ -116,7 +140,6 @@ export default function CVGenerator() {
     </div>
   );
 
-  // Choose mode
   if (mode === "choose") {
     return (
       <ProtectedRoute>
@@ -158,7 +181,6 @@ export default function CVGenerator() {
     );
   }
 
-  // Generate mode
   if (mode === "generate") {
     return (
       <ProtectedRoute>
@@ -187,7 +209,6 @@ export default function CVGenerator() {
     );
   }
 
-  // Optimize mode
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-page-solid">

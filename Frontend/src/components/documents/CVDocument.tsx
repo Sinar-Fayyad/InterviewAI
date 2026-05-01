@@ -87,26 +87,31 @@ export interface CVData {
   phone: string;
   location: string;
   summary: string;
-  experience: Array<{
-    company: string;
+
+  experience: {
     position: string;
+    company: string;
     startDate: string;
     endDate: string;
-    description: string;
-  }>;
-  education: Array<{
+    description: string[] | string;
+  }[];
+
+  education: {
     school: string;
     degree: string;
     field: string;
     startDate: string;
     endDate: string;
-  }>;
+  }[];
+
   skills: string[];
-  certifications: Array<{
+
+  certifications: {
     name: string;
     issuer: string;
     date: string;
-  }>;
+    description?: string;
+  }[];
 }
 
 interface CVDocumentProps {
