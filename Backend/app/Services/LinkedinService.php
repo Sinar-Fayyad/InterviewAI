@@ -21,6 +21,8 @@ class LinkedinService
             throw new \Exception("LinkedIn token is missing or expired", 401);
         }
 
+        dd($user->linkedin_token, $user->linkedin_expires_at);
+        
         $myUrn = "urn:li:person:{$user->linkedin_id}";
 
         $convoResponse = Http::withToken($user->linkedin_token)
@@ -32,7 +34,7 @@ class LinkedinService
             ]);
 
         if (!$convoResponse->successful()) {
-            throw new \Exception("Failed to fetch conversations from LinkedIn: ".$convoResponse->body() , $convoResponse->getStatusCode());
+            throw new \Exception("Failed to fetch conversations from LinkedIn: " . $convoResponse->body(), $convoResponse->getStatusCode());
         }
 
         return collect($convoResponse->json('elements', []))
@@ -45,19 +47,13 @@ class LinkedinService
                         'sortOrder' => 'DESC'
                     ]);
 
-                if (!$msgResponse->successful()) {
-                    throw new \Exception("Failed to fetch messages for conversation: ".$msgResponse->body() , $msgResponse->getStatusCode());
-                }
+                if (!$msgResponse->successful()) return null; // ✅ skip
 
                 $messages = $msgResponse->json('elements', []);
-                if (count($messages) === 0) {
-                    throw new \Exception("No messages found for conversation", 404);
-                }
+                if (count($messages) === 0) return null; // ✅ skip
 
                 $lastMessage = $messages[0];
-                if (($lastMessage['createdActor'] ?? '') === $myUrn) {
-                    throw new \Exception("No messages from recruiter in this conversation", 404);
-                }
+                if (($lastMessage['createdActor'] ?? '') === $myUrn) return null; // ✅ skip
 
                 return [
                     'from' => 'Recruiter',
@@ -66,7 +62,7 @@ class LinkedinService
                     'conversation_urn' => $convo['entityUrn']
                 ];
             })
-            ->filter()
+            ->filter() // removes nulls
             ->values()
             ->all();
     }
@@ -123,7 +119,7 @@ class LinkedinService
             ]);
 
         if (!$response->successful()) {
-            throw new \Exception("Failed to publish post to LinkedIn: ".$response->body(), $response->getStatusCode());
+            throw new \Exception("Failed to publish post to LinkedIn: " . $response->body(), $response->getStatusCode());
         }
     }
 
@@ -143,7 +139,6 @@ class LinkedinService
         if (!$post) {
             throw new \Exception("Failed to schedule post", 500);
         }
-
     }
 
     static function checkExpiry($user_id)
@@ -179,3 +174,4 @@ class LinkedinService
         return $user;
     }
 }
+?>

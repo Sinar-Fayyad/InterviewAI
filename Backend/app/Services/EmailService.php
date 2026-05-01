@@ -128,7 +128,7 @@ class EmailService
                     ->json();
 
                 if (!$detail || !isset($detail['payload'])) {
-                    throw new \Exception("Failed to fetch email details", 500);
+                    return null;
                 }
 
                 $headers = collect($detail['payload']['headers']);
