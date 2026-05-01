@@ -52,8 +52,8 @@ const ResetPassword = () => {
     setIsLoading(true);
 
     try {
-      const resetToken = sessionStorage.getItem("reset_token");
-      const response = await api.post("/auth/reset-password", { password, token: resetToken });
+const resetToken = sessionStorage.getItem("reset_token");
+      const response = await api.post("/reset-password", { token: resetToken, password });
       const error = response.data?.error;
       if (error) {
         toast({
