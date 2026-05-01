@@ -12,19 +12,19 @@ class SocialiteController extends Controller
     {
         try {
             $url = SocialiteService::redirect($provider, $user_id);
-            return redirect($url);
+            return $this->SuccessJSON($url);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);
         }
     }
 
     public function callback(string $provider, Request $request)
-    {
-        try {
-            $result = SocialiteService::callback($provider, $request);
-            return $this->SuccessJSON($result);
-        } catch (\Exception $e) {
-            return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);
-        }
+{
+    try {
+        $result = SocialiteService::callback($provider, $request);
+        return redirect("http://localhost:8080/profile");
+    } catch (\Exception $e) {
+        return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);
     }
+}
 }

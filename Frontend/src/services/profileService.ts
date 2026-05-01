@@ -101,7 +101,7 @@ export const disconnectLinkedin = async (userId: string) => {
 
 export const socialiteRedirect = async (provider: string, userId: string) => {
   const { data } = await api.get(`/auth/${provider}/redirect/${userId}`);
-  return data;
+  return data.payload;
 };
 
 export const getSocialConnections = async (userId: string) => {

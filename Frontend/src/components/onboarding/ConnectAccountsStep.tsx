@@ -36,14 +36,22 @@ export const ConnectAccountsStep = ({
     if (isProfileMode && userId) {
       setLoading(true);
       try {
-        const data = await socialiteRedirect("linkedin", userId);
-        if (data?.url) window.location.href = data.url;
+        const url = await socialiteRedirect("linkedin-openid", userId);
+        if (url) window.location.href = url;
         else {
           onUpdate?.(true, googleConnected);
-          toast({ title: "LinkedIn Connected", description: "Your LinkedIn account has been connected successfully." });
+          toast({
+            title: "LinkedIn Connected",
+            description:
+              "Your LinkedIn account has been connected successfully.",
+          });
         }
       } catch (error: any) {
-        toast({ title: "Connection Failed", description: error.message || "Failed to connect LinkedIn", variant: "destructive" });
+        toast({
+          title: "Connection Failed",
+          description: error.message || "Failed to connect LinkedIn",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
@@ -56,14 +64,21 @@ export const ConnectAccountsStep = ({
     if (isProfileMode && userId) {
       setLoading(true);
       try {
-        const data = await socialiteRedirect("google", userId);
-        if (data?.url) window.location.href = data.url;
+        const url = await socialiteRedirect("google", userId);
+        if (url) window.location.href = url;
         else {
           onUpdate?.(linkedinConnected, true);
-          toast({ title: "Google Connected", description: "Your Google account has been connected successfully." });
+          toast({
+            title: "Google Connected",
+            description: "Your Google account has been connected successfully.",
+          });
         }
       } catch (error: any) {
-        toast({ title: "Connection Failed", description: error.message || "Failed to connect Google", variant: "destructive" });
+        toast({
+          title: "Connection Failed",
+          description: error.message || "Failed to connect Google",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
@@ -81,7 +96,11 @@ export const ConnectAccountsStep = ({
 
   const getButtonText = (connected: boolean, service: string) => {
     if (isProfileMode) {
-      return loading ? "..." : connected ? `Disconnect ${service}` : `Connect ${service}`;
+      return loading
+        ? "..."
+        : connected
+          ? `Disconnect ${service}`
+          : `Connect ${service}`;
     }
     return loading ? "..." : connected ? "✓ Connected" : `Connect ${service}`;
   };
@@ -91,17 +110,22 @@ export const ConnectAccountsStep = ({
       {!isProfileMode && (
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold mb-2">Connect Your Accounts</h2>
-          <p className="text-muted-foreground">Connect your LinkedIn and Gmail to enhance your experience (optional)</p>
+          <p className="text-muted-foreground">
+            Connect your LinkedIn and Gmail to enhance your experience
+            (optional)
+          </p>
         </div>
       )}
-      
+
       {isProfileMode && (
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-2">Social Login</h2>
-          <p className="text-muted-foreground">Connect your LinkedIn and Gmail accounts</p>
+          <p className="text-muted-foreground">
+            Connect your LinkedIn and Gmail accounts
+          </p>
         </div>
       )}
-      
+
       <div className="grid md:grid-cols-2 gap-4">
         <Card className="p-6 border-border hover:border-primary transition-colors">
           <div className="flex flex-col items-center text-center space-y-4">
@@ -110,12 +134,14 @@ export const ConnectAccountsStep = ({
             </div>
             <div>
               <h3 className="font-semibold mb-1">LinkedIn</h3>
-              <p className="text-sm text-muted-foreground">Import your professional profile</p>
+              <p className="text-sm text-muted-foreground">
+                Import your professional profile
+              </p>
             </div>
-            <Button 
-              onClick={handleLinkedInConnect} 
-              disabled={loading} 
-              className="w-full" 
+            <Button
+              onClick={handleLinkedInConnect}
+              disabled={loading}
+              className="w-full"
               variant={getButtonVariant(linkedinConnected)}
             >
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -130,12 +156,14 @@ export const ConnectAccountsStep = ({
             </div>
             <div>
               <h3 className="font-semibold mb-1">Gmail</h3>
-              <p className="text-sm text-muted-foreground">Connect your email account</p>
+              <p className="text-sm text-muted-foreground">
+                Connect your email account
+              </p>
             </div>
-            <Button 
-              onClick={handleGoogleConnect} 
-              disabled={loading} 
-              className="w-full" 
+            <Button
+              onClick={handleGoogleConnect}
+              disabled={loading}
+              className="w-full"
               variant={getButtonVariant(googleConnected)}
             >
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}

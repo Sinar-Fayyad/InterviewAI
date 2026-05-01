@@ -35,6 +35,7 @@ Route::group(["prefix" => "v0.1"], function () {
     Route::post('/clearChatMemory/{collection_name}', [ChatbotController::class, 'clearMemory']); // AI call
 
     Route::post('generate_email/{user_id?}', [EmailController::class, 'generateEmail']); // AI call
+    Route::get('/auth/{provider}/callback', [SocialiteController::class, "callback"]);
 
     Route::middleware('jwt.auth')->group(function () {
 
@@ -42,7 +43,6 @@ Route::group(["prefix" => "v0.1"], function () {
 
         Route::group(["prefix" => "auth"], function () {
             Route::get('/{provider}/redirect/{user_id}', [SocialiteController::class, "redirect"]);
-            Route::get('/{provider}/callback', [SocialiteController::class, "callback"]);
             Route::post('/disconnect_google/{user_id}', [EmailController::class, 'disconnectGoogle']);
             Route::post('/disconnect_linkedin/{user_id}', [LinkedinController::class, 'disconnectLinkedin']);
         });
