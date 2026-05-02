@@ -82,4 +82,16 @@ class SocialiteService
         $user->updateOrFail($updates);
         return $user;
     }
+
+    static function checkConnections($user_id)
+    {
+        $user = User::findOrFail($user_id);
+        if (!$user){
+            throw new \Exception('User not found', 404);
+        }
+        return [
+            'linkedin_connected' => !empty($user->linkedin_id) || !empty($user->linkedin_token),
+            'google_connected' => !empty($user->google_id) || !empty($user->google_token)
+        ];
+    }
 }
