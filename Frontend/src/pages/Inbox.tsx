@@ -34,6 +34,15 @@ import { getJobEmails, replyToEmail, sendEmail } from "@/services/emailService";
 import { socialiteRedirect } from "@/services/profileService";
 import api from "@/services/api";
 
+const loadingMessages = [
+  "Fetching your emails...",
+  "Please wait...",
+  "This might take a moment...",
+  "Almost there...",
+  "Scanning your inbox...",
+  "Prioritizing your messages...",
+];
+
 interface InboxMessage {
   id: number;
   type: "email";
@@ -64,6 +73,7 @@ export default function Inbox() {
   const [customizeNotes, setCustomizeNotes] = useState("");
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const { error, hideError, handleError } = useErrorHandler();
   const { toast } = useToast();
 
@@ -72,6 +82,14 @@ export default function Inbox() {
       initInbox();
     }
   }, [userId]);
+
+  useEffect(() => {
+    if (!isLoading) return;
+    const interval = setInterval(() => {
+      setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const initInbox = async () => {
     if (!userId) return;
@@ -318,8 +336,11 @@ export default function Inbox() {
             </div>
 
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
+              <div className="flex flex-col items-center justify-center py-12 gap-4">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground animate-pulse">
+                  {loadingMessages[loadingMessageIndex]}
+                </p>
               </div>
             ) : (
               <Tabs defaultValue="all" className="space-y-6">
