@@ -190,14 +190,19 @@ export default function Inbox() {
     if (!selectedMessage || !aiReply || !userId) return;
     setIsSendingEmail(true);
     try {
+      // Extract clean email from "Name <email@domain.com>" format
+      const rawFrom = selectedMessage.from;
+      const emailMatch = rawFrom.match(/<(.+?)>/);
+      const cleanEmail = emailMatch ? emailMatch[1] : rawFrom;
+
       await sendEmail(userId, {
-        to: selectedMessage.from,
+        to: cleanEmail,
         subject: `Re: ${selectedMessage.subject}`,
         body: aiReply,
       });
       toast({
         title: "Email sent successfully",
-        description: `Reply sent to ${selectedMessage.from}`,
+        description: `Reply sent to ${cleanEmail}`,
       });
       setAiReply("");
       setIsModalOpen(false);
