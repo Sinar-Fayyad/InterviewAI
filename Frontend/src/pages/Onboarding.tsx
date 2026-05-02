@@ -146,7 +146,7 @@ export default function Onboarding() {
     if (!userId) return;
     setLoading(true);
     try {
-      const url = await socialiteRedirect("linkedin-openid", userId);
+      const url = await socialiteRedirect("linkedin-openid", userId, "/onboarding");
       if (url) window.location.href = url;
     } catch (error: any) {
       toast({
@@ -163,7 +163,7 @@ export default function Onboarding() {
     if (!userId) return;
     setLoading(true);
     try {
-      const url = await socialiteRedirect("google", userId);
+      const url = await socialiteRedirect("google", userId, "/onboarding");
       if (url) window.location.href = url;
     } catch (error: any) {
       toast({

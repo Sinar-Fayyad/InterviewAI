@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/layout/Navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { BackButton } from "@/components/layout/BackButton";
@@ -17,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, Linkedin, AlertTriangle, Star, Search, Trash2, Loader2, Send, Edit2, ExternalLink } from "lucide-react";
 import { getJobEmails, replyToEmail, sendEmail } from "@/services/emailService";
 import { getLinkedinMessages } from "@/services/linkedinService";
+import { socialiteRedirect } from "@/services/profileService";
 
 interface InboxMessage {
   id: number;
@@ -34,6 +36,7 @@ interface InboxMessage {
 
 export default function Inbox() {
   const { userId } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [showStarredOnly, setShowStarredOnly] = useState(false);
   const [messages, setMessages] = useState<InboxMessage[]>([]);
@@ -47,6 +50,8 @@ export default function Inbox() {
   const [customizeNotes, setCustomizeNotes] = useState("");
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isLoadingLinkedInUrl, setIsLoadingLinkedInUrl] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(true);
+  const [linkedinConnected, setLinkedinConnected] = useState(true);
   const { error, hideError, handleError } = useErrorHandler();
   const { toast } = useToast();
 
@@ -62,6 +67,13 @@ export default function Inbox() {
         getJobEmails(userId),
         getLinkedinMessages(userId),
       ]);
+
+      if (emails.status === "rejected") {
+        if (emails.reason?.response?.status === 400) setGoogleConnected(false);
+      }
+      if (linkedinMsgs.status === "rejected") {
+        if (linkedinMsgs.reason?.response?.status === 401) setLinkedinConnected(false);
+      }
 
       const allMessages: InboxMessage[] = [];
       if (emails.status === "fulfilled" && Array.isArray(emails.value)) {
@@ -154,6 +166,17 @@ export default function Inbox() {
     window.open(`https://www.linkedin.com/messaging/`, "_blank");
   };
 
+  const handleConnect = async (type: "email" | "linkedin") => {
+    if (!userId) return;
+    try {
+      const provider = type === "email" ? "google" : "linkedin-openid";
+      const url = await socialiteRedirect(provider, userId, "/inbox");
+      if (url) window.location.href = url;
+    } catch (error: any) {
+      toast({ title: "Connection Failed", description: error.message || "Failed to connect", variant: "destructive" });
+    }
+  };
+
   const getPriorityColor = (priority: string) => {
     switch (priority) { case "high": return "destructive"; case "medium": return "default"; default: return "secondary"; }
   };
@@ -192,6 +215,32 @@ export default function Inbox() {
     </Card>
   );
 
+  const renderNotConnected = (type: "email" | "linkedin") => {
+    const isEmail = type === "email";
+    return (
+      <Card className="bg-secondary/80 border-primary/20 shadow-card p-8">
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 ${isEmail ? "bg-primary/10" : "bg-accent/10"}`}>
+            {isEmail ? <Mail className="w-7 h-7 text-primary" /> : <Linkedin className="w-7 h-7 text-accent" />}
+          </div>
+          <div className="flex-1 text-center sm:text-left">
+            <h3 className="text-lg font-semibold mb-1">
+              {isEmail ? "Gmail Not Connected" : "LinkedIn Not Connected"}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {isEmail
+                ? "Connect your Gmail account to receive and manage job-related emails directly from your inbox."
+                : "Connect your LinkedIn account to see recruiter messages and opportunities in one place."}
+            </p>
+          </div>
+          <Button onClick={() => handleConnect(type)} variant="default" className="flex-shrink-0">
+            {isEmail ? "Connect Gmail" : "Connect LinkedIn"}
+          </Button>
+        </div>
+      </Card>
+    );
+  };
+
   const filteredAll = filterMessages("all");
   const filteredEmail = filterMessages("email");
   const filteredLinkedin = filterMessages("linkedin");
@@ -228,9 +277,17 @@ export default function Inbox() {
                   <TabsTrigger value="linkedin"><Linkedin className="w-4 h-4 mr-2" />LinkedIn</TabsTrigger>
                   <TabsTrigger value="spam"><AlertTriangle className="w-4 h-4 mr-2" />Spam ({spamMessages.length})</TabsTrigger>
                 </TabsList>
-                <TabsContent value="all" className="space-y-4">{filteredAll.length > 0 ? filteredAll.map(renderMessageCard) : <div className="text-center py-12 text-muted-foreground">No messages found.</div>}</TabsContent>
-                <TabsContent value="email" className="space-y-4">{filteredEmail.length > 0 ? filteredEmail.map(renderMessageCard) : <div className="text-center py-12 text-muted-foreground">No email messages found.</div>}</TabsContent>
-                <TabsContent value="linkedin" className="space-y-4">{filteredLinkedin.length > 0 ? filteredLinkedin.map(renderMessageCard) : <div className="text-center py-12 text-muted-foreground">No LinkedIn messages found.</div>}</TabsContent>
+                <TabsContent value="all" className="space-y-4">
+                  {!googleConnected && renderNotConnected("email")}
+                  {!linkedinConnected && renderNotConnected("linkedin")}
+                  {filteredAll.length > 0 ? filteredAll.map(renderMessageCard) : (!googleConnected || !linkedinConnected) ? null : <div className="text-center py-12 text-muted-foreground">No messages found.</div>}
+                </TabsContent>
+                <TabsContent value="email" className="space-y-4">
+                  {!googleConnected ? renderNotConnected("email") : filteredEmail.length > 0 ? filteredEmail.map(renderMessageCard) : <div className="text-center py-12 text-muted-foreground">No email messages found.</div>}
+                </TabsContent>
+                <TabsContent value="linkedin" className="space-y-4">
+                  {!linkedinConnected ? renderNotConnected("linkedin") : filteredLinkedin.length > 0 ? filteredLinkedin.map(renderMessageCard) : <div className="text-center py-12 text-muted-foreground">No LinkedIn messages found.</div>}
+                </TabsContent>
                 <TabsContent value="spam" className="space-y-4">{spamMessages.map(m => (
                   <Card key={m.id} className="border-destructive/50 bg-destructive/5 p-6 cursor-pointer" onClick={() => handleOpenMessage(m)}>
                     <div className="flex items-start gap-4">
@@ -262,7 +319,7 @@ export default function Inbox() {
                     <div><p className="font-medium">{selectedMessage.from}</p><p className="text-sm text-muted-foreground">{selectedMessage.date} • {selectedMessage.time}</p></div>
                   </div>
                   <div className="py-4"><p className="whitespace-pre-wrap text-foreground">{selectedMessage.fullContent}</p></div>
-                  
+
                   {!selectedMessage.isSpam && selectedMessage.type === "email" && (
                     <div className="pt-4 border-t border-border space-y-4">
                       <Button onClick={() => { setCustomizeNotes(""); setIsCustomizeModalOpen(true); }} disabled={isGeneratingReply} className="w-full">

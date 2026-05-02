@@ -18,11 +18,18 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor: handle 401 (no hard reload for login page)
+// Response interceptor: handle 401
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && window.location.pathname !== '/auth') {
+    const url = error.config?.url || "";
+    const ignoredPaths = [
+      "/get_linkedin_messages",
+      "/get_job_emails",
+    ];
+    const isIgnored = ignoredPaths.some(path => url.includes(path));
+
+    if (error.response?.status === 401 && !isIgnored && window.location.pathname !== '/auth') {
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("user_id");
       window.location.href = "/auth";

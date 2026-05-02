@@ -13,13 +13,17 @@ class SocialiteService
         'linkedin-openid',
     ];
 
-    static function redirect(string $provider, int $user_id)
+    static function redirect(string $provider, $user_id, string $return_to = '/')
     {
         if (!in_array($provider, self::$officialProviders)) {
             throw new \InvalidArgumentException('Provider not supported', 404);
         }
 
-        return Socialite::driver($provider)->stateless()->with(['state' => (string)$user_id])->redirect()->getTargetUrl();
+        return Socialite::driver($provider)
+            ->stateless()
+            ->with(['state' => json_encode(['user_id' => (string)$user_id, 'return_to' => $return_to])])
+            ->redirect()
+            ->getTargetUrl();
     }
 
     static function callback(string $provider, Request $request)
@@ -28,7 +32,10 @@ class SocialiteService
             throw new \InvalidArgumentException('Invalid provider', 404);
         }
 
-        $user_id = $request->query('state');
+        $state = json_decode($request->query('state'), true);
+        $user_id = $state['user_id'] ?? null;
+        $return_to = $state['return_to'] ?? '/';
+
         if (!$user_id || !is_numeric($user_id)) {
             throw new \InvalidArgumentException('Invalid user_id in state', 400);
         }
@@ -44,6 +51,7 @@ class SocialiteService
         return [
             'status' => 'success',
             'token' => $token,
+            'return_to' => $return_to,
         ];
     }
 
@@ -75,4 +83,3 @@ class SocialiteService
         return $user;
     }
 }
-

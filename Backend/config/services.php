@@ -14,7 +14,7 @@ return [
     |
     */
 
-    
+
     'n8n' => [
         'auth_key' => env('N8N_WEBHOOK_SECRET'),
     ],
@@ -44,6 +44,8 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'scopes' => ['openid', 'profile', 'email', 'https://mail.google.com/'],
+        'with' => ['access_type' => 'offline', 'prompt' => 'consent'],
     ],
 
     'linkedin-openid' => [

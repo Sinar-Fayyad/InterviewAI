@@ -99,8 +99,10 @@ export const disconnectLinkedin = async (userId: string) => {
   return data;
 };
 
-export const socialiteRedirect = async (provider: string, userId: string) => {
-  const { data } = await api.get(`/auth/${provider}/redirect/${userId}`);
+export const socialiteRedirect = async (provider: string, userId: string, returnTo: string = '/') => {
+  const { data } = await api.get(`/auth/${provider}/redirect/${userId}`, {
+    params: { return_to: returnTo }
+  });
   return data.payload;
 };
 

@@ -41,7 +41,6 @@ export const ConnectAccountsStep = ({
       setLoading(true);
       try {
         if (linkedinConnected) {
-          // ✅ disconnect
           await disconnectLinkedin(userId);
           onUpdate?.(false, googleConnected);
           toast({
@@ -49,8 +48,7 @@ export const ConnectAccountsStep = ({
             description: "Your LinkedIn account has been disconnected.",
           });
         } else {
-          // connect
-          const url = await socialiteRedirect("linkedin-openid", userId);
+          const url = await socialiteRedirect("linkedin-openid", userId, "/profile"); // ✅
           if (url) window.location.href = url;
         }
       } catch (error: any) {
@@ -72,7 +70,6 @@ export const ConnectAccountsStep = ({
       setLoading(true);
       try {
         if (googleConnected) {
-          // ✅ disconnect
           await disconnectGoogle(userId);
           onUpdate?.(linkedinConnected, false);
           toast({
@@ -80,8 +77,7 @@ export const ConnectAccountsStep = ({
             description: "Your Google account has been disconnected.",
           });
         } else {
-          // connect
-          const url = await socialiteRedirect("google", userId);
+          const url = await socialiteRedirect("google", userId, "/profile"); // ✅
           if (url) window.location.href = url;
         }
       } catch (error: any) {

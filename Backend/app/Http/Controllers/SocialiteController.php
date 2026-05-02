@@ -8,10 +8,11 @@ use App\Http\Controllers\Controller;
 
 class SocialiteController extends Controller
 {
-    public function redirect(string $provider, $user_id)
+    public function redirect(string $provider, $user_id, Request $request)
     {
         try {
-            $url = SocialiteService::redirect($provider, $user_id);
+            $return_to = $request->query('return_to', '/');
+            $url = SocialiteService::redirect($provider, $user_id, $return_to);
             return $this->SuccessJSON($url);
         } catch (\Exception $e) {
             return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);
@@ -19,12 +20,13 @@ class SocialiteController extends Controller
     }
 
     public function callback(string $provider, Request $request)
-{
-    try {
-        $result = SocialiteService::callback($provider, $request);
-        return redirect("http://localhost:8080/profile");
-    } catch (\Exception $e) {
-        return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);
+    {
+        try {
+            $result = SocialiteService::callback($provider, $request);
+            $return_to = $result['return_to'] ?? '/';
+            return redirect("http://localhost:8080{$return_to}");
+        } catch (\Exception $e) {
+            return redirect("http://localhost:8080/?error=" . urlencode($e->getMessage()));
+        }
     }
-}
 }
