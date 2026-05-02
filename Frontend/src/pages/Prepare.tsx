@@ -68,7 +68,7 @@ const handleResearchCompany = async () => {
   }
 };
 
-const handleGenerateQuestions = async () => {
+ const handleGenerateQuestions = async () => {
   if (!validateInputs() || !userId) return;
 
   setIsGenerating(true);
@@ -80,7 +80,7 @@ const handleGenerateQuestions = async () => {
       context_summary: contextSummary,
     });
 
-    const questions = result.questions || [];
+    const questions = result.questions;
 
     toast({
       title: "Questions Generated!",
@@ -109,30 +109,47 @@ const handleGenerateQuestions = async () => {
 };
 
   const handleStartMockInterview = async () => {
-    if (!validateInputs() || !userId) return;
-    setIsStartingMock(true);
-    try {
-      const result = await startInterview(userId, {
-        company_name: companyName,
-        job_title: jobTitle,
-        context_summary: contextSummary,
-      });
-      toast({ title: "Interview Starting!", description: "Your mock interview is ready." });
-      navigate("/mock-interview", {
-        state: {
-          companyName,
-          jobTitle,
-          contextSummary,
-          interviewId: result?.interview_id || result?.id,
-        },
-      });
-    } catch (error) {
-      console.error("Error starting mock interview:", error);
-      toast({ title: "Failed to Start", description: "Failed to start mock interview. Please try again.", variant: "destructive" });
-    } finally {
-      setIsStartingMock(false);
-    }
-  };
+  if (!validateInputs() || !userId) return;
+
+  setIsStartingMock(true);
+
+  try {
+    // Keep the API call for later, but do not block navigation if it fails
+    const result = await startInterview(userId, {
+      company_name: companyName,
+      job_title: jobTitle,
+      context_summary: contextSummary,
+    });
+
+    navigate("/mock-interview", {
+      state: {
+        companyName,
+        jobTitle,
+        contextSummary,
+        interviewId: result?.interview_id || result?.id,
+      },
+    });
+  } catch (error) {
+    console.error("Error starting mock interview, navigating anyway:", error);
+
+    toast({
+      title: "Mock Interview Preview",
+      description: "Opening the mock interview page without saving the session.",
+    });
+
+  navigate("/mock-interview", {
+  state: {
+    companyName,
+    jobTitle,
+    contextSummary,
+    interviewId: null,
+    previewMode: true,
+  },
+});
+  } finally {
+    setIsStartingMock(false);
+  }
+};
 
   return (
     <ProtectedRoute>
