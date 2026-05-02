@@ -5,10 +5,11 @@ namespace App\Services;
 use App\Models\User;
 use App\Services\UserService;
 use App\Services\SkillService;
+use Illuminate\Support\Facades\DB;
+use App\Services\SocialiteService;
 use App\Services\EducationService;
 use App\Services\ExperienceService;
 use App\Services\CertificationService;
-use Illuminate\Support\Facades\DB;
 
 class ProfileService
 {
@@ -25,8 +26,7 @@ class ProfileService
             'experience' => ExperienceService::getExperiences($user_id),
             'certifications' => CertificationService::getCertifications($user_id),
             'skills' => SkillService::getSkills($user_id),
-            'linkedin_connected' => !empty($user->linkedin_id) || !empty($user->linkedin_token),
-            'google_connected' => !empty($user->google_id) || !empty($user->google_token),
+            'social_connections' => SocialiteService::checkConnections($user_id),
         ];
     }
 

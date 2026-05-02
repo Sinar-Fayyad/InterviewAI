@@ -24,9 +24,21 @@ class SocialiteController extends Controller
         try {
             $result = SocialiteService::callback($provider, $request);
             $return_to = $result['return_to'] ?? '/';
-            return redirect("http://localhost:8080{$return_to}");
+            $token = $result['token'];
+
+            return redirect("http://localhost:8080{$return_to}?token={$token}");
         } catch (\Exception $e) {
             return redirect("http://localhost:8080/?error=" . urlencode($e->getMessage()));
+        }
+    }
+
+    public function checkConnections($user_id)
+    {
+        try {
+            $connections = SocialiteService::checkConnections($user_id);
+            return $this->SuccessJSON($connections);
+        } catch (\Exception $e) {
+            return $this->ErrorJSON($e->getMessage(), $e->getCode() ?: 400);
         }
     }
 }

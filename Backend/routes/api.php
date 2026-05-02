@@ -20,6 +20,7 @@ use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\InterviewAIController;
 use App\Http\Controllers\CertificationController;
 use App\Http\Controllers\QuestionsListController;
+use Laravel\Socialite\Facades\Socialite;
 
 
 Route::group(["prefix" => "v0.1"], function () {
@@ -41,6 +42,7 @@ Route::group(["prefix" => "v0.1"], function () {
     Route::middleware('jwt.auth')->group(function () {
 
         Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/connections/{user_id}', [SocialiteController::class, 'checkConnections']);
         Route::get('auth/{provider}/redirect/{user_id}', [SocialiteController::class, "redirect"]);
 
         // Profile Routes

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Log;
 
 class SocialiteService
 {
@@ -19,11 +20,20 @@ class SocialiteService
             throw new \InvalidArgumentException('Provider not supported', 404);
         }
 
-        return Socialite::driver($provider)
+        $driver = Socialite::driver($provider)
             ->stateless()
-            ->with(['state' => json_encode(['user_id' => (string)$user_id, 'return_to' => $return_to])])
-            ->redirect()
-            ->getTargetUrl();
+            ->with(['state' => json_encode(['user_id' => (string)$user_id, 'return_to' => $return_to])]);
+
+        // Force Google to always return refresh token
+        if ($provider === 'google') {
+            $driver = $driver->with([
+                'state' => json_encode(['user_id' => (string)$user_id, 'return_to' => $return_to]),
+                'access_type' => 'offline',
+                'prompt' => 'consent',
+            ]);
+        }
+
+        return $driver->redirect()->getTargetUrl();
     }
 
     static function callback(string $provider, Request $request)
@@ -67,19 +77,35 @@ class SocialiteService
             $tokenColumn => $socialiteUser->token,
         ];
 
-        if ($provider === 'google' && isset($socialiteUser->refreshToken)) {
+        if ($provider === 'google' && !empty($socialiteUser->token)) {
+            $updates['google_token'] = $socialiteUser->token;
+        }
+
+        if ($provider === 'google' && !empty($socialiteUser->refreshToken)) {
             $updates['google_refresh_token'] = $socialiteUser->refreshToken;
         }
 
-        if ($provider === 'linkedin-openid' && isset($socialiteUser->expiresIn)) {
-            $updates['linkedin_expires_at'] = now()->addSeconds($socialiteUser->expiresIn);
-        }
 
-        if ($provider === 'google' && $socialiteUser->email) {
-            $updates['google_email'] = $socialiteUser->email;
+        if ($provider === 'google') {
+            $email = $socialiteUser->getEmail() ?? $socialiteUser->email ?? null;
+            if ($email) {
+                $updates['google_email'] = $email;
+            }
         }
 
         $user->updateOrFail($updates);
         return $user;
+    }
+
+    static function checkConnections($user_id)
+    {
+        $user = User::findOrFail($user_id);
+        if (!$user) {
+            throw new \Exception('User not found', 404);
+        }
+        return [
+            'linkedin_connected' => !empty($user->linkedin_id) || !empty($user->linkedin_token),
+            'google_connected' => !empty($user->google_id) || !empty($user->google_token)
+        ];
     }
 }
