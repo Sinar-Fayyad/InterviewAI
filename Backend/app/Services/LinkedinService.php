@@ -17,11 +17,9 @@ class LinkedinService
             throw new \Exception("User not found", 404);
         }
 
-        if (!$user->linkedin_token || !now()->lt($user->linkedin_expires_at)) {
+        if (!$user->linkedin_token || !now()->gt($user->linkedin_expires_at)) {
             throw new \Exception("LinkedIn token is missing or expired", 401);
         }
-
-        dd($user->linkedin_token, $user->linkedin_expires_at);
         
         $myUrn = "urn:li:person:{$user->linkedin_id}";
 

@@ -47,6 +47,10 @@ class User extends Authenticatable implements JWTSubject
         'remember_token',
     ];
 
+    protected $casts = [
+        'linkedin_expires_at' => 'datetime',
+    ];
+    
     /**
      * Get the attributes that should be cast.
      *

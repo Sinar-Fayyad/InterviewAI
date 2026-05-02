@@ -24,7 +24,6 @@ class SocialiteService
             ->stateless()
             ->with(['state' => json_encode(['user_id' => (string)$user_id, 'return_to' => $return_to])]);
 
-        // Force Google to always return refresh token
         if ($provider === 'google') {
             $driver = $driver->with([
                 'state' => json_encode(['user_id' => (string)$user_id, 'return_to' => $return_to]),
@@ -93,6 +92,16 @@ class SocialiteService
             }
         }
 
+        if ($provider === 'linkedin-openid') {
+            $expiresIn = $socialiteUser->expiresIn ?? null;
+            if ($expiresIn) {
+                $updates['linkedin_expires_at'] = now()->addSeconds($expiresIn);
+            } else {
+                // Default to 60 days if not provided
+                $updates['linkedin_expires_at'] = now()->addDays(60);
+            }
+        }
+
         $user->updateOrFail($updates);
         return $user;
     }
@@ -109,3 +118,4 @@ class SocialiteService
         ];
     }
 }
+?>
