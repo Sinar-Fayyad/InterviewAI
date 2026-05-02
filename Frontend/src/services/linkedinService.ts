@@ -6,12 +6,21 @@ export const getLinkedinMessages = async (userId: string) => {
   return data?.payload || [];
 };
 
-// POST /create_linkedin_post — no token required
-export const createLinkedinPost = async (params: { title: string; body: string; media?: string; scheduled_at?: string }) => {
+// POST /create_linkedin_post
+export const createLinkedinPost = async (params: {
+  title: string;
+  description: string;
+}) => {
   const { data } = await api.post("/create_linkedin_post", params);
-  return data?.payload;
-};
 
+  const payload = data?.payload;
+
+  return {
+    title: payload?.title || "",
+    content: payload?.content || payload?.data || "",
+    message: payload?.message || data?.message || "",
+  };
+};
 // GET /linkedin_profile
 export const getLinkedinProfile = async (userId: string) => {
   const { data } = await api.get(`/linkedin_profile/${userId}`);
