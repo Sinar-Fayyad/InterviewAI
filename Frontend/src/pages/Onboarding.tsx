@@ -131,8 +131,12 @@ export default function Onboarding() {
             })),
           );
 
-          setLinkedinConnected(data.linkedin_connected || false);
-          setGoogleConnected(data.google_connected || false);
+          setLinkedinConnected(
+            data.social_connections?.linkedin_connected || false,
+          );
+          setGoogleConnected(
+            data.social_connections?.google_connected || false,
+          );
         }
       } catch (error) {
         console.error("Error checking profile:", error);
@@ -146,7 +150,11 @@ export default function Onboarding() {
     if (!userId) return;
     setLoading(true);
     try {
-      const url = await socialiteRedirect("linkedin-openid", userId, "/onboarding");
+      const url = await socialiteRedirect(
+        "linkedin-openid",
+        userId,
+        "/onboarding",
+      );
       if (url) window.location.href = url;
     } catch (error: any) {
       toast({

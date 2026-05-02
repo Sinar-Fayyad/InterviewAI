@@ -13,7 +13,14 @@ import { EducationStep } from "@/components/onboarding/EducationStep";
 import { ExperienceStep } from "@/components/onboarding/ExperienceStep";
 import { CertificationsStep } from "@/components/onboarding/CertificationsStep";
 import { SkillsStep } from "@/components/onboarding/SkillsStep";
-import { Education, Experience, Certification, Skill, SkillCategory, backendToFrontendSkillCategory } from "@/components/onboarding/types";
+import {
+  Education,
+  Experience,
+  Certification,
+  Skill,
+  SkillCategory,
+  backendToFrontendSkillCategory,
+} from "@/components/onboarding/types";
 
 interface BasicInfo {
   full_name: string;
@@ -32,19 +39,19 @@ interface ProfileData {
 }
 
 const extractDateYearMonth = (dateStr: string | null | undefined): string => {
-  if (!dateStr) return '';
+  if (!dateStr) return "";
   // Handle various date formats
-  if (typeof dateStr === 'string') {
+  if (typeof dateStr === "string") {
     // If it's already in YYYY-MM format, return as-is
-    if (dateStr.length === 7 && dateStr[4] === '-') {
+    if (dateStr.length === 7 && dateStr[4] === "-") {
       return dateStr;
     }
     // If it's in YYYY-MM-DD format, extract first 7 chars
-    if (dateStr.length >= 10 && dateStr[4] === '-' && dateStr[7] === '-') {
+    if (dateStr.length >= 10 && dateStr[4] === "-" && dateStr[7] === "-") {
       return dateStr.substring(0, 7);
     }
   }
-  return '';
+  return "";
 };
 
 const Profile = () => {
@@ -56,7 +63,13 @@ const Profile = () => {
   const [googleConnected, setGoogleConnected] = useState(false);
 
   const [profileData, setProfileData] = useState<ProfileData>({
-    basicInfo: { full_name: "", email: "", phone: "", location: "", summary: "" },
+    basicInfo: {
+      full_name: "",
+      email: "",
+      phone: "",
+      location: "",
+      summary: "",
+    },
     education: [],
     experience: [],
     certifications: [],
@@ -70,21 +83,43 @@ const Profile = () => {
   const location = profileData.basicInfo.location;
   const summary = profileData.basicInfo.summary;
 
-  const setFullName = (v: string) => setProfileData(p => ({ ...p, basicInfo: { ...p.basicInfo, full_name: v } }));
-  const setPhone = (v: string) => setProfileData(p => ({ ...p, basicInfo: { ...p.basicInfo, phone: v } }));
-  const setLocation = (v: string) => setProfileData(p => ({ ...p, basicInfo: { ...p.basicInfo, location: v } }));
-  const setSummary = (v: string) => setProfileData(p => ({ ...p, basicInfo: { ...p.basicInfo, summary: v } }));
+  const setFullName = (v: string) =>
+    setProfileData((p) => ({
+      ...p,
+      basicInfo: { ...p.basicInfo, full_name: v },
+    }));
+  const setPhone = (v: string) =>
+    setProfileData((p) => ({ ...p, basicInfo: { ...p.basicInfo, phone: v } }));
+  const setLocation = (v: string) =>
+    setProfileData((p) => ({
+      ...p,
+      basicInfo: { ...p.basicInfo, location: v },
+    }));
+  const setSummary = (v: string) =>
+    setProfileData((p) => ({
+      ...p,
+      basicInfo: { ...p.basicInfo, summary: v },
+    }));
 
   const [education, setEducation] = useState<Education[]>([]);
   const [experience, setExperience] = useState<Experience[]>([]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
-  const [newSkill, setNewSkill] = useState({ name: "", category: "technical" as SkillCategory, proficiency_level: 3 });
-  const [selectedCategory, setSelectedCategory] = useState<SkillCategory | "all">("all");
+  const [newSkill, setNewSkill] = useState({
+    name: "",
+    category: "technical" as SkillCategory,
+    proficiency_level: 3,
+  });
+  const [selectedCategory, setSelectedCategory] = useState<
+    SkillCategory | "all"
+  >("all");
 
   useEffect(() => {
     if (authLoading) return;
-    if (!userId) { navigate("/auth"); return; }
+    if (!userId) {
+      navigate("/auth");
+      return;
+    }
     loadProfile();
   }, [userId, authLoading, navigate]);
 
@@ -94,88 +129,113 @@ const Profile = () => {
       const data = await fetchProfile(userId);
       if (data) {
         const userInfo = data.user_info?.[0] || {};
-        
+
         setProfileData({
           basicInfo: {
-            full_name: `${userInfo.first_name || ''} ${userInfo.last_name || ''}`.trim() || '',
-            email: userInfo.email || '',
-            phone: userInfo.phone || '',
-            location: userInfo.location || '',
-            summary: userInfo.summary || ''
+            full_name:
+              `${userInfo.first_name || ""} ${userInfo.last_name || ""}`.trim() ||
+              "",
+            email: userInfo.email || "",
+            phone: userInfo.phone || "",
+            location: userInfo.location || "",
+            summary: userInfo.summary || "",
           },
           education: (data.education || []).map((edu: any, index: number) => ({
             id: edu.id != null ? String(edu.id) : `edu_${index}_${Date.now()}`,
-            school: edu.institution_name || '',
-            degree: edu.degree || '',
-            field: edu.field_of_study || '',
+            school: edu.institution_name || "",
+            degree: edu.degree || "",
+            field: edu.field_of_study || "",
             startDate: extractDateYearMonth(edu.start_date),
             endDate: extractDateYearMonth(edu.end_date),
-            description: edu.description || ''
+            description: edu.description || "",
           })),
-          experience: (data.experience || []).map((exp: any, index: number) => ({
-            id: exp.id != null ? String(exp.id) : `exp_${index}_${Date.now()}`,
-            company: exp.company_name || '',
-            position: exp.position || '',
-            startDate: extractDateYearMonth(exp.start_date),
-            endDate: extractDateYearMonth(exp.end_date),
-            description: exp.description || ''
-          })),
-          certifications: (data.certifications || []).map((cert: any, index: number) => ({
-            id: cert.id != null ? String(cert.id) : `cert_${index}_${Date.now()}`,
-            name: cert.certification_name || '',
-            issuer: cert.organization_name || '',
-            date: extractDateYearMonth(cert.date_obtained),
-            url: cert.url || ''
-          })),
+          experience: (data.experience || []).map(
+            (exp: any, index: number) => ({
+              id:
+                exp.id != null ? String(exp.id) : `exp_${index}_${Date.now()}`,
+              company: exp.company_name || "",
+              position: exp.position || "",
+              startDate: extractDateYearMonth(exp.start_date),
+              endDate: extractDateYearMonth(exp.end_date),
+              description: exp.description || "",
+            }),
+          ),
+          certifications: (data.certifications || []).map(
+            (cert: any, index: number) => ({
+              id:
+                cert.id != null
+                  ? String(cert.id)
+                  : `cert_${index}_${Date.now()}`,
+              name: cert.certification_name || "",
+              issuer: cert.organization_name || "",
+              date: extractDateYearMonth(cert.date_obtained),
+              url: cert.url || "",
+            }),
+          ),
           skills: (data.skills || []).map((skill: any) => ({
-            id: String(skill.id ?? ''),
+            id: String(skill.id ?? ""),
             name: skill.name,
             category: backendToFrontendSkillCategory(skill.category),
-            proficiency_level: Math.round((skill.proficiency || 60) / 20)
-          }))
+            proficiency_level: Math.round((skill.proficiency || 60) / 20),
+          })),
         });
 
         // Also update the individual state variables
-        setEducation((data.education || []).map((edu: any, index: number) => ({
-          id: edu.id != null ? String(edu.id) : `edu_${index}_${Date.now()}`,
-          school: edu.institution_name || '',
-          degree: edu.degree || '',
-          field: edu.field_of_study || '',
-          startDate: extractDateYearMonth(edu.start_date),
-          endDate: extractDateYearMonth(edu.end_date),
-          description: edu.description || ''
-        })));
+        setEducation(
+          (data.education || []).map((edu: any, index: number) => ({
+            id: edu.id != null ? String(edu.id) : `edu_${index}_${Date.now()}`,
+            school: edu.institution_name || "",
+            degree: edu.degree || "",
+            field: edu.field_of_study || "",
+            startDate: extractDateYearMonth(edu.start_date),
+            endDate: extractDateYearMonth(edu.end_date),
+            description: edu.description || "",
+          })),
+        );
 
-        setExperience((data.experience || []).map((exp: any, index: number) => ({
-          id: exp.id != null ? String(exp.id) : `exp_${index}_${Date.now()}`,
-          company: exp.company_name || '',
-          position: exp.position || '',
-          startDate: extractDateYearMonth(exp.start_date),
-          endDate: extractDateYearMonth(exp.end_date),
-          description: exp.description || ''
-        })));
+        setExperience(
+          (data.experience || []).map((exp: any, index: number) => ({
+            id: exp.id != null ? String(exp.id) : `exp_${index}_${Date.now()}`,
+            company: exp.company_name || "",
+            position: exp.position || "",
+            startDate: extractDateYearMonth(exp.start_date),
+            endDate: extractDateYearMonth(exp.end_date),
+            description: exp.description || "",
+          })),
+        );
 
-        setCertifications((data.certifications || []).map((cert: any, index: number) => ({
-          id: cert.id != null ? String(cert.id) : `cert_${index}_${Date.now()}`,
-          name: cert.certification_name || '',
-          issuer: cert.organization_name || '',
-          date: extractDateYearMonth(cert.date_obtained),
-          url: cert.url || ''
-        })));
+        setCertifications(
+          (data.certifications || []).map((cert: any, index: number) => ({
+            id:
+              cert.id != null ? String(cert.id) : `cert_${index}_${Date.now()}`,
+            name: cert.certification_name || "",
+            issuer: cert.organization_name || "",
+            date: extractDateYearMonth(cert.date_obtained),
+            url: cert.url || "",
+          })),
+        );
 
-        setSkills((data.skills || []).map((skill: any) => ({
-          id: String(skill.id ?? ''),
-          name: skill.name,
-          category: backendToFrontendSkillCategory(skill.category),
-          proficiency_level: Math.round((skill.proficiency || 60) / 20)
-        })));
+        setSkills(
+          (data.skills || []).map((skill: any) => ({
+            id: String(skill.id ?? ""),
+            name: skill.name,
+            category: backendToFrontendSkillCategory(skill.category),
+            proficiency_level: Math.round((skill.proficiency || 60) / 20),
+          })),
+        );
 
-        setLinkedinConnected(data.linkedin_connected || false);
-        setGoogleConnected(data.google_connected || false);
+        setLinkedinConnected(
+          data.social_connections?.linkedin_connected || false,
+        );
+        setGoogleConnected(data.social_connections?.google_connected || false);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
-      toast({ title: "Error", description: "Failed to load profile", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to load profile",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -210,53 +270,110 @@ const Profile = () => {
     setProfileData({ ...profileData, skills: data });
   };
 
-// Education handlers
+  // Education handlers
   const addEducation = () => {
-    setEducation([...education, { id: `new_${Date.now()}`, school: "", degree: "", field: "", startDate: "", endDate: "", description: "" }]);
+    setEducation([
+      ...education,
+      {
+        id: `new_${Date.now()}`,
+        school: "",
+        degree: "",
+        field: "",
+        startDate: "",
+        endDate: "",
+        description: "",
+      },
+    ]);
   };
   const removeEducation = (id: string) => {
     setEducation(education.filter((e) => e.id !== id));
   };
-  const updateEducation = (id: string, field: keyof Education, value: string) => {
-    setEducation(education.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
+  const updateEducation = (
+    id: string,
+    field: keyof Education,
+    value: string,
+  ) => {
+    setEducation(
+      education.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
+    );
   };
 
   // Experience handlers
   const addExperience = () => {
-    setExperience([...experience, { id: `new_${Date.now()}`, company: "", position: "", startDate: "", endDate: "", description: "" }]);
+    setExperience([
+      ...experience,
+      {
+        id: `new_${Date.now()}`,
+        company: "",
+        position: "",
+        startDate: "",
+        endDate: "",
+        description: "",
+      },
+    ]);
   };
   const removeExperience = (id: string) => {
     setExperience(experience.filter((e) => e.id !== id));
   };
-  const updateExperience = (id: string, field: keyof Experience, value: string) => {
-    setExperience(experience.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
+  const updateExperience = (
+    id: string,
+    field: keyof Experience,
+    value: string,
+  ) => {
+    setExperience(
+      experience.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
+    );
   };
 
   // Certification handlers
   const addCertification = () => {
-    setCertifications([...certifications, { id: `new_${Date.now()}`, name: "", issuer: "", date: "", url: "" }]);
+    setCertifications([
+      ...certifications,
+      { id: `new_${Date.now()}`, name: "", issuer: "", date: "", url: "" },
+    ]);
   };
   const removeCertification = (id: string) => {
     setCertifications(certifications.filter((c) => c.id !== id));
   };
-  const updateCertification = (id: string, field: keyof Certification, value: string) => {
-    setCertifications(certifications.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
+  const updateCertification = (
+    id: string,
+    field: keyof Certification,
+    value: string,
+  ) => {
+    setCertifications(
+      certifications.map((c) => (c.id === id ? { ...c, [field]: value } : c)),
+    );
   };
 
   // Skills handlers
   const addSkill = () => {
     if (!newSkill.name.trim()) {
-      toast({ title: "Missing Information", description: "Please enter a skill name", variant: "destructive" });
+      toast({
+        title: "Missing Information",
+        description: "Please enter a skill name",
+        variant: "destructive",
+      });
       return;
     }
-    setSkills([...skills, { id: `new_${Date.now()}`, name: newSkill.name.trim(), category: newSkill.category, proficiency_level: newSkill.proficiency_level }]);
+    setSkills([
+      ...skills,
+      {
+        id: `new_${Date.now()}`,
+        name: newSkill.name.trim(),
+        category: newSkill.category,
+        proficiency_level: newSkill.proficiency_level,
+      },
+    ]);
     setNewSkill({ name: "", category: "technical", proficiency_level: 3 });
   };
   const removeSkill = (id: string) => {
     setSkills(skills.filter((s) => s.id !== id));
   };
 
-  const filteredSkills = selectedCategory === "all" ? skills : skills.filter((s) => s.category === selectedCategory);
+  const filteredSkills =
+    selectedCategory === "all"
+      ? skills
+      : skills.filter((s) => s.category === selectedCategory);
 
   if (loading) {
     return (
@@ -283,7 +400,10 @@ const Profile = () => {
               <TabsTrigger value="certifications">Certifications</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="connections" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+            <TabsContent
+              value="connections"
+              className="max-h-[calc(100vh-300px)] overflow-auto p-4"
+            >
               <ConnectAccountsStep
                 linkedinConnected={linkedinConnected}
                 googleConnected={googleConnected}
@@ -293,7 +413,10 @@ const Profile = () => {
               />
             </TabsContent>
 
-            <TabsContent value="basic" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+            <TabsContent
+              value="basic"
+              className="max-h-[calc(100vh-300px)] overflow-auto p-4"
+            >
               <BasicInfoStep
                 fullName={fullName}
                 email={email}
@@ -311,7 +434,10 @@ const Profile = () => {
               />
             </TabsContent>
 
-            <TabsContent value="education" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+            <TabsContent
+              value="education"
+              className="max-h-[calc(100vh-300px)] overflow-auto p-4"
+            >
               <EducationStep
                 education={education}
                 addEducation={addEducation}
@@ -323,7 +449,10 @@ const Profile = () => {
               />
             </TabsContent>
 
-            <TabsContent value="experience" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+            <TabsContent
+              value="experience"
+              className="max-h-[calc(100vh-300px)] overflow-auto p-4"
+            >
               <ExperienceStep
                 experience={experience}
                 addExperience={addExperience}
@@ -335,7 +464,10 @@ const Profile = () => {
               />
             </TabsContent>
 
-            <TabsContent value="skills" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+            <TabsContent
+              value="skills"
+              className="max-h-[calc(100vh-300px)] overflow-auto p-4"
+            >
               <SkillsStep
                 skills={skills}
                 newSkill={newSkill}
@@ -351,7 +483,10 @@ const Profile = () => {
               />
             </TabsContent>
 
-            <TabsContent value="certifications" className="max-h-[calc(100vh-300px)] overflow-auto p-4">
+            <TabsContent
+              value="certifications"
+              className="max-h-[calc(100vh-300px)] overflow-auto p-4"
+            >
               <CertificationsStep
                 certifications={certifications}
                 addCertification={addCertification}
