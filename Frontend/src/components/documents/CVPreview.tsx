@@ -10,7 +10,8 @@ export const CVPreview = ({ data }: CVPreviewProps) => {
   const hasEducation = data.education && data.education.length > 0;
   const hasSkills = data.skills && data.skills.length > 0;
   const hasCertifications = data.certifications && data.certifications.length > 0;
-
+console.log("Education in preview:", data.education);
+console.log("Certifications in preview:", data.certifications);
   return (
     <Card className="bg-white text-gray-900 p-8 shadow-lg border border-border max-w-[800px] mx-auto min-h-[600px]">
       {/* Header */}
@@ -49,8 +50,20 @@ export const CVPreview = ({ data }: CVPreviewProps) => {
                   {exp.company} | {exp.startDate} - {exp.endDate || 'Present'}
                 </p>
                 {exp.description && (
-                  <p className="text-sm text-gray-700 mt-1">{exp.description}</p>
-                )}
+  <ul className="list-disc pl-5 text-sm text-gray-700 mt-1 space-y-1">
+    {(Array.isArray(exp.description)
+      ? exp.description
+      : exp.description.split(".")
+    )
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((item, i) => (
+        <li key={i}>
+          {item.endsWith(".") ? item : `${item}.`}
+        </li>
+      ))}
+  </ul>
+)}
               </div>
             ))}
           </div>
@@ -65,15 +78,20 @@ export const CVPreview = ({ data }: CVPreviewProps) => {
           </h2>
           <div className="space-y-3">
             {data.education.map((edu, index) => (
-              <div key={index}>
-                <h3 className="font-semibold text-gray-900">
-                  {edu.degree} {edu.field && `in ${edu.field}`}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {edu.school} | {edu.startDate} - {edu.endDate || 'Present'}
-                </p>
-              </div>
-            ))}
+  <div key={index}>
+    {(edu.degree || edu.field) && (
+      <h3 className="font-semibold text-gray-900">
+        {[edu.degree, edu.field].filter(Boolean).join(" in ")}
+      </h3>
+    )}
+
+    <p className="text-sm text-gray-600">
+      {[edu.school, `${edu.startDate} - ${edu.endDate || "Present"}`]
+        .filter(Boolean)
+        .join(" | ")}
+    </p>
+  </div>
+))}
           </div>
         </div>
       )}
@@ -97,24 +115,46 @@ export const CVPreview = ({ data }: CVPreviewProps) => {
         </div>
       )}
 
-      {/* Certifications */}
-      {hasCertifications && (
-        <div className="mb-6">
-          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide border-b border-gray-300 pb-1 mb-3">
-            Certifications
-          </h2>
-          <div className="space-y-2">
-            {data.certifications.map((cert, index) => (
-              <div key={index}>
-                <h3 className="font-semibold text-gray-900">{cert.name}</h3>
-                <p className="text-sm text-gray-600">
-                  {cert.issuer} {cert.date && `| ${cert.date}`}
-                </p>
-              </div>
-            ))}
-          </div>
+     {/* Certifications */}
+{hasCertifications && (
+  <div className="mb-6">
+    <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide border-b border-gray-300 pb-1 mb-3">
+      Certifications
+    </h2>
+
+    <div className="space-y-3">
+      {data.certifications.map((cert, index) => (
+  <div key={index}>
+    {(cert.name || cert.issuer || cert.date) && (
+      <>
+        {cert.name && (
+          <h3 className="font-semibold text-gray-900">{cert.name}</h3>
+        )}
+
+        {(cert.issuer || cert.date) && (
+          <p className="text-sm text-gray-600">
+            {[cert.issuer, cert.date].filter(Boolean).join(" | ")}
+          </p>
+        )}
+      </>
+    )}
+
+          {cert.description && (
+            <ul className="list-disc pl-5 text-sm text-gray-700 mt-1 space-y-1">
+              {cert.description
+                .split(".")
+                .map((item) => item.trim())
+                .filter(Boolean)
+                .map((item, i) => (
+                  <li key={i}>{item}.</li>
+                ))}
+            </ul>
+          )}
         </div>
-      )}
+      ))}
+    </div>
+  </div>
+)}
 
       {/* Empty state */}
       {!data.summary && !hasExperience && !hasEducation && !hasSkills && !hasCertifications && (
