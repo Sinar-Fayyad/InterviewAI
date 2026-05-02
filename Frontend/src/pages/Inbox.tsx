@@ -175,9 +175,9 @@ export default function Inbox() {
       const result = await replyToEmail({
         email_id: String(selectedMessage.id),
         reply_content: customizeNotes,
-        text: selectedMessage.fullContent,
+        context: selectedMessage.fullContent,
       });
-      setAiReply(result?.reply || result || "");
+      setAiReply(result || "");
       setIsEditingReply(false);
     } catch (err) {
       handleError(err, "Failed to generate reply. Please try again.");
