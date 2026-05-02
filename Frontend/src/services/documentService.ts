@@ -1,7 +1,7 @@
 import api from "@/services/api";
 import type { CVData } from "@/components/documents/CVDocument";
 
-export type CoverLetterType = "solicited" | "unsolicited";
+export type CoverLetterType = "Solicited" | "Unsolicited";
 
 const normalizeString = (value: any): string => {
   if (typeof value === "string") return value.trim();
@@ -151,19 +151,24 @@ export const optimizeResume = async (
 
   return mapPayloadToCVData(payload);
 };
+
+
 // POST /cover_letter_generation/{user_id}
 export const generateCoverLetter = async (
   userId: string,
   params: {
     company_name: string;
     job_title: string;
-    cover_letter_type: string;
+    cover_letter_type: CoverLetterType;
     platform?: string;
     job_description?: string;
     contact_name?: string;
   }
 ) => {
   const { data } = await api.post(`/cover_letter_generation/${userId}`, params);
+
+  
+
   return data?.payload;
 };
 
@@ -177,5 +182,6 @@ export const optimizeCoverLetter = async (
   }
 ) => {
   const { data } = await api.post(`/cover_letter_optimization/${userId}`, params);
+
   return data?.payload;
 };
