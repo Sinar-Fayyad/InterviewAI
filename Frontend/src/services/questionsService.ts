@@ -23,7 +23,7 @@ export const addQuestionsList = async (
     questions,
   };
 };
-
+// GET /get_questions_lists/{user_id}
 // GET /get_questions_lists/{user_id}
 export const getQuestionsLists = async (userId: string) => {
   const { data } = await api.get(`/get_questions_lists/${userId}`);
@@ -33,9 +33,8 @@ export const getQuestionsLists = async (userId: string) => {
 // GET /get_questions_list/{id}
 export const getQuestionsList = async (id: string) => {
   const { data } = await api.get(`/get_questions_list/${id}`);
-  return data?.payload;
+  return data?.payload || null;
 };
-
 // POST /delete_questions_list/{id}
 export const deleteQuestionsList = async (id: string) => {
   const { data } = await api.post(`/delete_questions_list/${id}`);
