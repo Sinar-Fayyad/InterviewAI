@@ -17,6 +17,7 @@ export default function LinkedInManager() {
   const navigate = useNavigate();
   const { userId } = useAuth();
   const [topic, setTopic] = useState("");
+  const [description, setDescription] = useState("");
   const [generatedPost, setGeneratedPost] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
@@ -29,23 +30,37 @@ export default function LinkedInManager() {
   const { toast } = useToast();
   const { error, hideError, handleError } = useErrorHandler();
 
-  const handleGenerate = async () => {
-    if (!topic.trim()) {
-      toast({ title: "Missing topic", description: "Please provide a topic for your LinkedIn post.", variant: "destructive" });
-      return;
-    }
-    setIsGenerating(true);
-    try {
-      const result = await createLinkedinPost({ title: topic, body: topic });
-      setGeneratedPost(result?.body || result?.content || result || "");
-      setIsEditing(false);
-      toast({ title: "Post Generated!", description: "Review your AI-generated LinkedIn post below." });
-    } catch (err) {
-      handleError(err, "Failed to generate post. Please try again.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+ const handleGenerate = async () => {
+  if (!topic.trim()) {
+    toast({
+      title: "Missing topic",
+      description: "Please provide a topic for your LinkedIn post.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setIsGenerating(true);
+
+  try {
+    const result = await createLinkedinPost({
+      title: topic,
+      description: description.trim() || topic,
+    });
+
+    setGeneratedPost(result?.content || "");
+    setIsEditing(false);
+
+    toast({
+      title: "Post Generated!",
+      description: "Review your AI-generated LinkedIn post below.",
+    });
+  } catch (err) {
+    handleError(err, "Failed to generate post. Please try again.");
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -158,7 +173,12 @@ export default function LinkedInManager() {
                     </div>
                   )}
                   {isEditing ? (
-                    <Textarea value={generatedPost} onChange={(e) => setGeneratedPost(e.target.value)} className="min-h-[200px] mb-4" placeholder="Edit your post here..." />
+                  <Textarea
+  value={description}
+  onChange={(e) => setDescription(e.target.value)}
+  placeholder="Add any specific points you want to include..."
+  className="min-h-[100px]"
+/>
                   ) : (
                     <div className="bg-muted/30 rounded-lg p-4 mb-4 min-h-[150px]"><p className="whitespace-pre-wrap">{generatedPost}</p></div>
                   )}
