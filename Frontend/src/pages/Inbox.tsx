@@ -63,7 +63,9 @@ export default function Inbox() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showStarredOnly, setShowStarredOnly] = useState(false);
   const [messages, setMessages] = useState<InboxMessage[]>([]);
-  const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(
+    null,
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [aiReply, setAiReply] = useState("");
   const [isGeneratingReply, setIsGeneratingReply] = useState(false);
@@ -125,7 +127,12 @@ export default function Inbox() {
       }
 
       const starredIds = loadStarredFromStorage();
-      setMessages(allMessages.map((m) => ({ ...m, isStarred: starredIds.includes(m.id) })));
+      setMessages(
+        allMessages.map((m) => ({
+          ...m,
+          isStarred: starredIds.includes(m.id),
+        })),
+      );
     } catch (err) {
       handleError(err, "Failed to load inbox. Please refresh the page.");
     } finally {
@@ -147,7 +154,7 @@ export default function Inbox() {
   const handleToggleStar = (messageId: number, e: React.MouseEvent) => {
     e.stopPropagation();
     const updated = messages.map((m) =>
-      m.id === messageId ? { ...m, isStarred: !m.isStarred } : m
+      m.id === messageId ? { ...m, isStarred: !m.isStarred } : m,
     );
     setMessages(updated);
     saveStarredToStorage(updated.filter((m) => m.isStarred).map((m) => m.id));
@@ -217,9 +224,12 @@ export default function Inbox() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "high": return "destructive";
-      case "medium": return "default";
-      default: return "secondary";
+      case "high":
+        return "destructive";
+      case "medium":
+        return "default";
+      default:
+        return "secondary";
     }
   };
 
@@ -232,7 +242,7 @@ export default function Inbox() {
         (m) =>
           m.subject.toLowerCase().includes(q) ||
           m.from.toLowerCase().includes(q) ||
-          m.preview.toLowerCase().includes(q)
+          m.preview.toLowerCase().includes(q),
       );
     }
     if (type === "email") filtered = filtered.filter((m) => !m.isSpam);
@@ -271,10 +281,14 @@ export default function Inbox() {
               <Badge variant={getPriorityColor(message.priority)}>
                 {message.priority}
               </Badge>
-              <span className="text-xs text-muted-foreground">{message.time}</span>
+              <span className="text-xs text-muted-foreground">
+                {message.time}
+              </span>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground line-clamp-2">{message.preview}</p>
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {message.preview}
+          </p>
         </div>
       </div>
     </Card>
@@ -289,10 +303,15 @@ export default function Inbox() {
         <div className="flex-1 text-center sm:text-left">
           <h3 className="text-lg font-semibold mb-1">Gmail Not Connected</h3>
           <p className="text-sm text-muted-foreground">
-            Connect your Gmail account to receive and manage job-related emails directly from your inbox.
+            Connect your Gmail account to receive and manage job-related emails
+            directly from your inbox.
           </p>
         </div>
-        <Button onClick={handleConnectGmail} variant="default" className="flex-shrink-0">
+        <Button
+          onClick={handleConnectGmail}
+          variant="default"
+          className="flex-shrink-0"
+        >
           Connect Gmail
         </Button>
       </div>
@@ -311,7 +330,9 @@ export default function Inbox() {
           <div className="max-w-6xl mx-auto">
             <BackButton className="mb-6" />
             <div className="mb-8 animate-fade-in">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">Smart Inbox</h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                Smart Inbox
+              </h1>
               <p className="text-xl text-muted-foreground">
                 AI-powered message prioritization with automatic spam detection
               </p>
@@ -330,7 +351,9 @@ export default function Inbox() {
                 variant={showStarredOnly ? "default" : "outline"}
                 onClick={() => setShowStarredOnly(!showStarredOnly)}
               >
-                <Star className={`w-4 h-4 mr-2 ${showStarredOnly ? "fill-current" : ""}`} />
+                <Star
+                  className={`w-4 h-4 mr-2 ${showStarredOnly ? "fill-current" : ""}`}
+                />
                 Starred
               </Button>
             </div>
@@ -345,7 +368,9 @@ export default function Inbox() {
             ) : (
               <Tabs defaultValue="all" className="space-y-6">
                 <TabsList>
-                  <TabsTrigger value="all">All ({filteredAll.length})</TabsTrigger>
+                  <TabsTrigger value="all">
+                    All ({filteredAll.length})
+                  </TabsTrigger>
                   <TabsTrigger value="email">
                     <Mail className="w-4 h-4 mr-2" />
                     Email
@@ -391,10 +416,18 @@ export default function Inbox() {
                         <div className="flex items-start gap-4">
                           <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-1" />
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold truncate">{m.subject}</h3>
-                            <p className="text-sm text-muted-foreground">{m.from}</p>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-2">{m.preview}</p>
-                            <Badge variant="destructive" className="mt-2">Marked as Spam</Badge>
+                            <h3 className="font-semibold truncate">
+                              {m.subject}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {m.from}
+                            </p>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
+                              {m.preview}
+                            </p>
+                            <Badge variant="destructive" className="mt-2">
+                              Marked as Spam
+                            </Badge>
                           </div>
                         </div>
                       </Card>
@@ -411,11 +444,13 @@ export default function Inbox() {
         </main>
 
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto overflow-x-hidden">
             {selectedMessage && (
               <>
                 <DialogHeader>
-                  <DialogTitle className="text-xl">{selectedMessage.subject}</DialogTitle>
+                  <DialogTitle className="text-xl">
+                    {selectedMessage.subject}
+                  </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 pb-4 border-b border-border">
@@ -430,27 +465,44 @@ export default function Inbox() {
                     </div>
                   </div>
                   <div className="py-4">
-                    <p className="whitespace-pre-wrap text-foreground">{selectedMessage.fullContent}</p>
+                    <p className="text-sm text-foreground leading-relaxed break-all whitespace-pre-wrap">
+                      {selectedMessage.fullContent}
+                    </p>
                   </div>
 
                   {!selectedMessage.isSpam && (
                     <div className="pt-4 border-t border-border space-y-4">
                       <Button
-                        onClick={() => { setCustomizeNotes(""); setIsCustomizeModalOpen(true); }}
+                        onClick={() => {
+                          setCustomizeNotes("");
+                          setIsCustomizeModalOpen(true);
+                        }}
                         disabled={isGeneratingReply}
                         className="w-full"
                       >
                         {isGeneratingReply ? (
-                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating AI Reply...</>
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Generating AI Reply...
+                          </>
                         ) : (
-                          <><Send className="w-4 h-4 mr-2" />Generate AI Reply</>
+                          <>
+                            <Send className="w-4 h-4 mr-2" />
+                            Generate AI Reply
+                          </>
                         )}
                       </Button>
                       {aiReply && (
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium">AI-Generated Reply</label>
-                            <Button variant="ghost" size="sm" onClick={() => setIsEditingReply(!isEditingReply)}>
+                            <label className="text-sm font-medium">
+                              AI-Generated Reply
+                            </label>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setIsEditingReply(!isEditingReply)}
+                            >
                               <Edit2 className="w-4 h-4 mr-2" />
                               {isEditingReply ? "Preview" : "Edit"}
                             </Button>
@@ -464,14 +516,26 @@ export default function Inbox() {
                             />
                           ) : (
                             <div className="bg-muted/30 rounded-lg p-4">
-                              <p className="whitespace-pre-wrap text-sm">{aiReply}</p>
+                              <p className="whitespace-pre-wrap text-sm">
+                                {aiReply}
+                              </p>
                             </div>
                           )}
-                          <Button onClick={handleSendEmail} disabled={isSendingEmail} className="w-full">
+                          <Button
+                            onClick={handleSendEmail}
+                            disabled={isSendingEmail}
+                            className="w-full"
+                          >
                             {isSendingEmail ? (
-                              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Sending...</>
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Sending...
+                              </>
                             ) : (
-                              <><Send className="w-4 h-4 mr-2" />Send Email</>
+                              <>
+                                <Send className="w-4 h-4 mr-2" />
+                                Send Email
+                              </>
                             )}
                           </Button>
                         </div>
@@ -484,7 +548,10 @@ export default function Inbox() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={isCustomizeModalOpen} onOpenChange={setIsCustomizeModalOpen}>
+        <Dialog
+          open={isCustomizeModalOpen}
+          onOpenChange={setIsCustomizeModalOpen}
+        >
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Customize Your Reply</DialogTitle>
@@ -502,7 +569,12 @@ export default function Inbox() {
               </div>
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={() => setIsCustomizeModalOpen(false)}>Cancel</Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsCustomizeModalOpen(false)}
+              >
+                Cancel
+              </Button>
               <Button onClick={handleGenerateReply}>Generate Reply</Button>
             </DialogFooter>
           </DialogContent>

@@ -34,12 +34,12 @@ class EmailService
         $response = Http::withHeaders([
             'X-N8N-KEY' => config('services.n8n.auth_key'),
         ])->timeout(120)->post('http://127.0.0.1:5678/webhook/generate_email', [
-                    'input' => $request,
-                    'profile' => $profile
-                ]);
+            'input' => $request,
+            'profile' => $profile
+        ]);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to generate email " , 500);
+            throw new \Exception("Failed to generate email ", 500);
         }
 
         return $response->json();
@@ -53,7 +53,7 @@ class EmailService
         ])->timeout(120)->post('http://127.0.0.1:5678/webhook/ReplyToEmail', $request);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to generate email reply: " . $response->json('error') , 500);
+            throw new \Exception("Failed to generate email reply: " . $response->json('error'), 500);
         }
 
         return $response->json();
@@ -132,11 +132,46 @@ class EmailService
                 }
 
                 $headers = collect($detail['payload']['headers']);
+
+                // Extract full body
+                $body = '';
+                $payload = $detail['payload'];
+
+                // Try direct body first
+                if (!empty($payload['body']['data'])) {
+                    $body = base64_decode(strtr($payload['body']['data'], '-_', '+/'));
+                }
+                // Try parts (multipart emails)
+                elseif (!empty($payload['parts'])) {
+                    foreach ($payload['parts'] as $part) {
+                        if ($part['mimeType'] === 'text/plain' && !empty($part['body']['data'])) {
+                            $body = base64_decode(strtr($part['body']['data'], '-_', '+/'));
+                            break;
+                        }
+                    }
+                    // Fallback to HTML part if no plain text
+                    if (empty($body)) {
+                        foreach ($payload['parts'] as $part) {
+                            if ($part['mimeType'] === 'text/html' && !empty($part['body']['data'])) {
+                                $body = strip_tags(base64_decode(strtr($part['body']['data'], '-_', '+/')));
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Fallback to snippet
+                if (empty($body)) {
+                    $body = $detail['snippet'] ?? '';
+                }
+
                 return [
                     'from' => $headers->firstWhere('name', 'From')['value'] ?? '',
                     'subject' => $headers->firstWhere('name', 'Subject')['value'] ?? '',
-                    'snippet' => $detail['snippet'],
-                    'date' => date('c', intval($detail['internalDate']) / 1000),
+                    'snippet' => $detail['snippet'] ?? '',
+                    'body' => trim($body),
+                    'date' => date('d/m/Y', intval($detail['internalDate']) / 1000),
+                    'time' => date('H:i', intval($detail['internalDate']) / 1000),
                     'url' => "https://mail.google.com/mail/u/0/#inbox/{$msg['id']}"
                 ];
             })
