@@ -10,17 +10,17 @@ use App\Http\Requests\SchedulePostRequest;
 
 class LinkedinController extends Controller
 {
-    function getMessages($user_id)
-    {
-        try {
-            $messages = LinkedinService::getMessages($user_id);
-            return $this->SuccessJSON($messages);
-        } catch (\Exception $e) {
-            $code = $e->getCode();
-            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
-            return $this->ErrorJSON($e->getMessage(), $httpCode);
-        }
-    }
+    // function getMessages($user_id)
+    // {
+    //     try {
+    //         $messages = LinkedinService::getMessages($user_id);
+    //         return $this->SuccessJSON($messages);
+    //     } catch (\Exception $e) {
+    //         $code = $e->getCode();
+    //         $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
+    //         return $this->ErrorJSON($e->getMessage(), $httpCode);
+    //     }
+    // }
 
     function createPost(CreateLinkedinPostRequest $request)
     {

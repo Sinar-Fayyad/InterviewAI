@@ -117,7 +117,7 @@ Route::group(["prefix" => "v0.1"], function () {
         Route::post('/disconnect_google/{user_id}', [EmailController::class, 'disconnectGoogle']);
 
         // Linkedin Routes
-        Route::get('/get_linkedin_messages/{user_id}', [LinkedinController::class, 'getMessages']);
+        // Route::get('/get_linkedin_messages/{user_id}', [LinkedinController::class, 'getMessages']);
         Route::post('/create_linkedin_post', [LinkedinController::class, 'createPost']); // AI call
         Route::get('/linkedin_profile/{user_id}', [LinkedinController::class, 'createProfile']); // AI call
         Route::post('/post_to_linkedin/{user_id}', [LinkedinController::class, 'postToLinkedin']);

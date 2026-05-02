@@ -9,61 +9,61 @@ use Illuminate\Support\Facades\Http;
 
 class LinkedinService
 {
-    static function getMessages($user_id)
-    {
-        $user = User::find($user_id);
+    // static function getMessages($user_id)
+    // {
+    //     $user = User::find($user_id);
 
-        if (!$user) {
-            throw new \Exception("User not found", 404);
-        }
+    //     if (!$user) {
+    //         throw new \Exception("User not found", 404);
+    //     }
 
-        if (!$user->linkedin_token || !now()->gt($user->linkedin_expires_at)) {
-            throw new \Exception("LinkedIn token is missing or expired", 401);
-        }
+    //     if (!$user->linkedin_token || now()->gt($user->linkedin_expires_at)) {
+    //         throw new \Exception("LinkedIn token is missing or expired", 401);
+    //     }
         
-        $myUrn = "urn:li:person:{$user->linkedin_id}";
+    //     $myUrn = "urn:li:person:{$user->linkedin_id}";
 
-        $convoResponse = Http::withToken($user->linkedin_token)
-            ->timeout(60)
-            ->get('https://api.linkedin.com/v2/conversations', [
-                'q' => 'participants',
-                'participant' => $myUrn,
-                'count' => 10
-            ]);
+    //     $convoResponse = Http::withToken($user->linkedin_token)
+    //         ->timeout(60)
+    //         ->get('https://api.linkedin.com/v2/conversations', [
+    //             'q' => 'participants',
+    //             'participant' => $myUrn,
+    //             'count' => 10
+    //         ]);
 
-        if (!$convoResponse->successful()) {
-            throw new \Exception("Failed to fetch conversations from LinkedIn: " . $convoResponse->body(), $convoResponse->getStatusCode());
-        }
+    //     if (!$convoResponse->successful()) {
+    //         throw new \Exception("Failed to fetch conversations from LinkedIn: " . $convoResponse->body(), $convoResponse->getStatusCode());
+    //     }
 
-        return collect($convoResponse->json('elements', []))
-            ->map(function ($convo) use ($user, $myUrn) {
-                $msgResponse = Http::withToken($user->linkedin_token)
-                    ->get("https://api.linkedin.com/v2/messages", [
-                        'q' => 'conversation',
-                        'conversation' => $convo['entityUrn'],
-                        'count' => 1,
-                        'sortOrder' => 'DESC'
-                    ]);
+    //     return collect($convoResponse->json('elements', []))
+    //         ->map(function ($convo) use ($user, $myUrn) {
+    //             $msgResponse = Http::withToken($user->linkedin_token)
+    //                 ->get("https://api.linkedin.com/v2/messages", [
+    //                     'q' => 'conversation',
+    //                     'conversation' => $convo['entityUrn'],
+    //                     'count' => 1,
+    //                     'sortOrder' => 'DESC'
+    //                 ]);
 
-                if (!$msgResponse->successful()) return null; // ✅ skip
+    //             if (!$msgResponse->successful()) return null; 
 
-                $messages = $msgResponse->json('elements', []);
-                if (count($messages) === 0) return null; // ✅ skip
+    //             $messages = $msgResponse->json('elements', []);
+    //             if (count($messages) === 0) return null; 
 
-                $lastMessage = $messages[0];
-                if (($lastMessage['createdActor'] ?? '') === $myUrn) return null; // ✅ skip
+    //             $lastMessage = $messages[0];
+    //             if (($lastMessage['createdActor'] ?? '') === $myUrn) return null;
 
-                return [
-                    'from' => 'Recruiter',
-                    'content' => $lastMessage['message']['text']['text'] ?? '',
-                    'date' => date('c', intval($lastMessage['createdAt']) / 1000),
-                    'conversation_urn' => $convo['entityUrn']
-                ];
-            })
-            ->filter() // removes nulls
-            ->values()
-            ->all();
-    }
+    //             return [
+    //                 'from' => 'Recruiter',
+    //                 'content' => $lastMessage['message']['text']['text'] ?? '',
+    //                 'date' => date('c', intval($lastMessage['createdAt']) / 1000),
+    //                 'conversation_urn' => $convo['entityUrn']
+    //             ];
+    //         })
+    //         ->filter() // removes nulls
+    //         ->values()
+    //         ->all();
+    // }
 
     static function createPost($payload)
     {
