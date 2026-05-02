@@ -20,7 +20,7 @@ export default function Prepare() {
   const [isResearching, setIsResearching] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isStartingMock, setIsStartingMock] = useState(false);
-  const [contextSummary, setContextSummary] = useState("");
+  const [contextSummary, setContextSummary] = useState<string>("");
   const { toast } = useToast();
 
   const validateInputs = () => {
@@ -34,41 +34,79 @@ export default function Prepare() {
     }
     return true;
   };
+const handleResearchCompany = async () => {
+  if (!validateInputs()) return;
 
-  const handleResearchCompany = async () => {
-    if (!validateInputs()) return;
-    setIsResearching(true);
-    try {
-      const result = await researchCompany(companyName, jobTitle);
-      setContextSummary(result?.context_summary || result || "Research completed successfully.");
-      toast({ title: "Research Complete!", description: "Company research has been gathered." });
-    } catch (error) {
-      console.error("Error researching company:", error);
-      toast({ title: "Research Failed", description: "Failed to research company. Please try again.", variant: "destructive" });
-    } finally {
-      setIsResearching(false);
-    }
-  };
+  setIsResearching(true);
 
-  const handleGenerateQuestions = async () => {
-    if (!validateInputs() || !userId) return;
-    setIsGenerating(true);
-    try {
-      const result = await addQuestionsList(userId, {
-        company_name: companyName,
-        job_title: jobTitle,
-        context_summary: contextSummary,
-      });
-      const questions = result?.questions || [];
-      toast({ title: "Questions Generated!", description: `${questions.length} personalized interview questions are ready.` });
-      navigate("/interview-questions", { state: { questions, companyName, jobTitle, contextSummary } });
-    } catch (error) {
-      console.error("Error generating questions:", error);
-      toast({ title: "Generation Failed", description: "Failed to generate questions. Please try again.", variant: "destructive" });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  try {
+    const result = await researchCompany(companyName, jobTitle);
+
+    console.log("Research result:", result);
+
+    const summary =
+      typeof result.context_summary === "string"
+        ? result.context_summary
+        : JSON.stringify(result.raw, null, 2);
+
+    setContextSummary(summary || "Research completed successfully.");
+
+    toast({
+      title: "Research Complete!",
+      description: "Company research has been gathered.",
+    });
+  } catch (error) {
+    console.error("Error researching company:", error);
+
+    toast({
+      title: "Research Failed",
+      description: "Failed to research company. Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsResearching(false);
+  }
+};
+
+const handleGenerateQuestions = async () => {
+  if (!validateInputs() || !userId) return;
+
+  setIsGenerating(true);
+
+  try {
+    const result = await addQuestionsList(userId, {
+      company_name: companyName,
+      job_title: jobTitle,
+      context_summary: contextSummary,
+    });
+
+    const questions = result.questions || [];
+
+    toast({
+      title: "Questions Generated!",
+      description: `${questions.length} personalized interview questions are ready.`,
+    });
+
+    navigate("/interview-questions", {
+      state: {
+        questions,
+        companyName,
+        jobTitle,
+        contextSummary,
+      },
+    });
+  } catch (error) {
+    console.error("Error generating questions:", error);
+
+    toast({
+      title: "Generation Failed",
+      description: "Failed to generate questions. Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
   const handleStartMockInterview = async () => {
     if (!validateInputs() || !userId) return;

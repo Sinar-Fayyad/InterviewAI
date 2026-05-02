@@ -35,7 +35,7 @@ function addQuestionsList(AddQuestionsListRequest $request, $user_id)
     function getQuestionsLists($user_id)
     {
         try {
-            $questionsLists = QuestionsListService::getQuestionsListsByUserId($user_id);
+            $questionsLists = QuestionsListService::getQuestionsLists($user_id);
             return $this->SuccessJSON($questionsLists);
         } catch (\Exception $e) {
             $code = $e->getCode();
