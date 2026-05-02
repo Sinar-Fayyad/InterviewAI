@@ -39,15 +39,15 @@ class QuestionsListService
                 throw new \Exception('Invalid response format: expected an array of questions', 500);
             }
 
-            $questionsToInsert = collect($questions)->map(function ($item) use ($questionsList) {
-                [
-                    'questions_list_id' => $questionsList->id,
-                    'question' => $item['question'],
-                    'answer' => $item['answer'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            })->all();
+          $questionsToInsert = collect($questions)->map(function ($item) use ($questionsList) {
+    return [
+        'questions_list_id' => $questionsList->id,
+        'question' => $item['question'],
+        'answer' => $item['answer'],
+        'created_at' => now(),
+        'updated_at' => now(),
+    ];
+})->all();
 
             if (empty($questionsToInsert)) {
                 throw new \Exception('No questions generated', 500);

@@ -1,9 +1,27 @@
 import api from "@/services/api";
 
 // POST /add_questions_list/{user_id}
-export const addQuestionsList = async (userId: string, params: { company_name: string; job_title: string; context_summary: string }) => {
+export const addQuestionsList = async (
+  userId: string,
+  params: {
+    company_name: string;
+    job_title: string;
+    context_summary: string;
+  }
+) => {
   const { data } = await api.post(`/add_questions_list/${userId}`, params);
-  return data?.payload;
+
+  const payload = data?.payload ?? data;
+
+  const questions = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.questions)
+      ? payload.questions
+      : [];
+
+  return {
+    questions,
+  };
 };
 
 // GET /get_questions_lists/{user_id}

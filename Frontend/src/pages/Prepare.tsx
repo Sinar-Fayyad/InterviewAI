@@ -68,7 +68,7 @@ const handleResearchCompany = async () => {
   }
 };
 
- const handleGenerateQuestions = async () => {
+const handleGenerateQuestions = async () => {
   if (!validateInputs() || !userId) return;
 
   setIsGenerating(true);
@@ -80,7 +80,7 @@ const handleResearchCompany = async () => {
       context_summary: contextSummary,
     });
 
-    const questions = result.questions;
+    const questions = result.questions || [];
 
     toast({
       title: "Questions Generated!",
