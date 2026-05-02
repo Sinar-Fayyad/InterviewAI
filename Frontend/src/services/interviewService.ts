@@ -2,8 +2,23 @@ import api from "@/services/api";
 
 // POST /research
 export const researchCompany = async (companyName: string, jobTitle: string) => {
-  const { data } = await api.post("/research", { company_name: companyName, job_title: jobTitle });
-  return data?.payload;
+  const { data } = await api.post("/research", {
+    company_name: companyName,
+    job_title: jobTitle,
+  });
+
+  const payload = data?.payload;
+
+  return {
+    code: payload?.code ?? data?.code,
+    context_summary:
+      payload?.context_summary ||
+      payload?.response ||
+      payload?.summary ||
+      payload?.data ||
+      "",
+    raw: payload ?? data,
+  };
 };
 
 // GET /analysis_feedback/{user_id}
