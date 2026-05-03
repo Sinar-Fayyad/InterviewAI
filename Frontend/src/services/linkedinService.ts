@@ -6,27 +6,49 @@ export const getLinkedinMessages = async (userId: string) => {
   return data?.payload || [];
 };
 
-// POST /create_linkedin_post
 export const createLinkedinPost = async (params: {
   title: string;
   description: string;
-}) => {
-  const { data } = await api.post("/create_linkedin_post", params);
 
-  const payload = data?.payload;
+  image_description?: string;
+  image_style?: string;
+  image_mood?: string;
+  image_colors?: string;
+  custom_image_colors?: string;
+  image_people?: string;
+  image_text_option?: string;
+  image_text?: string;
+}) => {
+  const { data } = await api.post("/create_linkedin_post", {
+    title: params.title,
+    description: params.description,
+
+    image_description: params.image_description || "",
+    image_style: params.image_style || "",
+    image_mood: params.image_mood || "",
+    image_colors: params.image_colors || "",
+    custom_image_colors: params.custom_image_colors || "",
+    image_people: params.image_people || "",
+    image_text_option: params.image_text_option || "no_text",
+    image_text: params.image_text || "",
+  });
+
+  const payload = data?.payload || {};
 
   return {
-    title: payload?.title || "",
-    content: payload?.content || payload?.data || "",
-    message: payload?.message || data?.message || "",
+    code: payload?.code || null,
+
+    title: payload?.title || payload?.post?.title || "",
+
+    content: payload?.content || payload?.post?.content || "",
+
+    image: payload?.image || payload?.image_base64 || "",
+
+    imagePrompt: payload?.image_prompt || "",
+
+    message: data?.message || "",
   };
 };
-// GET /linkedin_profile
-export const getLinkedinProfile = async (userId: string) => {
-  const { data } = await api.get(`/linkedin_profile/${userId}`);
-  return data?.payload;
-};
-
 // POST /post_to_linkedin/{user_id}
 export const postToLinkedin = async (userId: string, params: { text: string }) => {
   const { data } = await api.post(`/post_to_linkedin/${userId}`, params);
