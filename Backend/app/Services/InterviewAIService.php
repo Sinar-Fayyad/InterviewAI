@@ -115,7 +115,7 @@ class InterviewAIService
         if ($response->json('code') !== 200) {
             throw new \Exception("Failed to get next question". $response->json('error') , 500);
         }
-        if ($response->json()['question']) {
+        if (!$response->json()['question']) {
             throw new \Exception("Failed to get next question", 500);
         }
 

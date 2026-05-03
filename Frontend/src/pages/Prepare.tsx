@@ -19,48 +19,44 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { researchCompany, startInterview } from "@/services/interviewService";
+import { researchCompany } from "@/services/interviewService";
 import { addQuestionsList } from "@/services/questionsService";
 
 export default function Prepare() {
   const navigate = useNavigate();
   const { userId } = useAuth();
+  const { toast } = useToast();
+
   const [companyName, setCompanyName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
+  const [contextSummary, setContextSummary] = useState("");
   const [isResearching, setIsResearching] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isStartingMock, setIsStartingMock] = useState(false);
-  const [contextSummary, setContextSummary] = useState<string>("");
-  const { toast } = useToast();
 
   const validateInputs = () => {
     if (!companyName.trim() || !jobTitle.trim()) {
       toast({
         title: "Missing information",
-        description:
-          "Please provide both company name and job title to continue.",
+        description: "Please provide both company name and job title to continue.",
         variant: "destructive",
       });
       return false;
     }
     return true;
   };
+
   const handleResearchCompany = async () => {
     if (!validateInputs()) return;
-
     setIsResearching(true);
-
     try {
       const result = await researchCompany(companyName, jobTitle);
       setContextSummary(result.context_summary);
-
       toast({
         title: "Research Complete!",
         description: "Company research has been gathered.",
       });
     } catch (error) {
       console.error("Error researching company:", error);
-
       toast({
         title: "Research Failed",
         description: "Failed to research company. Please try again.",
@@ -71,37 +67,25 @@ export default function Prepare() {
     }
   };
 
-  
   const handleGenerateQuestions = async () => {
     if (!validateInputs() || !userId) return;
-
     setIsGenerating(true);
-
     try {
       const result = await addQuestionsList(userId, {
         company_name: companyName,
         job_title: jobTitle,
         context_summary: contextSummary,
       });
-
       const questions = result.questions;
-
       toast({
         title: "Questions Generated!",
         description: `${questions.length} personalized interview questions are ready.`,
       });
-
       navigate("/interview-questions", {
-        state: {
-          questions,
-          companyName,
-          jobTitle,
-          contextSummary,
-        },
+        state: { questions, companyName, jobTitle, contextSummary },
       });
     } catch (error) {
       console.error("Error generating questions:", error);
-
       toast({
         title: "Generation Failed",
         description: "Failed to generate questions. Please try again.",
@@ -112,66 +96,27 @@ export default function Prepare() {
     }
   };
 
-  const handleStartMockInterview = async () => {
-    if (!validateInputs() || !userId) return;
-
-    setIsStartingMock(true);
-
-    try {
-      // Keep the API call for later, but do not block navigation if it fails
-      const result = await startInterview(userId, {
-        company_name: companyName,
-        job_title: jobTitle,
-        context_summary: contextSummary,
-      });
-
-      navigate("/mock-interview", {
-        state: {
-          companyName,
-          jobTitle,
-          contextSummary,
-          interviewId: result?.interview_id || result?.id,
-        },
-      });
-    } catch (error) {
-      console.error("Error starting mock interview, navigating anyway:", error);
-
-      toast({
-        title: "Offline Mock Interview",
-        description:
-          "Opening the mock interview page without backend persistence.",
-      });
-
-      navigate("/mock-interview", {
-        state: {
-          companyName,
-          jobTitle,
-          contextSummary,
-          interviewId: null,
-          offlineMode: true,
-        },
-      });
-    } finally {
-      setIsStartingMock(false);
-    }
+  const handleStartMockInterview = () => {
+    if (!validateInputs()) return;
+    navigate("/mock-interview", {
+      state: { companyName, jobTitle, contextSummary },
+    });
   };
 
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
         <Navigation />
-
         <main className="pt-24 pb-16 px-4">
           <div className="max-w-4xl mx-auto">
             <BackButton className="mb-6" />
+
             {/* Header */}
             <div className="text-center mb-12 animate-fade-in">
               <div className="flex items-center justify-center gap-4 mb-6">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-card/50 backdrop-blur-sm">
                   <Sparkles className="w-4 h-4 text-accent" />
-                  <span className="text-sm font-medium">
-                    Interview Preparation
-                  </span>
+                  <span className="text-sm font-medium">Interview Preparation</span>
                 </div>
                 <Button
                   variant="outline"
@@ -183,20 +128,16 @@ export default function Prepare() {
                   History
                 </Button>
               </div>
-
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                Interview Preparation
-              </h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">Interview Preparation</h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Enter company details to research and generate tailored
-                interview questions.
+                Enter company details to research and generate tailored interview questions.
               </p>
             </div>
 
             {/* Form Card */}
             <Card className="bg-secondary/80 border-border shadow-card p-8 animate-slide-up">
               <div className="space-y-6">
-                {/* Company Name & Job Title */}
+                {/* Inputs */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <label className="flex items-center gap-2 text-sm font-medium">
@@ -224,7 +165,7 @@ export default function Prepare() {
                   </div>
                 </div>
 
-                {/* Research Company Button */}
+                {/* Research Button */}
                 {!contextSummary && (
                   <Button
                     variant="hero"
@@ -248,7 +189,7 @@ export default function Prepare() {
                   </Button>
                 )}
 
-                {/* Context Summary Preview */}
+                {/* Research Summary + Action Buttons */}
                 {contextSummary && (
                   <div className="space-y-4">
                     <div className="space-y-3">
@@ -263,14 +204,13 @@ export default function Prepare() {
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="grid md:grid-cols-2 gap-4">
                       <Button
                         variant="hero"
                         size="lg"
                         className="w-full group"
                         onClick={handleGenerateQuestions}
-                        disabled={isGenerating || isStartingMock}
+                        disabled={isGenerating}
                       >
                         {isGenerating ? (
                           <>
@@ -291,20 +231,11 @@ export default function Prepare() {
                         size="lg"
                         className="w-full group border-primary/30 hover:bg-primary hover:text-primary-foreground"
                         onClick={handleStartMockInterview}
-                        disabled={isGenerating || isStartingMock}
+                        disabled={isGenerating}
                       >
-                        {isStartingMock ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                            Starting...
-                          </>
-                        ) : (
-                          <>
-                            <Video className="w-5 h-5 mr-2" />
-                            Start Mock Interview
-                            <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                          </>
-                        )}
+                        <Video className="w-5 h-5 mr-2" />
+                        Start Mock Interview
+                        <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
                       </Button>
                     </div>
                   </div>
@@ -315,21 +246,9 @@ export default function Prepare() {
             {/* Info Cards */}
             <div className="grid md:grid-cols-3 gap-6 mt-12">
               {[
-                {
-                  icon: "🎯",
-                  title: "Personalized",
-                  desc: "Questions tailored to your specific role",
-                },
-                {
-                  icon: "🎥",
-                  title: "Mock Practice",
-                  desc: "AI-powered interview simulation",
-                },
-                {
-                  icon: "⚡",
-                  title: "Instant",
-                  desc: "Get results in seconds",
-                },
+                { icon: "🎯", title: "Personalized", desc: "Questions tailored to your specific role" },
+                { icon: "🎥", title: "Mock Practice", desc: "AI-powered interview simulation" },
+                { icon: "⚡", title: "Instant", desc: "Get results in seconds" },
               ].map((item, i) => (
                 <Card
                   key={i}
