@@ -1,4 +1,4 @@
-import api from "@/services/api";
+import api from "./api";
 
 // GET /get_linkedin_messages/{user_id}
 export const getLinkedinMessages = async (userId: string) => {
@@ -50,16 +50,57 @@ export const createLinkedinPost = async (params: {
   };
 };
 // POST /post_to_linkedin/{user_id}
-export const postToLinkedin = async (userId: string, params: { text: string }) => {
-  const { data } = await api.post(`/post_to_linkedin/${userId}`, params);
+export const postToLinkedin = async (
+  userId: string,
+  params: {
+    text: string;
+    media?: string | null;
+  }
+) => {
+  const { data } = await api.post(
+    `/post_to_linkedin/${encodeURIComponent(userId)}`,
+    params
+  );
+
   return data;
 };
 
+
 // POST /schedule_post/{user_id}
-export const schedulePost = async (userId: string, params: any) => {
-  const { data } = await api.post(`/schedule_post/${userId}`, params);
+export const schedulePost = async (
+  userId: string,
+  params: {
+    title: string;
+    body?: string;
+    text?: string;
+    content?: string;
+    scheduled_at: string;
+    media?: string | null;
+  }
+) => {
+  const mediaUrl =
+    params.media && params.media.startsWith("http")
+      ? params.media
+      : "https://placehold.co/1200x627/png?text=LinkedIn+Post";
+
+  const payload = {
+    user_id: userId,
+    title: params.title,
+    body: params.body ?? params.text ?? params.content ?? "",
+    scheduled_at: params.scheduled_at,
+    media: mediaUrl,
+  };
+
+  console.log("Final schedulePost payload:", payload);
+
+  const { data } = await api.post(
+    `/schedule_post/${encodeURIComponent(userId)}`,
+    payload
+  );
+
   return data;
 };
+
 
 // GET /check_linkedin_expiry/{user_id}
 export const checkLinkedinExpiry = async (userId: string) => {

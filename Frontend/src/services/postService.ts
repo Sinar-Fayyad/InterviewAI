@@ -1,31 +1,44 @@
-import api from "@/services/api";
+import api from "./api";
 
-// POST /add_post/{user_id}
-export const addPost = async (userId: string, postData: any) => {
-  const { data } = await api.post(`/add_post/${userId}`, postData);
-  return data?.payload;
-};
 
-// POST /update_post/{id}
-export const updatePost = async (id: string, postData: any) => {
-  const { data } = await api.post(`/update_post/${id}`, postData);
-  return data?.payload;
-};
-
-// GET /get_posts/{user_id}
 export const getPosts = async (userId: string) => {
-  const { data } = await api.get(`/get_posts/${userId}`);
-  return data?.payload || [];
+  try {
+    const { data } = await api.get(`/get_posts/${encodeURIComponent(userId)}`);
+    return data?.payload || [];
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      return [];
+    }
+
+    throw error;
+  }
 };
 
 // GET /get_post/{id}
 export const getPost = async (id: string) => {
-  const { data } = await api.get(`/get_post/${id}`);
+  const { data } = await api.get(`/get_post/${encodeURIComponent(id)}`);
+  return data?.payload;
+};
+
+// POST /update_post/{id}
+export const updatePost = async (
+  id: string,
+  params: {
+    body?: string;
+    scheduled_at?: string;
+    media?: string | null;
+  }
+) => {
+  const { data } = await api.post(
+    `/update_post/${encodeURIComponent(id)}`,
+    params
+  );
+
   return data?.payload;
 };
 
 // POST /delete_post/{id}
 export const deletePost = async (id: string) => {
-  const { data } = await api.post(`/delete_post/${id}`);
+  const { data } = await api.post(`/delete_post/${encodeURIComponent(id)}`);
   return data;
 };

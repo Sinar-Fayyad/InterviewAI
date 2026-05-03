@@ -45,32 +45,47 @@ class LinkedinController extends Controller
             return $this->ErrorJSON($e->getMessage(), $httpCode);
         }
     }
+function postToLinkedin(PostToLinkedinRequest $request, $user_id)
+{
+    try {
+        LinkedinService::postToLinkedIn($request->validated(), $user_id);
 
-    function postToLinkedin(PostToLinkedinRequest $request, $user_id)
-    {
-        try {
-            LinkedinService::postToLinkedIn($request->validated(), $user_id);
-            return $this->SuccessJSON(null,  "Post published successfully");
-        } catch (\Exception $e) {
-            $code = $e->getCode();
-            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
-            return $this->ErrorJSON($e->getMessage(), $httpCode);
-        }
+        return response()->json([
+            'payload' => null,
+            'message' => 'Post published successfully',
+        ], 200);
+
+    } catch (\Throwable $e) {
+        $code = $e->getCode();
+        $httpCode = is_int($code) && $code >= 100 && $code < 600 ? $code : 500;
+
+        return response()->json([
+            'payload' => null,
+            'message' => $e->getMessage(),
+        ], $httpCode);
     }
+}
 
-    function schedulePost(SchedulePostRequest $request, $user_id)
-    {
-        try {
-            LinkedinService::schedulePost($request->validated(), $user_id);
-            return $this->SuccessJSON(null,  "Post scheduled successfully");
-        } 
-        catch (\Exception $e) {
-            $code = $e->getCode();
-            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
-            return $this->ErrorJSON($e->getMessage(), $httpCode);
-        }
+function schedulePost(SchedulePostRequest $request, $user_id)
+{
+    try {
+        LinkedinService::schedulePost($request->validated(), $user_id);
+
+        return response()->json([
+            'payload' => null,
+            'message' => 'Post scheduled successfully',
+        ], 200);
+
+    } catch (\Throwable $e) {
+        $code = $e->getCode();
+        $httpCode = is_int($code) && $code >= 100 && $code < 600 ? $code : 500;
+
+        return response()->json([
+            'payload' => null,
+            'message' => $e->getMessage(),
+        ], $httpCode);
     }
-
+}
     function checkExpiry($user_id)
     {
         try {

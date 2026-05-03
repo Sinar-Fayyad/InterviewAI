@@ -65,9 +65,26 @@ const imageTextOptions = [
   { label: "Custom text", value: "custom_text" },
 ];
 
+const formatScheduledAtForBackend = (dateTime: string) => {
+  if (!dateTime) return "";
+
+  // datetime-local gives: 2026-05-03T20:30
+  const [date, time] = dateTime.split("T");
+
+  if (!date || !time) return dateTime;
+
+  const cleanTime = time.slice(0, 8);
+  const normalizedTime = cleanTime.length === 5 ? `${cleanTime}:00` : cleanTime;
+
+  // Laravel-friendly format: 2026-05-03 20:30:00
+  return `${date} ${normalizedTime}`;
+};
+
 export default function LinkedInManager() {
   const navigate = useNavigate();
   const { userId } = useAuth();
+  const { toast } = useToast();
+  const { handleError } = useErrorHandler();
 
   const [topic, setTopic] = useState("");
   const [description, setDescription] = useState("");
@@ -87,18 +104,18 @@ export default function LinkedInManager() {
   const [isScheduling, setIsScheduling] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [scheduleDateTime, setScheduleDateTime] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
-const { handleError } = useErrorHandler();
 
   const resetForm = () => {
     setGeneratedPost("");
     setTopic("");
     setDescription("");
-    setUploadedImage(null);
+   setUploadedImage(null);
+  setUploadedImageFile(null);
     setScheduleDateTime("");
     setShowSchedulePicker(false);
     setIsEditing(false);
@@ -176,6 +193,7 @@ const { handleError } = useErrorHandler();
       setGeneratedPost(result.content || "");
 
       const finalImage = normalizeImage(result.image);
+
       if (finalImage) {
         setUploadedImage(finalImage);
       }
@@ -197,40 +215,46 @@ const { handleError } = useErrorHandler();
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
 
-    if (!file) return;
+  if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please upload an image smaller than 5MB.",
-        variant: "destructive",
-      });
-      return;
-    }
+  if (file.size > 5 * 1024 * 1024) {
+    toast({
+      title: "File too large",
+      description: "Please upload an image smaller than 5MB.",
+      variant: "destructive",
+    });
+    return;
+  }
 
-    const reader = new FileReader();
+  setUploadedImageFile(file);
 
-    reader.onload = (e) => {
-      setUploadedImage(e.target?.result as string);
-      toast({
-        title: "Image uploaded",
-        description: "Your image has been added to the post.",
-      });
-    };
+  const reader = new FileReader();
 
-    reader.readAsDataURL(file);
+  reader.onload = (e) => {
+    setUploadedImage(e.target?.result as string);
+
+    toast({
+      title: "Image uploaded",
+      description: "Your image has been added to the post.",
+    });
   };
 
-  const handleRemoveImage = () => {
-    setUploadedImage(null);
+  reader.readAsDataURL(file);
+};
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
+const handleRemoveImage = () => {
+  setUploadedImage(null);
+  setUploadedImageFile(null);
+
+  if (fileInputRef.current) {
+    fileInputRef.current.value = "";
+  }
+};
+
+
 
   const handlePostNow = async () => {
     if (!generatedPost.trim()) {
@@ -242,13 +266,21 @@ const { handleError } = useErrorHandler();
       return;
     }
 
-    if (!userId) return;
+    if (!userId) {
+      toast({
+        title: "User not found",
+        description: "Please log in again before posting.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsPosting(true);
 
     try {
       await postToLinkedin(userId, {
         text: generatedPost,
+        media: uploadedImage || null,
       });
 
       toast({
@@ -278,49 +310,69 @@ const { handleError } = useErrorHandler();
   };
 
   const handleScheduleConfirm = async () => {
-    if (!scheduleDateTime) {
-      toast({
-        title: "Select date and time",
-        description: "Please choose when to schedule your post.",
-        variant: "destructive",
-      });
-      return;
-    }
+  if (!scheduleDateTime) {
+    toast({
+      title: "Select date and time",
+      description: "Please choose when to schedule your post.",
+      variant: "destructive",
+    });
+    return;
+  }
 
-    if (!userId) return;
+  if (!userId) return;
 
-    setIsScheduling(true);
-    setShowSchedulePicker(false);
+  setIsScheduling(true);
+  setShowSchedulePicker(false);
 
-    try {
-      await schedulePost(userId, {
-        text: generatedPost,
-        scheduled_at: scheduleDateTime,
-        media: uploadedImage || undefined,
-      });
+  try {
+  const scheduledAt = formatScheduledAtForBackend(scheduleDateTime);
 
-      const dateObj = new Date(scheduleDateTime);
-      const scheduledDate = dateObj.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-      const scheduledTime = dateObj.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+  console.log("Scheduling payload:", {
+    user_id: userId,
+    title: topic || "LinkedIn Post",
+    body: generatedPost,
+    scheduled_at: scheduledAt,
+    media: uploadedImage || "",
+  });
 
-      toast({
-        title: "Scheduled Successfully!",
-        description: `Your post will be published on ${scheduledDate} at ${scheduledTime}.`,
-      });
+  await schedulePost(userId, {
+  title: topic || "LinkedIn Post",
+  body: generatedPost,
+  scheduled_at: scheduledAt,
+  media: uploadedImage,
+});
+  const dateObj = new Date(scheduleDateTime);
 
-      resetForm();
-    } catch (err) {
-      handleError(err, "Failed to schedule. Please try again.");
-    } finally {
-      setIsScheduling(false);
-    }
-  };
+  const scheduledDate = dateObj.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+
+  const scheduledTime = dateObj.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  toast({
+    title: "Scheduled Successfully!",
+    description: `Your post will be published on ${scheduledDate} at ${scheduledTime}.`,
+  });
+
+  resetForm();
+}catch (err: any) {
+  console.error("Schedule error full:", err?.response?.data);
+  console.error("Schedule media error:", err?.response?.data?.errors?.media);
+
+  handleError(
+    err,
+    err?.response?.data?.errors?.media?.[0] ||
+      err?.response?.data?.message ||
+      "Failed to schedule. Please try again."
+  );
+}finally {
+    setIsScheduling(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-background">
@@ -363,6 +415,7 @@ const { handleError } = useErrorHandler();
             <div className="lg:col-span-2 space-y-6">
               <Card className="gradient-card border-border shadow-card p-6">
                 <h3 className="font-semibold mb-2">Create New Post</h3>
+
                 <p className="text-sm text-muted-foreground mb-6">
                   Add your post idea first, then optionally customize the image
                   that will be generated with it.
@@ -372,6 +425,7 @@ const { handleError } = useErrorHandler();
                   <div className="space-y-4">
                     <div>
                       <h4 className="font-medium mb-1">Post Details</h4>
+
                       <p className="text-sm text-muted-foreground">
                         Tell us what the LinkedIn post should be about.
                       </p>
@@ -411,6 +465,7 @@ const { handleError } = useErrorHandler();
 
                       <div>
                         <h4 className="font-medium mb-1">Image Details</h4>
+
                         <p className="text-sm text-muted-foreground">
                           Optional: guide the AI image so it looks more relevant
                           and less random.
@@ -698,13 +753,17 @@ const { handleError } = useErrorHandler();
                           min={new Date().toISOString().slice(0, 16)}
                         />
 
-                        <Button onClick={handleScheduleConfirm}>
+                        <Button
+                          onClick={handleScheduleConfirm}
+                          disabled={isScheduling}
+                        >
                           Confirm
                         </Button>
 
                         <Button
                           variant="ghost"
                           onClick={() => setShowSchedulePicker(false)}
+                          disabled={isScheduling}
                         >
                           Cancel
                         </Button>
