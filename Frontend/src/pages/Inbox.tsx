@@ -72,6 +72,7 @@ export default function Inbox() {
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const [selectedPriority, setSelectedPriority] = useState<"high" | "medium" | "low" | "all">("all");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -249,7 +250,7 @@ export default function Inbox() {
     }
   };
 
-  const filterMessages = (type: "all" | "email" | "spam") => {
+  const filterMessages = (priority: "high" | "medium" | "low" | "all" = "all") => {
     let filtered = [...messages];
     if (showStarredOnly) filtered = filtered.filter((m) => m.isStarred);
     if (searchQuery) {
@@ -261,9 +262,9 @@ export default function Inbox() {
           m.preview.toLowerCase().includes(q)
       );
     }
-    if (type === "email") filtered = filtered.filter((m) => m.type === "email" && !m.isSpam);
-    else if (type === "spam") filtered = filtered.filter((m) => m.isSpam);
-    else filtered = filtered.filter((m) => !m.isSpam);
+    if (priority !== "all") {
+      filtered = filtered.filter((m) => m.priority === priority);
+    }
     return filtered;
   };
 
@@ -319,8 +320,9 @@ export default function Inbox() {
   };
 
   const filteredAll = filterMessages("all");
-  const filteredEmail = filterMessages("email");
-  const spamMessages = filterMessages("spam");
+  const filteredHigh = filterMessages("high");
+  const filteredMedium = filterMessages("medium");
+  const filteredLow = filterMessages("low");
 
   return (
     <ProtectedRoute>
@@ -362,14 +364,17 @@ export default function Inbox() {
                 </p>
               </div>
             ) : (
-              <Tabs defaultValue="all" className="space-y-6">
+              <Tabs defaultValue="all" className="space-y-6" value={selectedPriority} onValueChange={(value) => setSelectedPriority(value as "high" | "medium" | "low" | "all")}>
                 <TabsList>
                   <TabsTrigger value="all">All ({filteredAll.length})</TabsTrigger>
-                  <TabsTrigger value="email">
-                    <Mail className="w-4 h-4 mr-2" />Email
+                  <TabsTrigger value="high">
+                    <Mail className="w-4 h-4 mr-2" />High ({filteredHigh.length})
                   </TabsTrigger>
-                  <TabsTrigger value="spam">
-                    <AlertTriangle className="w-4 h-4 mr-2" />Spam ({spamMessages.length})
+                  <TabsTrigger value="medium">
+                    <Mail className="w-4 h-4 mr-2" />Medium ({filteredMedium.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="low">
+                    <Mail className="w-4 h-4 mr-2" />Low ({filteredLow.length})
                   </TabsTrigger>
                 </TabsList>
 
@@ -383,37 +388,31 @@ export default function Inbox() {
                   }
                 </TabsContent>
 
-                <TabsContent value="email" className="space-y-4">
+                <TabsContent value="high" className="space-y-4">
                   {!googleConnected
                     ? renderNotConnected()
-                    : filteredEmail.length > 0
-                      ? filteredEmail.map(renderMessageCard)
-                      : <div className="text-center py-12 text-muted-foreground">No email messages found.</div>
+                    : filteredHigh.length > 0
+                      ? filteredHigh.map(renderMessageCard)
+                      : <div className="text-center py-12 text-muted-foreground">No high priority messages found.</div>
                   }
                 </TabsContent>
 
-                <TabsContent value="spam" className="space-y-4">
-                  {spamMessages.length > 0 ? (
-                    spamMessages.map((m) => (
-                      <Card
-                        key={m.id}
-                        className="border-destructive/50 bg-destructive/5 p-6 cursor-pointer"
-                        onClick={() => handleOpenMessage(m)}
-                      >
-                        <div className="flex items-start gap-4">
-                          <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-1" />
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold truncate">{m.subject}</h3>
-                            <p className="text-sm text-muted-foreground">{m.from}</p>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-2">{m.preview}</p>
-                            <Badge variant="destructive" className="mt-2">Marked as Spam</Badge>
-                          </div>
-                        </div>
-                      </Card>
-                    ))
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground">No spam messages found.</div>
-                  )}
+                <TabsContent value="medium" className="space-y-4">
+                  {!googleConnected
+                    ? renderNotConnected()
+                    : filteredMedium.length > 0
+                      ? filteredMedium.map(renderMessageCard)
+                      : <div className="text-center py-12 text-muted-foreground">No medium priority messages found.</div>
+                  }
+                </TabsContent>
+
+                <TabsContent value="low" className="space-y-4">
+                  {!googleConnected
+                    ? renderNotConnected()
+                    : filteredLow.length > 0
+                      ? filteredLow.map(renderMessageCard)
+                      : <div className="text-center py-12 text-muted-foreground">No low priority messages found.</div>
+                  }
                 </TabsContent>
               </Tabs>
             )}

@@ -171,19 +171,53 @@ class EmailService
                     $body = $detail['snippet'] ?? '';
                 }
 
+                $subject = $headers->firstWhere('name', 'Subject')['value'] ?? '';
+                $from = $headers->firstWhere('name', 'From')['value'] ?? '';
+                $emailPriority = self::determineEmailPriority($subject, $from, $body);
+
                 return [
-                    'from' => $headers->firstWhere('name', 'From')['value'] ?? '',
-                    'subject' => $headers->firstWhere('name', 'Subject')['value'] ?? '',
+                    'id' => $msg['id'],
+                    'from' => $from,
+                    'subject' => $subject,
                     'snippet' => $detail['snippet'] ?? '',
                     'body' => trim($body),
                     'date' => date('d/m/Y', intval($detail['internalDate']) / 1000),
                     'time' => date('H:i', intval($detail['internalDate']) / 1000),
+                    'priority' => $emailPriority,
                     'url' => "https://mail.google.com/mail/u/0/#inbox/{$msg['id']}"
                 ];
             })
             ->filter()
             ->values()
             ->all();
+    }
+
+    static function determineEmailPriority($subject, $from, $body)
+    {
+        $subjectLower = strtolower($subject . ' ' . $from . ' ' . $body);
+
+        // High priority keywords
+        $highKeywords = ['urgent', 'asap', 'immediate', 'offer', 'interview scheduled', 'congratulations', 'selected', 'shortlisted', 'final round', 'urgent response', 'time-sensitive', 'action required'];
+
+        // Medium priority keywords
+        $mediumKeywords = ['interview', 'phone screen', 'technical assessment', 'next step', 'follow up', 'update', 'status', 'feedback'];
+
+        // Check for high priority keywords
+        foreach ($highKeywords as $keyword) {
+            if (strpos($subjectLower, $keyword) !== false) {
+                return 'high';
+            }
+        }
+
+        // Check for medium priority keywords
+        foreach ($mediumKeywords as $keyword) {
+            if (strpos($subjectLower, $keyword) !== false) {
+                return 'medium';
+            }
+        }
+
+        // Default to low priority
+        return 'low';
     }
     static function refreshGoogleToken($refresh_token)
     {
