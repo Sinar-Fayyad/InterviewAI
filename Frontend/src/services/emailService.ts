@@ -16,6 +16,7 @@ export const generateEmail = async (params: {
 // POST /reply_to_email
 export const replyToEmail = async (params: { email_id: string; reply_content: string; context: string }) => {
   const { data } = await api.post("/reply_to_email", params);
+  console.log("RAW API RESPONSE:", JSON.stringify(data, null, 2));
   const payload = data?.payload;
   return {
     subject: payload?.subject || "",

@@ -50,7 +50,7 @@ class EmailService
 
         $response = Http::withHeaders([
             'X-N8N-KEY' => config('services.n8n.auth_key'),
-        ])->timeout(120)->post('http://127.0.0.1:5678/webhook/ReplyToEmail', $request);
+        ])->timeout(120)->post('http://127.0.0.1:5678/webhook-test/ReplyToEmail', $request);
 
         if ($response->json('code') !== 200) {
             throw new \Exception("Failed to generate email reply: " . $response->json('error'), 500);
@@ -70,18 +70,24 @@ class EmailService
         if (!$user->google_refresh_token || !$user->google_email) {
             throw new \Exception("Google account not connected", 400);
         }
+
         $access_token = self::refreshGoogleToken($user->google_refresh_token);
 
         if (!$access_token) {
             throw new \Exception("Failed to refresh Google access token", 500);
         }
 
-        $raw = "To: {$request->to}\r\n
-                From: {$user->google_email}\r\n
-                Subject: {$request->subject}\r\n
-                Content-Type: text/plain; charset=utf-8\r\n\r\n{$request->body}";
+        $message = implode("\r\n", [
+            "To: {$request->to}",
+            "From: {$user->google_email}",
+            "Subject: {$request->subject}",
+            "MIME-Version: 1.0",
+            "Content-Type: text/plain; charset=UTF-8",
+            "",
+            $request->body
+        ]);
 
-        $encoded = rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
+        $encoded = rtrim(strtr(base64_encode($message), '+/', '-_'), '=');
 
         $response = Http::withToken($access_token)
             ->timeout(30)

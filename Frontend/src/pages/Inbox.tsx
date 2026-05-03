@@ -96,7 +96,6 @@ export default function Inbox() {
     if (!userId) return;
     setIsLoading(true);
     try {
-      // Step 1: Check connections first
       const response = await api.get(`/connections/${userId}`);
       const data = response.data?.payload;
       const isGoogleConnected = data?.google_connected ?? false;
@@ -106,7 +105,6 @@ export default function Inbox() {
 
       const allMessages: InboxMessage[] = [];
 
-      // Step 2: Fetch emails if Google is connected
       if (isGoogleConnected) {
         const emails = await getJobEmails(userId).catch(() => []);
         if (Array.isArray(emails)) {
@@ -128,7 +126,6 @@ export default function Inbox() {
         }
       }
 
-      // Step 3: Fetch LinkedIn notifications if LinkedIn is connected
       if (isLinkedinConnected) {
         const linkedinMsgs = await getLinkedinMessages(userId).catch(() => []);
         if (Array.isArray(linkedinMsgs)) {
@@ -186,17 +183,48 @@ export default function Inbox() {
     setIsModalOpen(true);
   };
 
+  // ─── Extract reply text ───────────────────────────────────────────────────
+  // replyToEmail() in emailService already unwraps axios + SuccessJSON and
+  // returns: { subject, email_reply, reply }
+  // So result.email_reply is always the right field.
+  const extractReplyText = (result: any): string => {
+    if (!result) return "";
+    const candidate = result.email_reply || result.reply || "";
+    return typeof candidate === "string" ? candidate.trim() : "";
+  };
+  // ─────────────────────────────────────────────────────────────────────────
+
   const handleGenerateReply = async () => {
-    if (!selectedMessage || !userId) return;
+    // Snapshot all values before state changes — closing the modal triggers
+    // a re-render that can null out selectedMessage via stale closures
+    const message = selectedMessage;
+    const uid = userId;
+    const notes = customizeNotes;
+
+    if (!message || !uid) return;
+
     setIsCustomizeModalOpen(false);
     setIsGeneratingReply(true);
+
     try {
       const result = await replyToEmail({
-        email_id: String(selectedMessage.id),
-        reply_content: customizeNotes,
-        context: selectedMessage.fullContent,
+        email_id: String(message.id),
+        reply_content: notes,
+        context: message.fullContent,
       });
-      setAiReply(result?.reply || result?.email_reply || "");
+
+      const replyText = extractReplyText(result);
+
+      if (!replyText) {
+        toast({
+          title: "No reply generated",
+          description: "The AI returned an empty response. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setAiReply(replyText);
       setIsEditingReply(false);
     } catch (err) {
       toast({ title: "Error", description: "Failed to generate reply. Please try again.", variant: "destructive" });
@@ -209,7 +237,6 @@ export default function Inbox() {
     if (!selectedMessage || !aiReply || !userId) return;
     setIsSendingEmail(true);
     try {
-      // Extract clean email from "Name <email@domain.com>" format
       const rawFrom = selectedMessage.from;
       const emailMatch = rawFrom.match(/<(.+?)>/);
       const cleanEmail = emailMatch ? emailMatch[1] : rawFrom;
@@ -454,6 +481,7 @@ export default function Inbox() {
           </div>
         </main>
 
+        {/* ── Message Detail Modal ── */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto overflow-x-hidden">
             {selectedMessage && (
@@ -494,7 +522,9 @@ export default function Inbox() {
                           : <><Send className="w-4 h-4 mr-2" />Generate AI Reply</>
                         }
                       </Button>
-                      {aiReply && (
+
+                      {/* ── AI Reply Section: only renders when aiReply has content ── */}
+                      {aiReply.length > 0 && (
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <label className="text-sm font-medium">AI-Generated Reply</label>
@@ -505,7 +535,11 @@ export default function Inbox() {
                           </div>
                           {isEditingReply
                             ? <Textarea value={aiReply} onChange={(e) => setAiReply(e.target.value)} rows={8} className="resize-none" />
-                            : <div className="bg-muted/30 rounded-lg p-4"><p className="whitespace-pre-wrap text-sm">{aiReply}</p></div>
+                            : (
+                              <div className="bg-muted/30 rounded-lg p-4">
+                                <p className="whitespace-pre-wrap text-sm">{aiReply}</p>
+                              </div>
+                            )
                           }
                           <Button onClick={handleSendEmail} disabled={isSendingEmail} className="w-full">
                             {isSendingEmail
@@ -531,6 +565,7 @@ export default function Inbox() {
           </DialogContent>
         </Dialog>
 
+        {/* ── Customize Reply Modal ── */}
         <Dialog open={isCustomizeModalOpen} onOpenChange={setIsCustomizeModalOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
