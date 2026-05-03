@@ -88,7 +88,7 @@ class LinkedinService
             ->timeout(120)
             ->post('http://localhost:5678/webhook/Linkedin_profile', ProfileService::getProfile($user_id));
 
-        if ($response->json('code') !== '200') {
+        if ($response->json('code') !== 200) {
             throw new \Exception("Failed to create LinkedIn profile", 500);
         }
 
