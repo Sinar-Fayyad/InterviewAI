@@ -196,7 +196,7 @@ export default function Inbox() {
         reply_content: customizeNotes,
         context: selectedMessage.fullContent,
       });
-      setAiReply(result || "");
+      setAiReply(result?.reply || result?.email_reply || "");
       setIsEditingReply(false);
     } catch (err) {
       toast({ title: "Error", description: "Failed to generate reply. Please try again.", variant: "destructive" });
