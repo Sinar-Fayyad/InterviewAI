@@ -10,7 +10,7 @@ use App\Http\Requests\GenerateEmailRequest;
 
 class EmailController extends Controller
 {
-function generateEmail(GenerateEmailRequest $request, $user_id = null)
+    function generateEmail(GenerateEmailRequest $request, $user_id = null)
     {
         try {
             $email = EmailService::generateEmail($request->validated(), $user_id);
@@ -22,7 +22,7 @@ function generateEmail(GenerateEmailRequest $request, $user_id = null)
         }
     }
 
-public function replyToEmail(ReplyToEmailRequest $request)
+    public function replyToEmail(ReplyToEmailRequest $request)
     {
         try {
             $reply = EmailService::replyToEmail($request->validated());
@@ -34,10 +34,10 @@ public function replyToEmail(ReplyToEmailRequest $request)
         }
     }
 
-public function sendEmail(SendEmailRequest $request, $user_id)
+    public function sendEmail(SendEmailRequest $request, $user_id)
     {
         try {
-            EmailService::sendEmail($request->validated(), $user_id);
+            EmailService::sendEmail($request, $user_id);
             return $this->SuccessJSON(null, "Email sent successfully");
         } catch (\Exception $e) {
             $code = $e->getCode();
@@ -62,7 +62,7 @@ public function sendEmail(SendEmailRequest $request, $user_id)
     {
         try {
             EmailService::disconnectGoogle($user_id);
-            return $this->SuccessJSON(null, "Google account disconnected successfully" );
+            return $this->SuccessJSON(null, "Google account disconnected successfully");
         } catch (\Exception $e) {
             $code = $e->getCode();
             $httpCode = ($code >= 100 && $code < 600) ? $code : 500;

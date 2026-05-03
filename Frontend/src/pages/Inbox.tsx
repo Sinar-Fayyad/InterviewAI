@@ -9,8 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { ErrorPopup } from "@/components/ui/error-popup";
-import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -23,19 +21,22 @@ import {
 import { Label } from "@/components/ui/label";
 import {
   Mail,
+  Linkedin,
   AlertTriangle,
   Star,
   Search,
   Loader2,
   Send,
   Edit2,
+  ExternalLink,
 } from "lucide-react";
 import { getJobEmails, replyToEmail, sendEmail } from "@/services/emailService";
+import { getLinkedinMessages } from "@/services/linkedinService";
 import { socialiteRedirect } from "@/services/profileService";
 import api from "@/services/api";
 
 const loadingMessages = [
-  "Fetching your emails...",
+  "Fetching your messages...",
   "Please wait...",
   "This might take a moment...",
   "Almost there...",
@@ -45,7 +46,7 @@ const loadingMessages = [
 
 interface InboxMessage {
   id: number;
-  type: "email";
+  type: "email" | "linkedin";
   from: string;
   subject: string;
   preview: string;
@@ -63,9 +64,7 @@ export default function Inbox() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showStarredOnly, setShowStarredOnly] = useState(false);
   const [messages, setMessages] = useState<InboxMessage[]>([]);
-  const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(
-    null,
-  );
+  const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [aiReply, setAiReply] = useState("");
   const [isGeneratingReply, setIsGeneratingReply] = useState(false);
@@ -75,8 +74,8 @@ export default function Inbox() {
   const [customizeNotes, setCustomizeNotes] = useState("");
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
+  const [linkedinConnected, setLinkedinConnected] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
-  const { error, hideError, handleError } = useErrorHandler();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -101,10 +100,13 @@ export default function Inbox() {
       const response = await api.get(`/connections/${userId}`);
       const data = response.data?.payload;
       const isGoogleConnected = data?.google_connected ?? false;
+      const isLinkedinConnected = data?.linkedin_connected ?? false;
       setGoogleConnected(isGoogleConnected);
+      setLinkedinConnected(isLinkedinConnected);
 
-      // Step 2: Only fetch emails if Google is connected
       const allMessages: InboxMessage[] = [];
+
+      // Step 2: Fetch emails if Google is connected
       if (isGoogleConnected) {
         const emails = await getJobEmails(userId).catch(() => []);
         if (Array.isArray(emails)) {
@@ -126,15 +128,32 @@ export default function Inbox() {
         }
       }
 
+      // Step 3: Fetch LinkedIn notifications if LinkedIn is connected
+      if (isLinkedinConnected) {
+        const linkedinMsgs = await getLinkedinMessages(userId).catch(() => []);
+        if (Array.isArray(linkedinMsgs)) {
+          linkedinMsgs.forEach((m: any, i: number) => {
+            allMessages.push({
+              id: m.id || 1000 + i,
+              type: "linkedin",
+              from: m.from || m.sender || "",
+              subject: m.subject || "",
+              preview: m.preview || m.body?.substring(0, 100) || "",
+              fullContent: m.body || m.fullContent || "",
+              priority: m.priority || "medium",
+              isSpam: false,
+              isStarred: false,
+              time: m.time || "",
+              date: m.date || "",
+            });
+          });
+        }
+      }
+
       const starredIds = loadStarredFromStorage();
-      setMessages(
-        allMessages.map((m) => ({
-          ...m,
-          isStarred: starredIds.includes(m.id),
-        })),
-      );
+      setMessages(allMessages.map((m) => ({ ...m, isStarred: starredIds.includes(m.id) })));
     } catch (err) {
-      handleError(err, "Failed to load inbox. Please refresh the page.");
+      toast({ title: "Error", description: "Failed to load inbox. Please refresh the page.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -154,7 +173,7 @@ export default function Inbox() {
   const handleToggleStar = (messageId: number, e: React.MouseEvent) => {
     e.stopPropagation();
     const updated = messages.map((m) =>
-      m.id === messageId ? { ...m, isStarred: !m.isStarred } : m,
+      m.id === messageId ? { ...m, isStarred: !m.isStarred } : m
     );
     setMessages(updated);
     saveStarredToStorage(updated.filter((m) => m.isStarred).map((m) => m.id));
@@ -180,7 +199,7 @@ export default function Inbox() {
       setAiReply(result || "");
       setIsEditingReply(false);
     } catch (err) {
-      handleError(err, "Failed to generate reply. Please try again.");
+      toast({ title: "Error", description: "Failed to generate reply. Please try again.", variant: "destructive" });
     } finally {
       setIsGeneratingReply(false);
     }
@@ -207,21 +226,27 @@ export default function Inbox() {
       setAiReply("");
       setIsModalOpen(false);
     } catch (err) {
-      handleError(err, "Failed to send email. Please try again.");
+      toast({ title: "Error", description: "Failed to send email. Please try again.", variant: "destructive" });
     } finally {
       setIsSendingEmail(false);
     }
   };
 
-  const handleConnectGmail = async () => {
+  const handleViewOnLinkedIn = () => {
+    if (!selectedMessage) return;
+    window.open(`https://www.linkedin.com/messaging/`, "_blank");
+  };
+
+  const handleConnect = async (type: "email" | "linkedin") => {
     if (!userId) return;
     try {
-      const url = await socialiteRedirect("google", userId, "/inbox");
+      const provider = type === "email" ? "google" : "linkedin-openid";
+      const url = await socialiteRedirect(provider, userId, "/inbox");
       if (url) window.location.href = url;
     } catch (error: any) {
       toast({
         title: "Connection Failed",
-        description: error.message || "Failed to connect Gmail",
+        description: error.message || "Failed to connect",
         variant: "destructive",
       });
     }
@@ -229,16 +254,13 @@ export default function Inbox() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "high":
-        return "destructive";
-      case "medium":
-        return "default";
-      default:
-        return "secondary";
+      case "high": return "destructive";
+      case "medium": return "default";
+      default: return "secondary";
     }
   };
 
-  const filterMessages = (type: "all" | "email" | "spam") => {
+  const filterMessages = (type: "all" | "email" | "linkedin" | "spam") => {
     let filtered = [...messages];
     if (showStarredOnly) filtered = filtered.filter((m) => m.isStarred);
     if (searchQuery) {
@@ -247,10 +269,11 @@ export default function Inbox() {
         (m) =>
           m.subject.toLowerCase().includes(q) ||
           m.from.toLowerCase().includes(q) ||
-          m.preview.toLowerCase().includes(q),
+          m.preview.toLowerCase().includes(q)
       );
     }
-    if (type === "email") filtered = filtered.filter((m) => !m.isSpam);
+    if (type === "email") filtered = filtered.filter((m) => m.type === "email" && !m.isSpam);
+    else if (type === "linkedin") filtered = filtered.filter((m) => m.type === "linkedin" && !m.isSpam);
     else if (type === "spam") filtered = filtered.filter((m) => m.isSpam);
     else filtered = filtered.filter((m) => !m.isSpam);
     return filtered;
@@ -263,8 +286,11 @@ export default function Inbox() {
       onClick={() => handleOpenMessage(message)}
     >
       <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/10">
-          <Mail className="w-5 h-5 text-primary" />
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${message.type === "email" ? "bg-primary/10" : "bg-accent/10"}`}>
+          {message.type === "email"
+            ? <Mail className="w-5 h-5 text-primary" />
+            : <Linkedin className="w-5 h-5 text-accent" />
+          }
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4 mb-2">
@@ -273,58 +299,48 @@ export default function Inbox() {
               <p className="text-sm text-muted-foreground">{message.from}</p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={(e) => handleToggleStar(message.id, e)}
-              >
-                <Star
-                  className={`w-4 h-4 ${message.isStarred ? "fill-primary text-primary" : "text-muted-foreground"}`}
-                />
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => handleToggleStar(message.id, e)}>
+                <Star className={`w-4 h-4 ${message.isStarred ? "fill-primary text-primary" : "text-muted-foreground"}`} />
               </Button>
-              <Badge variant={getPriorityColor(message.priority)}>
-                {message.priority}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                {message.time}
-              </span>
+              <Badge variant={getPriorityColor(message.priority)}>{message.priority}</Badge>
+              <span className="text-xs text-muted-foreground">{message.time}</span>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {message.preview}
-          </p>
+          <p className="text-sm text-muted-foreground line-clamp-2">{message.preview}</p>
         </div>
       </div>
     </Card>
   );
 
-  const renderNotConnected = () => (
-    <Card className="bg-secondary/80 border-primary/20 shadow-card p-8">
-      <div className="flex flex-col sm:flex-row items-center gap-6">
-        <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/10">
-          <Mail className="w-7 h-7 text-primary" />
+  const renderNotConnected = (type: "email" | "linkedin") => {
+    const isEmail = type === "email";
+    return (
+      <Card className="bg-secondary/80 border-primary/20 shadow-card p-8">
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 ${isEmail ? "bg-primary/10" : "bg-accent/10"}`}>
+            {isEmail ? <Mail className="w-7 h-7 text-primary" /> : <Linkedin className="w-7 h-7 text-accent" />}
+          </div>
+          <div className="flex-1 text-center sm:text-left">
+            <h3 className="text-lg font-semibold mb-1">
+              {isEmail ? "Gmail Not Connected" : "LinkedIn Not Connected"}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {isEmail
+                ? "Connect your Gmail account to receive and manage job-related emails directly from your inbox."
+                : "Connect your LinkedIn account to see notifications and opportunities in one place."}
+            </p>
+          </div>
+          <Button onClick={() => handleConnect(type)} variant="default" className="flex-shrink-0">
+            {isEmail ? "Connect Gmail" : "Connect LinkedIn"}
+          </Button>
         </div>
-        <div className="flex-1 text-center sm:text-left">
-          <h3 className="text-lg font-semibold mb-1">Gmail Not Connected</h3>
-          <p className="text-sm text-muted-foreground">
-            Connect your Gmail account to receive and manage job-related emails
-            directly from your inbox.
-          </p>
-        </div>
-        <Button
-          onClick={handleConnectGmail}
-          variant="default"
-          className="flex-shrink-0"
-        >
-          Connect Gmail
-        </Button>
-      </div>
-    </Card>
-  );
+      </Card>
+    );
+  };
 
   const filteredAll = filterMessages("all");
   const filteredEmail = filterMessages("email");
+  const filteredLinkedin = filterMessages("linkedin");
   const spamMessages = filterMessages("spam");
 
   return (
@@ -335,9 +351,7 @@ export default function Inbox() {
           <div className="max-w-6xl mx-auto">
             <BackButton className="mb-6" />
             <div className="mb-8 animate-fade-in">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                Smart Inbox
-              </h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">Smart Inbox</h1>
               <p className="text-xl text-muted-foreground">
                 AI-powered message prioritization with automatic spam detection
               </p>
@@ -356,9 +370,7 @@ export default function Inbox() {
                 variant={showStarredOnly ? "default" : "outline"}
                 onClick={() => setShowStarredOnly(!showStarredOnly)}
               >
-                <Star
-                  className={`w-4 h-4 mr-2 ${showStarredOnly ? "fill-current" : ""}`}
-                />
+                <Star className={`w-4 h-4 mr-2 ${showStarredOnly ? "fill-current" : ""}`} />
                 Starred
               </Button>
             </div>
@@ -373,41 +385,45 @@ export default function Inbox() {
             ) : (
               <Tabs defaultValue="all" className="space-y-6">
                 <TabsList>
-                  <TabsTrigger value="all">
-                    All ({filteredAll.length})
-                  </TabsTrigger>
+                  <TabsTrigger value="all">All ({filteredAll.length})</TabsTrigger>
                   <TabsTrigger value="email">
-                    <Mail className="w-4 h-4 mr-2" />
-                    Email
+                    <Mail className="w-4 h-4 mr-2" />Email
+                  </TabsTrigger>
+                  <TabsTrigger value="linkedin">
+                    <Linkedin className="w-4 h-4 mr-2" />LinkedIn
                   </TabsTrigger>
                   <TabsTrigger value="spam">
-                    <AlertTriangle className="w-4 h-4 mr-2" />
-                    Spam ({spamMessages.length})
+                    <AlertTriangle className="w-4 h-4 mr-2" />Spam ({spamMessages.length})
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="all" className="space-y-4">
-                  {!googleConnected ? (
-                    renderNotConnected()
-                  ) : filteredAll.length > 0 ? (
-                    filteredAll.map(renderMessageCard)
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      No messages found.
-                    </div>
-                  )}
+                  {!googleConnected && renderNotConnected("email")}
+                  {!linkedinConnected && renderNotConnected("linkedin")}
+                  {filteredAll.length > 0
+                    ? filteredAll.map(renderMessageCard)
+                    : (!googleConnected || !linkedinConnected)
+                      ? null
+                      : <div className="text-center py-12 text-muted-foreground">No messages found.</div>
+                  }
                 </TabsContent>
 
                 <TabsContent value="email" className="space-y-4">
-                  {!googleConnected ? (
-                    renderNotConnected()
-                  ) : filteredEmail.length > 0 ? (
-                    filteredEmail.map(renderMessageCard)
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      No email messages found.
-                    </div>
-                  )}
+                  {!googleConnected
+                    ? renderNotConnected("email")
+                    : filteredEmail.length > 0
+                      ? filteredEmail.map(renderMessageCard)
+                      : <div className="text-center py-12 text-muted-foreground">No email messages found.</div>
+                  }
+                </TabsContent>
+
+                <TabsContent value="linkedin" className="space-y-4">
+                  {!linkedinConnected
+                    ? renderNotConnected("linkedin")
+                    : filteredLinkedin.length > 0
+                      ? filteredLinkedin.map(renderMessageCard)
+                      : <div className="text-center py-12 text-muted-foreground">No LinkedIn notifications found.</div>
+                  }
                 </TabsContent>
 
                 <TabsContent value="spam" className="space-y-4">
@@ -421,26 +437,16 @@ export default function Inbox() {
                         <div className="flex items-start gap-4">
                           <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-1" />
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold truncate">
-                              {m.subject}
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                              {m.from}
-                            </p>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
-                              {m.preview}
-                            </p>
-                            <Badge variant="destructive" className="mt-2">
-                              Marked as Spam
-                            </Badge>
+                            <h3 className="font-semibold truncate">{m.subject}</h3>
+                            <p className="text-sm text-muted-foreground">{m.from}</p>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mt-2">{m.preview}</p>
+                            <Badge variant="destructive" className="mt-2">Marked as Spam</Badge>
                           </div>
                         </div>
                       </Card>
                     ))
                   ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      No spam messages found.
-                    </div>
+                    <div className="text-center py-12 text-muted-foreground">No spam messages found.</div>
                   )}
                 </TabsContent>
               </Tabs>
@@ -453,14 +459,15 @@ export default function Inbox() {
             {selectedMessage && (
               <>
                 <DialogHeader>
-                  <DialogTitle className="text-xl">
-                    {selectedMessage.subject}
-                  </DialogTitle>
+                  <DialogTitle className="text-xl">{selectedMessage.subject}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 pb-4 border-b border-border">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/10">
-                      <Mail className="w-5 h-5 text-primary" />
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${selectedMessage.type === "email" ? "bg-primary/10" : "bg-accent/10"}`}>
+                      {selectedMessage.type === "email"
+                        ? <Mail className="w-5 h-5 text-primary" />
+                        : <Linkedin className="w-5 h-5 text-accent" />
+                      }
                     </div>
                     <div>
                       <p className="font-medium">{selectedMessage.from}</p>
@@ -475,76 +482,47 @@ export default function Inbox() {
                     </p>
                   </div>
 
-                  {!selectedMessage.isSpam && (
+                  {!selectedMessage.isSpam && selectedMessage.type === "email" && (
                     <div className="pt-4 border-t border-border space-y-4">
                       <Button
-                        onClick={() => {
-                          setCustomizeNotes("");
-                          setIsCustomizeModalOpen(true);
-                        }}
+                        onClick={() => { setCustomizeNotes(""); setIsCustomizeModalOpen(true); }}
                         disabled={isGeneratingReply}
                         className="w-full"
                       >
-                        {isGeneratingReply ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Generating AI Reply...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="w-4 h-4 mr-2" />
-                            Generate AI Reply
-                          </>
-                        )}
+                        {isGeneratingReply
+                          ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating AI Reply...</>
+                          : <><Send className="w-4 h-4 mr-2" />Generate AI Reply</>
+                        }
                       </Button>
                       {aiReply && (
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium">
-                              AI-Generated Reply
-                            </label>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setIsEditingReply(!isEditingReply)}
-                            >
+                            <label className="text-sm font-medium">AI-Generated Reply</label>
+                            <Button variant="ghost" size="sm" onClick={() => setIsEditingReply(!isEditingReply)}>
                               <Edit2 className="w-4 h-4 mr-2" />
                               {isEditingReply ? "Preview" : "Edit"}
                             </Button>
                           </div>
-                          {isEditingReply ? (
-                            <Textarea
-                              value={aiReply}
-                              onChange={(e) => setAiReply(e.target.value)}
-                              rows={8}
-                              className="resize-none"
-                            />
-                          ) : (
-                            <div className="bg-muted/30 rounded-lg p-4">
-                              <p className="whitespace-pre-wrap text-sm">
-                                {aiReply}
-                              </p>
-                            </div>
-                          )}
-                          <Button
-                            onClick={handleSendEmail}
-                            disabled={isSendingEmail}
-                            className="w-full"
-                          >
-                            {isSendingEmail ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Sending...
-                              </>
-                            ) : (
-                              <>
-                                <Send className="w-4 h-4 mr-2" />
-                                Send Email
-                              </>
-                            )}
+                          {isEditingReply
+                            ? <Textarea value={aiReply} onChange={(e) => setAiReply(e.target.value)} rows={8} className="resize-none" />
+                            : <div className="bg-muted/30 rounded-lg p-4"><p className="whitespace-pre-wrap text-sm">{aiReply}</p></div>
+                          }
+                          <Button onClick={handleSendEmail} disabled={isSendingEmail} className="w-full">
+                            {isSendingEmail
+                              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Sending...</>
+                              : <><Send className="w-4 h-4 mr-2" />Send Email</>
+                            }
                           </Button>
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {!selectedMessage.isSpam && selectedMessage.type === "linkedin" && (
+                    <div className="pt-4 border-t border-border">
+                      <Button onClick={handleViewOnLinkedIn} className="w-full" variant="outline">
+                        <ExternalLink className="w-4 h-4 mr-2" />View on LinkedIn
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -553,10 +531,7 @@ export default function Inbox() {
           </DialogContent>
         </Dialog>
 
-        <Dialog
-          open={isCustomizeModalOpen}
-          onOpenChange={setIsCustomizeModalOpen}
-        >
+        <Dialog open={isCustomizeModalOpen} onOpenChange={setIsCustomizeModalOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Customize Your Reply</DialogTitle>
@@ -574,24 +549,11 @@ export default function Inbox() {
               </div>
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
-              <Button
-                variant="outline"
-                onClick={() => setIsCustomizeModalOpen(false)}
-              >
-                Cancel
-              </Button>
+              <Button variant="outline" onClick={() => setIsCustomizeModalOpen(false)}>Cancel</Button>
               <Button onClick={handleGenerateReply}>Generate Reply</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        <ErrorPopup
-          isOpen={error.isOpen}
-          onClose={hideError}
-          title={error.title}
-          message={error.message}
-          onRetry={error.onRetry}
-        />
       </div>
     </ProtectedRoute>
   );
