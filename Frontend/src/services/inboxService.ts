@@ -8,7 +8,6 @@ export interface Message {
   fullContent: string;
   priority: "high" | "medium" | "low";
   isSpam: boolean;
-  time: string;
   date: string;
   url?: string;
   matched_keyword?: string;
@@ -88,7 +87,6 @@ export const getJobEmails = async (userId: string): Promise<Message[]> => {
       fullContent: body,
       priority: getPriority(subject, body),
       isSpam: false,
-      time: email.time || "",
       date: email.date || "",
       url: email.url,
       matched_keyword: email.matched_keyword,

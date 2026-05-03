@@ -52,7 +52,6 @@ interface InboxMessage {
   fullContent: string;
   priority: "high" | "medium" | "low";
   isSpam: boolean;
-  time: string;
   date: string;
 }
 
@@ -113,7 +112,6 @@ export default function Inbox() {
               fullContent: e.body || e.fullContent || "",
               priority: e.priority || "medium",
               isSpam: e.is_spam || false,
-              time: e.time || "",
               date: e.date || "",
             });
           });
@@ -273,7 +271,6 @@ export default function Inbox() {
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Badge variant={getPriorityColor(message.priority)}>{message.priority}</Badge>
-                <span className="text-xs text-muted-foreground">{message.time}</span>
               </div>
             </div>
             <p className="text-sm text-muted-foreground line-clamp-2">{message.preview}</p>
@@ -419,7 +416,7 @@ export default function Inbox() {
                     <div>
                       <p className="font-medium">{selectedMessage.from}</p>
                       <p className="text-sm text-muted-foreground">
-                        {selectedMessage.date} • {selectedMessage.time}
+                        {selectedMessage.date}
                       </p>
                     </div>
                   </div>
