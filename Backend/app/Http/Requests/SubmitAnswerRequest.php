@@ -12,8 +12,8 @@ class SubmitAnswerRequest extends ApiFormRequest
     public function rules(): array
     {
         return [
-            'audio' => 'required|file|mimes:webm,wav,mp3|max:10240', // 10MB
-            'emotion' => 'nullable|string|in:happy,sad,neutral,excited,anxious',
+            'answer_text' => 'nullable|string|min:1',
+            'emotion' => 'nullable|string',
             'end_now' => 'nullable|boolean',
         ];
     }

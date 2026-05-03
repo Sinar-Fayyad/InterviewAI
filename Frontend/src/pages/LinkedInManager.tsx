@@ -804,6 +804,7 @@ const handleRemoveImage = () => {
           </div>
         </div>
       </main>
+      <ErrorPopup isOpen={error.isOpen} onClose={hideError} title={error.title} message={error.message} onRetry={error.onRetry} />
     </div>
   );
 }

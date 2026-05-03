@@ -11,6 +11,7 @@ const SILENCE_DURATION_MS = 2000;
 
 export function useSilenceDetection(): UseSilenceDetectionReturn {
   const [isDetecting, setIsDetecting] = useState(false);
+  const detectingRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
@@ -42,10 +43,11 @@ export function useSilenceDetection(): UseSilenceDetectionReturn {
       const bufferLength = analyserRef.current.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
 
+      detectingRef.current = true;
       setIsDetecting(true);
 
       const checkAudioLevel = () => {
-        if (!analyserRef.current || !isDetecting) return;
+        if (!analyserRef.current || !detectingRef.current) return;
 
         analyserRef.current.getByteTimeDomainData(dataArray);
         const rms = calculateRMS(dataArray);
@@ -72,9 +74,10 @@ export function useSilenceDetection(): UseSilenceDetectionReturn {
     } catch (error) {
       console.error("Failed to start silence detection:", error);
     }
-  }, [calculateRMS, isDetecting]);
+  }, [calculateRMS]);
 
   const stopDetection = useCallback(() => {
+    detectingRef.current = false;
     setIsDetecting(false);
     silenceStartRef.current = null;
 
