@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { ErrorPopup } from "@/components/ui/error-popup";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { Linkedin, Sparkles, Calendar, Send, Upload, X, Edit2, Loader2, CalendarDays } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -218,7 +217,7 @@ export default function LinkedInManager() {
           </div>
         </div>
       </main>
-      <ErrorPopup isOpen={error.isOpen} onClose={hideError} title={error.title} message={error.message} onRetry={error.onRetry} />
+      {/* <ErrorPopup isOpen={error.isOpen} onClose={hideError} title={error.title} message={error.message} onRetry={error.onRetry} /> */}
     </div>
   );
 }
