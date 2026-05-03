@@ -16,7 +16,12 @@ export const generateEmail = async (params: {
 // POST /reply_to_email
 export const replyToEmail = async (params: { email_id: string; reply_content: string; context: string }) => {
   const { data } = await api.post("/reply_to_email", params);
-  return data?.payload?.reply_message || data?.reply_message || "";
+  const payload = data?.payload;
+  return {
+    subject: payload?.subject || "",
+    email_reply: payload?.email_reply || payload?.reply || "",
+    reply: payload?.reply || payload?.email_reply || "",
+  };
 };
 
 // POST /send_email/{user_id}
