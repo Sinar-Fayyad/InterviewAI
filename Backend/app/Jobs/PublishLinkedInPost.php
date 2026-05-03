@@ -36,7 +36,7 @@ class PublishLinkedInPost implements ShouldQueue
         }
 
         $response = Http::withToken($user->linkedin_token)
-            ->post('https://api.linkedin.com/v2/ugcPosts', [
+            ->post('http://api.linkedin.com/v2/ugcPosts', [
                 'author' => 'urn:li:person:' . $user->linkedin_id,
                 'lifecycleState' => 'PUBLISHED',
                 'specificContent' => [
