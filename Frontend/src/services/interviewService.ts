@@ -7,17 +7,33 @@ export const researchCompany = async (companyName: string, jobTitle: string) => 
     job_title: jobTitle,
   });
 
-  const payload = data?.payload;
+  const payload = data?.payload || {};
+  const code = payload?.code ?? data?.code;
+  const errorMessage =
+    payload?.error ||
+    payload?.message ||
+    data?.message ||
+    (typeof payload?.response === "string" ? payload.response : undefined);
+
+  const contextSummary =
+    payload?.context_summary ??
+    payload?.summary ??
+    payload?.response ??
+    payload?.data ??
+    "";
+
+  if (code && code !== 0) {
+    throw new Error(errorMessage || "Research failed. Please try again.");
+  }
+
+  if (!contextSummary || String(contextSummary).trim().length === 0) {
+    throw new Error(errorMessage || "Research returned no usable summary.");
+  }
 
   return {
-    code: payload?.code ?? data?.code,
-    context_summary:
-      payload?.context_summary ||
-      payload?.response ||
-      payload?.summary ||
-      payload?.data ||
-      "",
-    raw: payload ?? data,
+    code,
+    context_summary: String(contextSummary),
+    raw: payload,
   };
 };
 

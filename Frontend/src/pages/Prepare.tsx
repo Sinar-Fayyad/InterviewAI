@@ -46,10 +46,14 @@ const handleResearchCompany = async () => {
 
     const summary =
       typeof result.context_summary === "string"
-        ? result.context_summary
-        : JSON.stringify(result.raw, null, 2);
+        ? result.context_summary.trim()
+        : JSON.stringify(result.raw, null, 2).trim();
 
-    setContextSummary(summary || "Research completed successfully.");
+    if (!summary) {
+      throw new Error("Research returned no usable summary.");
+    }
+
+    setContextSummary(summary);
 
     toast({
       title: "Research Complete!",
