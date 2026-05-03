@@ -33,7 +33,7 @@ class EmailService
 
         $response = Http::withHeaders([
             'X-N8N-KEY' => config('services.n8n.auth_key'),
-        ])->timeout(120)->post('https://n8n-6ixrams.zapto.org/webhook/generate_email', [
+        ])->timeout(120)->post('https://127.0.0.1:5678/webhook/generate_email', [
             'input' => $request,
             'profile' => $profile
         ]);
@@ -92,177 +92,93 @@ class EmailService
         }
     }
 
-static function getJobEmails($user_id)
-{
-    $user = User::find($user_id);
+    static function getJobEmails($user_id)
+    {
+        $user = User::find($user_id);
+        if (!$user) {
+            throw new \Exception("User not found", 404);
+        }
 
-    if (!$user) {
-        throw new \Exception("User not found", 404);
-    }
+        if (!$user->google_refresh_token) {
+            throw new \Exception("Google account not connected", 400);
+        }
 
-    if (!$user->google_refresh_token) {
-        throw new \Exception("Google account not connected", 400);
-    }
+        $access_token = self::refreshGoogleToken($user->google_refresh_token);
+        if (!$access_token) {
+            throw new \Exception("Failed to refresh Google access token", 500);
+        }
 
-    $access_token = self::refreshGoogleToken($user->google_refresh_token);
-
-    if (!$access_token) {
-        throw new \Exception("Failed to refresh Google access token", 500);
-    }
-
-    /*
-     |---------------------------------------------------------------
-     | Fetch only recent inbox emails first
-     | Keep maxResults low to avoid timeout.
-     |---------------------------------------------------------------
-     */
-    $response = Http::withToken($access_token)
-        ->timeout(20)
-        ->get('https://gmail.googleapis.com/gmail/v1/users/me/messages', [
-            'maxResults' => 20,
-            'q' => 'newer_than:90d',
-            'labelIds' => 'INBOX',
-        ]);
-
-    if (!$response->successful()) {
-        throw new \Exception(
-            "Failed to fetch emails: " . $response->body(),
-            $response->getStatusCode()
-        );
-    }
-
-    $messages = $response->json('messages', []);
-
-    if (empty($messages)) {
-        return [];
-    }
-
-    $jobKeywords = [
-        'job',
-        'jobs',
-        'hiring',
-        'hire',
-        'interview',
-        'offer',
-        'internship',
-        'intern',
-        'opportunity',
-        'career',
-        'careers',
-        'position',
-        'role',
-        'opening',
-        'vacancy',
-        'recruiter',
-        'recruiting',
-        'recruitment',
-        'talent',
-        'talent acquisition',
-        'candidate',
-        'applicant',
-        'application',
-        'applied',
-        'resume',
-        'résumé',
-        'cv',
-        'thank you for applying',
-        'thanks for applying',
-        'your application',
-        'application received',
-        'we received your application',
-        'application status',
-        'next steps',
-        'shortlisted',
-        'selected',
-        'not selected',
-        'unfortunately',
-        'congratulations',
-        'phone screen',
-        'screening call',
-        'technical interview',
-        'hr interview',
-        'assessment',
-        'coding challenge',
-        'linkedin',
-        'indeed',
-        'glassdoor',
-        'greenhouse',
-        'lever',
-        'workday',
-        'ashby',
-        'smartrecruiters',
-        'bamboohr',
-        'jobvite',
-        'recruitee',
-        'wellfound'
-    ];
-
-    $jobEmails = [];
-
-    foreach ($messages as $msg) {
-        /*
-         |---------------------------------------------------------------
-         | Use metadata instead of full body.
-         | This is much faster than format=full.
-         |---------------------------------------------------------------
-         */
-        $detailResponse = Http::withToken($access_token)
-            ->timeout(15)
-            ->get("https://gmail.googleapis.com/gmail/v1/users/me/messages/{$msg['id']}", [
-                'format' => 'metadata',
-                'metadataHeaders' => ['From', 'Subject', 'Date'],
+        $emailsResponse = Http::withToken($access_token)
+            ->timeout(60)
+            ->get('https://gmail.googleapis.com/gmail/v1/users/me/messages', [
+                'maxResults' => 50,
+                'q' => 'is:unread subject:(job OR hiring OR interview OR offer OR internship 
+                                            OR opportunity OR career OR position OR role OR opening 
+                                            OR recruit OR application OR candidate OR resume OR cv OR talent)'
             ]);
 
-        if (!$detailResponse->successful()) {
-            continue;
+        if (!$emailsResponse->successful()) {
+            throw new \Exception("Failed to fetch emails: " . $emailsResponse->body(), $emailsResponse->getStatusCode());
         }
 
-        $detail = $detailResponse->json();
+        return collect($emailsResponse->json('messages', []))
+            ->map(function ($msg) use ($access_token) {
+                $detail = Http::withToken($access_token)
+                    ->get("https://gmail.googleapis.com/gmail/v1/users/me/messages/{$msg['id']}")
+                    ->json();
 
-        if (!$detail || !isset($detail['payload'])) {
-            continue;
-        }
+                if (!$detail || !isset($detail['payload'])) {
+                    return null;
+                }
 
-        $headers = collect($detail['payload']['headers'] ?? []);
+                $headers = collect($detail['payload']['headers']);
 
-        $from = $headers->firstWhere('name', 'From')['value'] ?? '';
-        $subject = $headers->firstWhere('name', 'Subject')['value'] ?? '';
-        $snippet = $detail['snippet'] ?? '';
+                // Extract full body
+                $body = '';
+                $payload = $detail['payload'];
 
-        $searchText = strtolower($from . ' ' . $subject . ' ' . $snippet);
+                // Try direct body first
+                if (!empty($payload['body']['data'])) {
+                    $body = base64_decode(strtr($payload['body']['data'], '-_', '+/'));
+                }
+                // Try parts (multipart emails)
+                elseif (!empty($payload['parts'])) {
+                    foreach ($payload['parts'] as $part) {
+                        if ($part['mimeType'] === 'text/plain' && !empty($part['body']['data'])) {
+                            $body = base64_decode(strtr($part['body']['data'], '-_', '+/'));
+                            break;
+                        }
+                    }
+                    // Fallback to HTML part if no plain text
+                    if (empty($body)) {
+                        foreach ($payload['parts'] as $part) {
+                            if ($part['mimeType'] === 'text/html' && !empty($part['body']['data'])) {
+                                $body = strip_tags(base64_decode(strtr($part['body']['data'], '-_', '+/')));
+                                break;
+                            }
+                        }
+                    }
+                }
 
-        $matchedKeyword = null;
+                // Fallback to snippet
+                if (empty($body)) {
+                    $body = $detail['snippet'] ?? '';
+                }
 
-        foreach ($jobKeywords as $keyword) {
-            if (str_contains($searchText, strtolower($keyword))) {
-                $matchedKeyword = $keyword;
-                break;
-            }
-        }
-
-        if (!$matchedKeyword) {
-            continue;
-        }
-
-        $timestamp = isset($detail['internalDate'])
-            ? intval($detail['internalDate']) / 1000
-            : time();
-
-        $jobEmails[] = [
-            'id' => $msg['id'],
-            'from' => $from,
-            'subject' => $subject ?: 'No Subject',
-            'snippet' => $snippet,
-            'body' => $snippet,
-            'date' => date('d/m/Y', $timestamp),
-            'time' => date('H:i', $timestamp),
-            'url' => "https://mail.google.com/mail/u/0/#inbox/{$msg['id']}",
-            'matched_keyword' => $matchedKeyword,
-        ];
+                return [
+                    'from' => $headers->firstWhere('name', 'From')['value'] ?? '',
+                    'subject' => $headers->firstWhere('name', 'Subject')['value'] ?? '',
+                    'snippet' => $detail['snippet'] ?? '',
+                    'body' => trim($body),
+                    'date' => date('d/m/Y', intval($detail['internalDate']) / 1000),
+                    'time' => date('H:i', intval($detail['internalDate']) / 1000),
+                    'url' => "https://mail.google.com/mail/u/0/#inbox/{$msg['id']}"
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
     }
-
-    return $jobEmails;
-}
     static function refreshGoogleToken($refresh_token)
     {
         $response = Http::asForm()->timeout(10)->post('https://oauth2.googleapis.com/token', [
