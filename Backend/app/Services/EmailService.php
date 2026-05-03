@@ -50,7 +50,7 @@ class EmailService
 
         $response = Http::withHeaders([
             'X-N8N-KEY' => config('services.n8n.auth_key'),
-        ])->timeout(120)->post('http://127.0.0.1:5678/webhook-test/ReplyToEmail', $request);
+        ])->timeout(120)->post('http://127.0.0.1:5678/webhook/ReplyToEmail', $request);
 
         if ($response->json('code') !== 200) {
             throw new \Exception("Failed to generate email reply: " . $response->json('error'), 500);
