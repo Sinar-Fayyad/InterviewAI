@@ -32,21 +32,20 @@ class InterviewAIService
                     'emotions' => []
                 ]);
 
-
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to start interview". $response->json('error') , 500);
+            throw new \Exception("Failed to start interview" . $response->json('error'), 500);
         }
-         
-        if ($response->json()['payload.0.question']) {
+
+        $firstQuestion = $response->json('payload.0.question') ?? $response->json('question') ?? $response->json('payload.question') ?? null;
+
+        if (!$firstQuestion) {
             throw new \Exception("Failed to get first question", 500);
         }
-
-        $firstQuestion = $response->json()['payload.0.question'];
 
         $transcript = self::appendToTranscript("", "question1", $firstQuestion);
 
         $interviewData = [
-            'user_id' => $data["user_id"],
+            'user_id' => $user_id,
             'company_name' => $data["company_name"],
             'job_title' => $data["job_title"],
             'context_summary' => $data["context_summary"],
@@ -130,7 +129,7 @@ class InterviewAIService
             'question_count' => $nextQNum,
         ], $interviewId);
 
-        return ['reply' => $nextQuestion, 'finished' => false];
+        return ['question' => $nextQuestion, 'finished' => false];
     }
 
     static function generateFeedback($interview_id)
