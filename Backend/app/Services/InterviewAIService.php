@@ -26,11 +26,11 @@ class InterviewAIService
         $response = Http::withHeaders([
             'X-N8N-KEY' => config('services.n8n.auth_key'),
         ])->timeout(120)->post('http://localhost:5678/webhook/Interview_maker', [
-                    'profile' => $profile,
-                    'context_summary' => $data["context_summary"],
-                    'conversation' => [],
-                    'emotions' => []
-                ]);
+            'profile' => $profile,
+            'context_summary' => $data["context_summary"],
+            'conversation' => [],
+            'emotions' => []
+        ]);
 
         if ($response->json('code') !== 200) {
             throw new \Exception("Failed to start interview" . $response->json('error'), 500);
@@ -70,14 +70,11 @@ class InterviewAIService
         $currentQNum = $interview->question_count;
         $emotion = $data["emotion"] ?? "neutral";
 
-        try {
-            $answerText = self::transcribeAudio(request()->file('audio'));
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage(), $e->getCode());
-        }
+        $answerText = $data["answer_text"] ?? "";
 
-        if (!$answerText) {
-            throw new \Exception("Failed to transcribe audio", 500);
+        // Only throw if no answer AND not ending
+        if (!$answerText && !($data["end_now"] ?? false)) {
+            throw new \Exception("No answer text provided", 400);
         }
 
         $transcript = $interview->transcript;
@@ -90,7 +87,7 @@ class InterviewAIService
 
         if ($endNow) {
             return [
-                "reply" => "That's all for today. Thank you.We will reply to you as soon as possible",
+                "reply" => "That's all for today. Thank you. We will reply to you as soon as possible",
                 "finished" => true
             ];
         }
@@ -102,24 +99,24 @@ class InterviewAIService
             throw new \Exception("User profile not found", 404);
         }
 
-
         $response = Http::withHeaders([
             'X-N8N-KEY' => config('services.n8n.auth_key'),
-        ])->timeout(120)->post('http://127.0.0.1:5678/webhook/interview_maker', [
-                    'profile' => $profile,
-                    'context_summary' => $interview->context_summary,
-                    'conversation' => $parsed['conversation'],
-                    'emotions' => $parsed['emotions']
-                ]);
+        ])->timeout(120)->post('http://localhost:5678/webhook-test/interview_maker', [
+            'profile' => $profile,
+            'context_summary' => $interview->context_summary,
+            'conversation' => $parsed['conversation'],
+            'emotions' => $parsed['emotions']
+        ]);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to get next question". $response->json('error') , 500);
-        }
-        if (!$response->json()['question']) {
-            throw new \Exception("Failed to get next question", 500);
+            throw new \Exception("Failed to get next question" . $response->json('error'), 500);
         }
 
-        $nextQuestion = $response->json()['question'];
+        $nextQuestion = $response->json()['question'] ?? null;
+
+        if (!$nextQuestion) {
+            throw new \Exception("Failed to get next question", 500);
+        }
 
         $nextQNum = $currentQNum + 1;
         $transcript = self::appendToTranscript($transcript, "question{$nextQNum}", $nextQuestion);
@@ -131,7 +128,6 @@ class InterviewAIService
 
         return ['question' => $nextQuestion, 'finished' => false];
     }
-
     static function generateFeedback($interview_id)
     {
         $interview = Interview::find($interview_id);
@@ -150,18 +146,17 @@ class InterviewAIService
         $response = Http::withHeaders([
             'X-N8N-KEY' => config('services.n8n.auth_key'),
         ])->timeout(120)->post('http://127.0.0.1:5678/webhook/interview_feedback', [
-                    'profile' => $profile,
-                    'context_summary' => $interview->context_summary,
-                    'conversation' => $parsed['conversation'],
-                    'emotions' => $parsed['emotions']
-                ]);
+            'profile' => $profile,
+            'context_summary' => $interview->context_summary,
+            'conversation' => $parsed['conversation'],
+            'emotions' => $parsed['emotions']
+        ]);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to generate feedback". $response->json('error') , 500);
+            throw new \Exception("Failed to generate feedback" . $response->json('error'), 500);
         }
 
         return $response->json();
-
     }
 
     static function endInterview($data, $interview_id)
@@ -182,7 +177,6 @@ class InterviewAIService
             'video_path' => $videoPath,
             'feedback' => $feedback,
         ], $interview_id);
-
     }
 
     static function transcribeAudio($audioFile)

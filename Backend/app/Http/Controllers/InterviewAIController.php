@@ -21,12 +21,10 @@ class InterviewAIController extends Controller
         }
     }
 
-    function submitAnswer(SubmitAnswerRequest $request, $id)
+    function submitAnswer(SubmitAnswerRequest $request , $id)
     {
         try {
-            $validated = $request->validated();
-            $validated['audio'] = $request->file('audio');
-            $result = InterviewAIService::submitAnswer($validated, $id);
+            $result = InterviewAIService::submitAnswer($request->validated(), $id);
             return $this->SuccessJSON($result);
         } catch (\Exception $e) {
             $code = $e->getCode();
