@@ -7,33 +7,20 @@ export const researchCompany = async (companyName: string, jobTitle: string) => 
     job_title: jobTitle,
   });
 
-  const payload = data?.payload || {};
-  const code = payload?.code ?? data?.code;
-  const errorMessage =
-    payload?.error ||
-    payload?.message ||
-    data?.message ||
-    (typeof payload?.response === "string" ? payload.response : undefined);
+  const code = data?.payload?.code;
+  const response = data?.payload?.response;
 
-  const contextSummary =
-    payload?.context_summary ??
-    payload?.summary ??
-    payload?.response ??
-    payload?.data ??
-    "";
-
-  if (code && code !== 0) {
-    throw new Error(errorMessage || "Research failed. Please try again.");
+  if (!code || code < 200 || code >= 300) {
+    throw new Error("Research failed. Please try again.");
   }
 
-  if (!contextSummary || String(contextSummary).trim().length === 0) {
-    throw new Error(errorMessage || "Research returned no usable summary.");
+  if (!response || String(response).trim().length === 0) {
+    throw new Error("Research returned no usable summary.");
   }
 
   return {
     code,
-    context_summary: String(contextSummary),
-    raw: payload,
+    context_summary: String(response),
   };
 };
 
@@ -44,7 +31,10 @@ export const getAnalysisFeedback = async (userId: string) => {
 };
 
 // POST /start_interview/{user_id}
-export const startInterview = async (userId: string, params: { company_name: string; job_title: string; context_summary: string }) => {
+export const startInterview = async (
+  userId: string,
+  params: { company_name: string; job_title: string; context_summary: string },
+) => {
   const { data } = await api.post(`/start_interview/${userId}`, params);
   return data?.payload;
 };
@@ -57,9 +47,9 @@ export const submitAnswer = async (interviewId: string, formData: FormData) => {
   return data?.payload;
 };
 
-// POST /generate_feedack/{id} (typo matches backend)
+// POST /generate_feedback/{id}
 export const generateFeedback = async (interviewId: string) => {
-  const { data } = await api.post(`/generate_feedack/${interviewId}`);
+  const { data } = await api.post(`/generate_feedback/${interviewId}`);
   return data?.payload;
 };
 
