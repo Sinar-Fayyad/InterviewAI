@@ -22,11 +22,13 @@ import { Label } from "@/components/ui/label";
 import {
   Mail,
   AlertTriangle,
-  Star,
   Search,
   Loader2,
   Send,
   Edit2,
+  Zap,
+  Clock,
+  ArrowDown,
 } from "lucide-react";
 import { getJobEmails, replyToEmail, sendEmail } from "@/services/emailService";
 import { socialiteRedirect } from "@/services/profileService";
@@ -50,7 +52,6 @@ interface InboxMessage {
   fullContent: string;
   priority: "high" | "medium" | "low";
   isSpam: boolean;
-  isStarred: boolean;
   time: string;
   date: string;
 }
@@ -59,7 +60,6 @@ export default function Inbox() {
   const { userId } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [showStarredOnly, setShowStarredOnly] = useState(false);
   const [messages, setMessages] = useState<InboxMessage[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -113,7 +113,6 @@ export default function Inbox() {
               fullContent: e.body || e.fullContent || "",
               priority: e.priority || "medium",
               isSpam: e.is_spam || false,
-              isStarred: false,
               time: e.time || "",
               date: e.date || "",
             });
@@ -121,33 +120,12 @@ export default function Inbox() {
         }
       }
 
-      const starredIds = loadStarredFromStorage();
-      setMessages(allMessages.map((m) => ({ ...m, isStarred: starredIds.includes(m.id) })));
+      setMessages(allMessages);
     } catch (err) {
       toast({ title: "Error", description: "Failed to load inbox. Please refresh the page.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const loadStarredFromStorage = (): number[] => {
-    try {
-      return JSON.parse(localStorage.getItem("starredMessages") || "[]");
-    } catch {
-      return [];
-    }
-  };
-
-  const saveStarredToStorage = (ids: number[]) =>
-    localStorage.setItem("starredMessages", JSON.stringify(ids));
-
-  const handleToggleStar = (messageId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const updated = messages.map((m) =>
-      m.id === messageId ? { ...m, isStarred: !m.isStarred } : m
-    );
-    setMessages(updated);
-    saveStarredToStorage(updated.filter((m) => m.isStarred).map((m) => m.id));
   };
 
   const handleOpenMessage = (message: InboxMessage) => {
@@ -252,7 +230,6 @@ export default function Inbox() {
 
   const filterMessages = (priority: "high" | "medium" | "low" | "all" = "all") => {
     let filtered = [...messages];
-    if (showStarredOnly) filtered = filtered.filter((m) => m.isStarred);
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -268,35 +245,43 @@ export default function Inbox() {
     return filtered;
   };
 
-  const renderMessageCard = (message: InboxMessage) => (
-    <Card
-      key={message.id}
-      className="gradient-card border-border shadow-card p-6 hover:shadow-glow transition-smooth cursor-pointer"
-      onClick={() => handleOpenMessage(message)}
-    >
-      <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/10">
-          <Mail className="w-5 h-5 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-4 mb-2">
-            <div>
-              <h3 className="font-semibold truncate">{message.subject}</h3>
-              <p className="text-sm text-muted-foreground">{message.from}</p>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => handleToggleStar(message.id, e)}>
-                <Star className={`w-4 h-4 ${message.isStarred ? "fill-primary text-primary" : "text-muted-foreground"}`} />
-              </Button>
-              <Badge variant={getPriorityColor(message.priority)}>{message.priority}</Badge>
-              <span className="text-xs text-muted-foreground">{message.time}</span>
-            </div>
+  const renderMessageCard = (message: InboxMessage) => {
+    const getPriorityIcon = (priority: string) => {
+      switch (priority) {
+        case "high": return <Zap className="w-5 h-5 text-red-500" />;
+        case "medium": return <Clock className="w-5 h-5 text-yellow-500" />;
+        case "low": return <ArrowDown className="w-5 h-5 text-green-500" />;
+        default: return <Mail className="w-5 h-5 text-primary" />;
+      }
+    };
+
+    return (
+      <Card
+        key={message.id}
+        className="gradient-card border-border shadow-card p-6 hover:shadow-glow transition-smooth cursor-pointer"
+        onClick={() => handleOpenMessage(message)}
+      >
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/10">
+            {getPriorityIcon(message.priority)}
           </div>
-          <p className="text-sm text-muted-foreground line-clamp-2">{message.preview}</p>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-4 mb-2">
+              <div>
+                <h3 className="font-semibold truncate">{message.subject}</h3>
+                <p className="text-sm text-muted-foreground">{message.from}</p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Badge variant={getPriorityColor(message.priority)}>{message.priority}</Badge>
+                <span className="text-xs text-muted-foreground">{message.time}</span>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground line-clamp-2">{message.preview}</p>
+          </div>
         </div>
-      </div>
-    </Card>
-  );
+      </Card>
+    );
+  };
 
   const renderNotConnected = () => {
     return (
@@ -347,13 +332,6 @@ export default function Inbox() {
                   className="pl-10"
                 />
               </div>
-              <Button
-                variant={showStarredOnly ? "default" : "outline"}
-                onClick={() => setShowStarredOnly(!showStarredOnly)}
-              >
-                <Star className={`w-4 h-4 mr-2 ${showStarredOnly ? "fill-current" : ""}`} />
-                Starred
-              </Button>
             </div>
 
             {isLoading ? (
@@ -368,13 +346,13 @@ export default function Inbox() {
                 <TabsList>
                   <TabsTrigger value="all">All ({filteredAll.length})</TabsTrigger>
                   <TabsTrigger value="high">
-                    <Mail className="w-4 h-4 mr-2" />High ({filteredHigh.length})
+                    <Zap className="w-4 h-4 mr-2" />High ({filteredHigh.length})
                   </TabsTrigger>
                   <TabsTrigger value="medium">
-                    <Mail className="w-4 h-4 mr-2" />Medium ({filteredMedium.length})
+                    <Clock className="w-4 h-4 mr-2" />Medium ({filteredMedium.length})
                   </TabsTrigger>
                   <TabsTrigger value="low">
-                    <Mail className="w-4 h-4 mr-2" />Low ({filteredLow.length})
+                    <ArrowDown className="w-4 h-4 mr-2" />Low ({filteredLow.length})
                   </TabsTrigger>
                 </TabsList>
 
@@ -430,7 +408,13 @@ export default function Inbox() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 pb-4 border-b border-border">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/10">
-                      <Mail className="w-5 h-5 text-primary" />
+                      {selectedMessage.priority === "high" ? (
+                        <Zap className="w-5 h-5 text-red-500" />
+                      ) : selectedMessage.priority === "medium" ? (
+                        <Clock className="w-5 h-5 text-yellow-500" />
+                      ) : (
+                        <ArrowDown className="w-5 h-5 text-green-500" />
+                      )}
                     </div>
                     <div>
                       <p className="font-medium">{selectedMessage.from}</p>

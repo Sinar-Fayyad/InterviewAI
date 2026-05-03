@@ -1,14 +1,13 @@
 import api from "@/services/api";
 export interface Message {
   id: string;
-  type: "email" | "linkedin";
+  type: "email";
   from: string;
   subject: string;
   preview: string;
   fullContent: string;
   priority: "high" | "medium" | "low";
   isSpam: boolean;
-  isStarred: boolean;
   time: string;
   date: string;
   url?: string;
@@ -89,7 +88,6 @@ export const getJobEmails = async (userId: string): Promise<Message[]> => {
       fullContent: body,
       priority: getPriority(subject, body),
       isSpam: false,
-      isStarred: false,
       time: email.time || "",
       date: email.date || "",
       url: email.url,
@@ -101,14 +99,9 @@ export const getJobEmails = async (userId: string): Promise<Message[]> => {
 export const filterMessages = (
   messages: Message[],
   searchQuery: string,
-  showStarredOnly: boolean,
-  type?: "email" | "linkedin" | "spam" | "all"
+  type?: "email" | "spam" | "all"
 ): Message[] => {
   let filtered = [...messages];
-
-  if (showStarredOnly) {
-    filtered = filtered.filter(message => message.isStarred);
-  }
 
   if (searchQuery.trim()) {
     const query = searchQuery.toLowerCase();
@@ -123,8 +116,6 @@ export const filterMessages = (
 
   if (type === "email") {
     filtered = filtered.filter(message => message.type === "email" && !message.isSpam);
-  } else if (type === "linkedin") {
-    filtered = filtered.filter(message => message.type === "linkedin" && !message.isSpam);
   } else if (type === "spam") {
     filtered = filtered.filter(message => message.isSpam);
   } else if (type === "all") {
@@ -134,22 +125,7 @@ export const filterMessages = (
   return filtered;
 };
 
-export const toggleStar = (messages: Message[], messageId: string): Message[] => {
-  return messages.map(message =>
-    message.id === messageId
-      ? { ...message, isStarred: !message.isStarred }
-      : message
-  );
-};
 
-export const loadStarredFromStorage = (): string[] => {
-  try {
-    const stored = localStorage.getItem("starredMessages");
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-};
 
 export const saveStarredToStorage = (starredIds: string[]): void => {
   localStorage.setItem("starredMessages", JSON.stringify(starredIds));
