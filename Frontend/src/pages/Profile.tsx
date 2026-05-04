@@ -402,7 +402,7 @@ const Profile = () => {
 
             <TabsContent
               value="connections"
-              className="max-h-[calc(100vh-300px)] overflow-auto p-4"
+              className="p-4"
             >
               <ConnectAccountsStep
                 linkedinConnected={linkedinConnected}
@@ -415,7 +415,7 @@ const Profile = () => {
 
             <TabsContent
               value="basic"
-              className="max-h-[calc(100vh-300px)] overflow-auto p-4"
+              className="p-4"
             >
               <BasicInfoStep
                 fullName={fullName}
@@ -436,7 +436,7 @@ const Profile = () => {
 
             <TabsContent
               value="education"
-              className="max-h-[calc(100vh-300px)] overflow-auto p-4"
+              className="p-4"
             >
               <EducationStep
                 education={education}
@@ -451,7 +451,7 @@ const Profile = () => {
 
             <TabsContent
               value="experience"
-              className="max-h-[calc(100vh-300px)] overflow-auto p-4"
+              className="p-4"
             >
               <ExperienceStep
                 experience={experience}
@@ -466,7 +466,7 @@ const Profile = () => {
 
             <TabsContent
               value="skills"
-              className="max-h-[calc(100vh-300px)] overflow-auto p-4"
+              className="p-4"
             >
               <SkillsStep
                 skills={skills}
@@ -485,7 +485,7 @@ const Profile = () => {
 
             <TabsContent
               value="certifications"
-              className="max-h-[calc(100vh-300px)] overflow-auto p-4"
+              className="p-4"
             >
               <CertificationsStep
                 certifications={certifications}
