@@ -54,7 +54,7 @@ export const submitAnswer = async (
 // POST /generate_feedback/{id}
 export const generateFeedback = async (interviewId: string) => {
   const { data } = await api.post(`/generate_feedback/${interviewId}`);
-  return data?.payload;
+  return data?.payload ?? data;
 };
 
 // POST /end_interview/{id}
