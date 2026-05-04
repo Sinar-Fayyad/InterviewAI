@@ -72,7 +72,6 @@ class InterviewAIService
 
         $answerText = $data["answer_text"] ?? "";
 
-        // Only throw if no answer AND not ending
         if (!$answerText && !($data["end_now"] ?? false)) {
             throw new \Exception("No answer text provided", 400);
         }
@@ -143,22 +142,29 @@ class InterviewAIService
             throw new \Exception("User profile not found", 404);
         }
 
+        // Merge conversation + emotions into one array per entry
+        $qa_with_emotions = array_map(function ($item, $index) use ($parsed) {
+            return [
+                'question' => $item['question'],
+                'answer'   => $item['answer'],
+                'emotion'  => $parsed['emotions'][$index] ?? 'neutral',
+            ];
+        }, $parsed['conversation'], array_keys($parsed['conversation']));
+
         $response = Http::withHeaders([
             'X-N8N-KEY' => config('services.n8n.auth_key'),
         ])->timeout(120)->post('http://127.0.0.1:5678/webhook/interview_feedback', [
-            'profile' => $profile,
-            'context_summary' => $interview->context_summary,
-            'conversation' => $parsed['conversation'],
-            'emotions' => $parsed['emotions']
+            'profile'          => $profile,
+            'context_summary'  => $interview->context_summary,
+            'conversation'     => $qa_with_emotions,   // ← now [{question, answer, emotion}]
         ]);
 
         if ($response->json('code') !== 200) {
-            throw new \Exception("Failed to generate feedback" . $response->json('error'), 500);
+            throw new \Exception("Failed to generate feedback: " . $response->json('error'), 500);
         }
 
         return $response->json();
     }
-
     static function endInterview($data, $interview_id)
     {
         if (!request()->hasFile('video'))
@@ -179,45 +185,6 @@ class InterviewAIService
         ], $interview_id);
     }
 
-    static function transcribeAudio($audioFile)
-    {
-        if (!$audioFile)
-            throw new \Exception("Audio file is required", 400);
-
-        $interviewId = time();
-        $tempAudioPath = "temp/{$interviewId}.wav";
-        $audioFile->storeAs('', $tempAudioPath, 'local');
-        $audioFullPath = storage_path("app/{$tempAudioPath}");
-
-        $whisperExe = 'C:\ai\whisper\main.exe';
-        $model = 'C:\ai\whisper\ggml-base.en.bin';
-
-        if (!file_exists($whisperExe) || !file_exists($audioFullPath)) {
-            Storage::delete($tempAudioPath);
-            throw new \Exception("Audio processing failed", 500);
-        }
-
-        shell_exec("\"{$whisperExe}\" -m \"{$model}\" -f \"{$audioFullPath}\" --output-txt");
-
-        $txtPath = $audioFullPath . '.txt';
-        $text = null;
-        if (file_exists($txtPath)) {
-            $text = trim(file_get_contents($txtPath));
-            unlink($txtPath);
-        }
-
-        if (!$text) {
-            throw new \Exception("Audio transcription failed", 500);
-        }
-
-        Storage::delete($tempAudioPath);
-        if (file_exists($audioFullPath)) {
-            unlink($audioFullPath);
-        }
-
-        return $text;
-    }
-
     static function appendToTranscript($transcript, $key, $value)
     {
         $line = "{$key}: " . trim($value);
@@ -230,26 +197,27 @@ class InterviewAIService
         $conversation = [];
         $emotions = [];
         $currentQ = null;
+        $currentA = '';
 
-        $lines->each(function ($line) use (&$conversation, &$emotions, &$currentQ) {
+        $lines->each(function ($line) use (&$conversation, &$emotions, &$currentQ, &$currentA) {
             $line = trim($line);
-            if (preg_match('/^question(\d+):\s*(.*)/i', $line, $m)) {
+            if (preg_match('/^question\d+:\s*(.*)/i', $line, $m)) {
+                // Save previous Q+A pair before starting a new question
                 if ($currentQ !== null) {
-                    $conversation[] = ['question' => $currentQ, 'answer' => ''];
+                    $conversation[] = ['question' => $currentQ, 'answer' => $currentA];
                 }
-                $currentQ = $m[2];
-            } elseif (preg_match('/^answer(\d+):\s*(.*)/i', $line, $m)) {
-                if (!empty($conversation)) {
-                    $last = array_key_last($conversation);
-                    $conversation[$last]['answer'] = $m[2];
-                }
-            } elseif (preg_match('/^emotion(\d+):\s*(.*)/i', $line, $m)) {
-                $emotions[] = $m[2];
+                $currentQ = $m[1];
+                $currentA = '';
+            } elseif (preg_match('/^answer\d+:\s*(.*)/i', $line, $m)) {
+                $currentA = $m[1];
+            } elseif (preg_match('/^emotion\d+:\s*(.*)/i', $line, $m)) {
+                $emotions[] = $m[1];  // capture emotion
             }
         });
 
+        // Push the last question
         if ($currentQ !== null) {
-            $conversation[] = ['question' => $currentQ, 'answer' => ''];
+            $conversation[] = ['question' => $currentQ, 'answer' => $currentA];
         }
 
         return compact('conversation', 'emotions');

@@ -21,17 +21,15 @@ class InterviewAIController extends Controller
         }
     }
 
-    function submitAnswer(SubmitAnswerRequest $request , $id)
-    {
-        try {
-            $result = InterviewAIService::submitAnswer($request->validated(), $id);
-            return $this->SuccessJSON($result);
-        } catch (\Exception $e) {
-            $code = $e->getCode();
-            $httpCode = ($code >= 100 && $code < 600) ? $code : 500;
-            return $this->ErrorJSON($e->getMessage(), $httpCode);
-        }
+    function submitAnswer(SubmitAnswerRequest $request, $id)
+{
+    try {
+        $result = InterviewAIService::submitAnswer($request->validated(), $id);
+        return $this->SuccessJSON($result);
+    } catch (\Exception $e) {
+        return $this->ErrorJSON($e->getMessage() . ' in ' . $e->getFile() . ' line ' . $e->getLine(), 500);
     }
+}
 
     function generateFeedback($interview_id)
     {
