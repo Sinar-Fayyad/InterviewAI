@@ -42,7 +42,7 @@ export const SkillsStep = ({
   const [editData, setEditData] = useState<{ name: string; category: SkillCategory; proficiency_level: number } | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  
+
   const isProfileMode = mode === "profile";
 
   const handleEdit = (skill: Skill) => {
@@ -50,7 +50,7 @@ export const SkillsStep = ({
     setEditData({
       name: skill.name,
       category: skill.category,
-      proficiency_level: skill.proficiency_level
+      proficiency_level: skill.proficiency_level,
     });
   };
 
@@ -59,9 +59,23 @@ export const SkillsStep = ({
     setEditData(null);
   };
 
-const handleSave = async () => {
-    if (!editData || !editingId || !userId) return;
-    
+  // ✅ Onboarding: update local state only. Profile: call API.
+  const handleSave = async () => {
+    if (!editData || !editingId) return;
+
+    if (!isProfileMode) {
+      const updated = skills.map((s) =>
+        s.id === editingId
+          ? { ...s, name: editData.name, category: editData.category, proficiency_level: editData.proficiency_level }
+          : s
+      );
+      onUpdateList?.(updated);
+      setEditingId(null);
+      setEditData(null);
+      return;
+    }
+
+    if (!userId) return;
     setSavingId(editingId);
     try {
       const skillData = {
@@ -70,11 +84,9 @@ const handleSave = async () => {
         proficiency: editData.proficiency_level * 20,
       };
       const result = await updateSkillAPI(editingId, skillData);
-      
       const mappedSkill = result ? mapBackendSkill(result) : { id: editingId, ...editData };
       const updated = skills.map((s) => (s.id === editingId ? mappedSkill : s));
       onUpdateList?.(updated);
-      
       setEditingId(null);
       setEditData(null);
       toast({ title: "Success", description: "Skill updated" });
@@ -85,7 +97,13 @@ const handleSave = async () => {
     }
   };
 
+  // ✅ Onboarding: remove from local state only. Profile: call API.
   const handleDelete = async (id: string) => {
+    if (!isProfileMode) {
+      removeSkill(id);
+      return;
+    }
+
     setDeletingId(id);
     try {
       await deleteSkillAPI(id);
@@ -100,7 +118,7 @@ const handleSave = async () => {
 
   const handleAddNew = async () => {
     if (!userId || !newSkill.name.trim()) return;
-    
+
     setSavingId("new");
     try {
       const skillData = {
@@ -108,11 +126,9 @@ const handleSave = async () => {
         category: frontendToBackendSkillCategory(newSkill.category),
         proficiency: newSkill.proficiency_level * 20,
       };
-      const result = await addSkillAPI(userId || '', skillData);
-      
+      const result = await addSkillAPI(userId, skillData);
       const mappedSkill = result ? mapBackendSkill(result) : { id: Date.now().toString(), ...newSkill };
       onUpdateList?.([...skills, mappedSkill]);
-      
       setNewSkill({ name: "", category: "technical", proficiency_level: 3 });
       toast({ title: "Success", description: "Skill added" });
     } catch (error) {
@@ -131,7 +147,7 @@ const handleSave = async () => {
           <p className="text-muted-foreground">Add at least one skill <span className="text-destructive">*</span></p>
         </div>
       )}
-      
+
       {isProfileMode && (
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -145,20 +161,20 @@ const handleSave = async () => {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="skillName">Skill Name</Label>
-            <Input 
-              id="skillName" 
-              value={newSkill.name} 
-              onChange={(e) => setNewSkill({ ...newSkill, name: e.target.value })} 
-              placeholder="e.g., React, Python, Leadership" 
-              onKeyDown={(e) => e.key === "Enter" && addSkill()} 
+            <Input
+              id="skillName"
+              value={newSkill.name}
+              onChange={(e) => setNewSkill({ ...newSkill, name: e.target.value })}
+              placeholder="e.g., React, Python, Leadership"
+              onKeyDown={(e) => e.key === "Enter" && addSkill()}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <select 
-              id="category" 
-              value={newSkill.category} 
-              onChange={(e) => setNewSkill({ ...newSkill, category: e.target.value as SkillCategory })} 
+            <select
+              id="category"
+              value={newSkill.category}
+              onChange={(e) => setNewSkill({ ...newSkill, category: e.target.value as SkillCategory })}
               className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {(Object.keys(categoryConfig) as SkillCategory[]).map((cat) => (
@@ -169,14 +185,14 @@ const handleSave = async () => {
           <div className="space-y-2">
             <Label htmlFor="proficiency">Proficiency Level (1-5)</Label>
             <div className="flex items-center gap-2">
-              <input 
-                type="range" 
-                id="proficiency" 
-                min="1" 
-                max="5" 
-                value={newSkill.proficiency_level} 
-                onChange={(e) => setNewSkill({ ...newSkill, proficiency_level: parseInt(e.target.value) })} 
-                className="flex-1" 
+              <input
+                type="range"
+                id="proficiency"
+                min="1"
+                max="5"
+                value={newSkill.proficiency_level}
+                onChange={(e) => setNewSkill({ ...newSkill, proficiency_level: parseInt(e.target.value) })}
+                className="flex-1"
               />
               <span className="w-8 text-center font-medium">{newSkill.proficiency_level}</span>
             </div>
@@ -218,19 +234,19 @@ const handleSave = async () => {
               const isEditing = editingId === skill.id;
               const isSaving = savingId === skill.id;
               const isDeleting = deletingId === skill.id;
-              
+
               return (
                 <div key={skill.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors group">
                   {isEditing && editData ? (
                     <div className="flex items-center gap-3 flex-1">
-                      <Input 
-                        value={editData.name} 
+                      <Input
+                        value={editData.name}
                         onChange={(e) => setEditData({ ...editData, name: e.target.value })}
                         className="max-w-[150px]"
                       />
-                      <select 
-                        value={editData.category} 
-                        onChange={(e) => setEditData({ ...editData, category: e.target.value as SkillCategory })} 
+                      <select
+                        value={editData.category}
+                        onChange={(e) => setEditData({ ...editData, category: e.target.value as SkillCategory })}
                         className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
                       >
                         {(Object.keys(categoryConfig) as SkillCategory[]).map((cat) => (
@@ -258,7 +274,7 @@ const handleSave = async () => {
                       <span className="font-medium truncate">{skill.name}</span>
                     </div>
                   )}
-                  
+
                   <div className="flex items-center gap-3">
                     {!isEditing && (
                       <div className="flex items-center gap-1">
@@ -267,7 +283,7 @@ const handleSave = async () => {
                         ))}
                       </div>
                     )}
-                    
+
                     {isEditing ? (
                       <div className="flex gap-1">
                         <Button variant="ghost" size="sm" onClick={handleCancelEdit} disabled={isSaving}>
@@ -282,10 +298,10 @@ const handleSave = async () => {
                         <Button variant="ghost" size="sm" onClick={() => handleEdit(skill)} className="opacity-0 group-hover:opacity-100 transition-opacity">
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleDelete(skill.id)} 
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(skill.id)}
                           disabled={isDeleting}
                           className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
