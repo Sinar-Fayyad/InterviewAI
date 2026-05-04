@@ -33,15 +33,23 @@ class InterviewService
             throw new \Exception("Interview not found", 404);
         }
 
-        $interview->interview_title = $data["interview_title"] ? $data["interview_title"] : $interview->interview_title;
-        $interview->video_path = $data["video_path"] ? $data["video_path"] : $interview->video_path;
-        $interview->feedback = $data["feedback"] ? $data["feedback"] : $interview->feedback;
-        $interview->transcript = $data["transcript"] ? $data["transcript"] : $interview->transcript;
-        $interview->question_count = $data["question_count"] ? $data["question_count"] : $interview->question_count;
+        if (array_key_exists('interview_title', $data))
+            $interview->interview_title = $data["interview_title"] ?: $interview->interview_title;
+
+        if (array_key_exists('video_path', $data))
+            $interview->video_path = $data["video_path"] ?: $interview->video_path;
+
+        if (array_key_exists('feedback', $data))
+            $interview->feedback = $data["feedback"] ?: $interview->feedback;
+
+        if (array_key_exists('transcript', $data))
+            $interview->transcript = $data["transcript"] ?: $interview->transcript;
+
+        if (array_key_exists('question_count', $data))
+            $interview->question_count = $data["question_count"] ?: $interview->question_count;
 
         $interview->save();
         return $interview;
-
     }
 
     static function getInterviews($user_id)
@@ -53,7 +61,7 @@ class InterviewService
         return Interview::where('user_id', $user_id)
             ->select('id', 'interview_title', 'company_name', 'job_title', 'created_at', 'feedback')
             ->get()
-                     ->toArray();
+            ->toArray();
     }
 
     static function getInterview($id)
@@ -91,4 +99,3 @@ class InterviewService
         return $interview;
     }
 }
-?>
