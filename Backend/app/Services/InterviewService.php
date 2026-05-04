@@ -83,19 +83,13 @@ class InterviewService
     static function deleteInterview($id)
     {
         $interview = Interview::find($id);
-
         if (!$interview) {
             throw new \Exception("Interview not found", 404);
         }
-
-        if (!$interview->video_path) {
-            throw new \Exception("Interview video not found", 404);
+        if ($interview->video_path) {
+            Storage::delete($interview->video_path);
         }
-
-        Storage::delete($interview->video_path);
-
         $interview->delete();
-
         return $interview;
     }
 }

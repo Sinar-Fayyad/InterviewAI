@@ -12,7 +12,7 @@ class EndInterviewRequest extends ApiFormRequest
     public function rules(): array
     {
         return [
-            'video' => 'required|file|mimes:webm,mp4|max:51200', // 50MB
+            'video' => 'required|file|mimes:webm,mp4',
             'interview_title' => 'nullable|string|max:255',
             'feedback' => 'nullable|string',
         ];

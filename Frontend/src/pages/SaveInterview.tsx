@@ -4,7 +4,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Video, Save, Trash2, Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Video, Save, Trash2, Loader2, CheckCircle, XCircle, AlertCircle, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generateFeedback, endInterview, deleteInterview } from "@/services/interviewService";
 
@@ -17,9 +17,10 @@ interface LocationState {
 }
 
 interface Feedback {
-  score?: number;
-  strengths?: string[];
-  weaknesses?: string[];
+  score?:       number;
+  summary?:     string;
+  strengths?:   string[];
+  weaknesses?:  string[];
   suggestions?: string[];
 }
 
@@ -29,13 +30,13 @@ export default function SaveInterview() {
   const [searchParams] = useSearchParams();
   const state = location.state as LocationState | null;
   const { toast } = useToast();
-  
+
   const interviewId = searchParams.get("id") || state?.interviewId || "";
   const videoBlob = state?.videoBlob;
   const companyName = state?.companyName || "";
   const jobTitle = state?.jobTitle || "";
   const duration = state?.duration || 0;
-  
+
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -118,12 +119,22 @@ export default function SaveInterview() {
         <div className="max-w-3xl w-full">
           <Card className="bg-secondary/80 border-primary/20 shadow-card p-8">
             <h2 className="text-2xl font-bold mb-6 text-center">Interview Complete</h2>
-            <div className="grid md:grid-cols-2 gap-8 mb-8">
+
+            {/* Row 1: Score circle + lists side by side */}
+            <div className="grid md:grid-cols-2 gap-8 mb-6">
+
+              {/* Left: Score */}
               <div className="flex flex-col items-center justify-center">
                 {isLoadingFeedback ? (
-                  <div className="flex flex-col items-center gap-4"><Loader2 className="w-16 h-16 animate-spin text-primary" /><p className="text-muted-foreground">Generating feedback...</p></div>
+                  <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-16 h-16 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Generating feedback...</p>
+                  </div>
                 ) : feedbackError ? (
-                  <div className="flex flex-col items-center gap-4 text-destructive"><AlertCircle className="w-16 h-16" /><p>{feedbackError}</p></div>
+                  <div className="flex flex-col items-center gap-4 text-destructive">
+                    <AlertCircle className="w-16 h-16" />
+                    <p>{feedbackError}</p>
+                  </div>
                 ) : (
                   <>
                     <div className="relative w-40 h-40">
@@ -136,47 +147,101 @@ export default function SaveInterview() {
                         <span className="text-sm text-muted-foreground">Score</span>
                       </div>
                     </div>
-                    <p className="mt-4 text-center text-muted-foreground">{companyName && jobTitle ? `${jobTitle} at ${companyName}` : "Mock Interview"}</p>
+                    <p className="mt-4 text-center text-muted-foreground">
+                      {companyName && jobTitle ? `${jobTitle} at ${companyName}` : "Mock Interview"}
+                    </p>
                     <p className="text-sm text-muted-foreground">Duration: {formatTime(duration)}</p>
                   </>
                 )}
               </div>
+
+              {/* Right: Strengths / Weaknesses / Suggestions */}
               <div className="space-y-6">
                 {isLoadingFeedback ? (
-                  <div className="space-y-4">{[1, 2, 3].map((i) => (<div key={i} className="h-20 bg-muted/50 rounded-lg animate-pulse" />))}</div>
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-20 bg-muted/50 rounded-lg animate-pulse" />
+                    ))}
+                  </div>
                 ) : feedback && !feedbackError ? (
                   <>
                     {feedback.strengths && feedback.strengths.length > 0 && (
                       <div>
-                        <h4 className="font-semibold mb-2 flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" />Strengths</h4>
-                        <ul className="space-y-1 text-sm text-muted-foreground">{feedback.strengths.map((item, idx) => (<li key={idx} className="flex items-start gap-2"><span className="text-green-500">•</span>{item}</li>))}</ul>
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-500" />Strengths
+                        </h4>
+                        <ul className="space-y-1 text-sm text-muted-foreground">
+                          {feedback.strengths.map((item, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-green-500">•</span>{item}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                     {feedback.weaknesses && feedback.weaknesses.length > 0 && (
                       <div>
-                        <h4 className="font-semibold mb-2 flex items-center gap-2"><XCircle className="w-4 h-4 text-red-500" />Areas for Improvement</h4>
-                        <ul className="space-y-1 text-sm text-muted-foreground">{feedback.weaknesses.map((item, idx) => (<li key={idx} className="flex items-start gap-2"><span className="text-red-500">•</span>{item}</li>))}</ul>
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          <XCircle className="w-4 h-4 text-red-500" />Areas for Improvement
+                        </h4>
+                        <ul className="space-y-1 text-sm text-muted-foreground">
+                          {feedback.weaknesses.map((item, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-red-500">•</span>{item}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                     {feedback.suggestions && feedback.suggestions.length > 0 && (
                       <div>
-                        <h4 className="font-semibold mb-2 flex items-center gap-2"><AlertCircle className="w-4 h-4 text-yellow-500" />Suggestions</h4>
-                        <ul className="space-y-1 text-sm text-muted-foreground">{feedback.suggestions.map((item, idx) => (<li key={idx} className="flex items-start gap-2"><span className="text-yellow-500">•</span>{item}</li>))}</ul>
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 text-yellow-500" />Suggestions
+                        </h4>
+                        <ul className="space-y-1 text-sm text-muted-foreground">
+                          {feedback.suggestions.map((item, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-yellow-500">•</span>{item}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                   </>
                 ) : null}
               </div>
             </div>
-            {videoBlob && (
-              <div className="p-4 rounded-lg bg-muted/50 flex items-center gap-3 mb-6">
-                <Video className="w-5 h-5 text-primary" /><span>Recording captured ({(videoBlob.size / 1024 / 1024).toFixed(2)} MB)</span>
+
+            {/* Row 2: Summary — full width below the grid */}
+            {!isLoadingFeedback && feedback && !feedbackError && feedback.summary && (
+              <div className="mb-6 p-4 rounded-lg bg-muted/30 border border-primary/10">
+                <h4 className="font-semibold mb-2 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-blue-500" />Overall Summary
+                </h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">{feedback.summary}</p>
               </div>
             )}
+
+            {/* Video info */}
+            {videoBlob && (
+              <div className="p-4 rounded-lg bg-muted/50 flex items-center gap-3 mb-6">
+                <Video className="w-5 h-5 text-primary" />
+                <span>Recording captured ({(videoBlob.size / 1024 / 1024).toFixed(2)} MB)</span>
+              </div>
+            )}
+
+            {/* Title input */}
             <div className="mb-6">
               <label className="text-sm font-medium mb-2 block">Interview Title</label>
-              <Input value={interviewTitle} onChange={(e) => setInterviewTitle(e.target.value)} placeholder="Enter a title for this interview" className="text-lg" />
+              <Input
+                value={interviewTitle}
+                onChange={(e) => setInterviewTitle(e.target.value)}
+                placeholder="Enter a title for this interview"
+                className="text-lg"
+              />
             </div>
+
+            {/* Actions */}
             <div className="flex gap-3">
               <Button variant="hero" size="lg" onClick={handleSave} disabled={isSaving || isDiscarding} className="flex-1">
                 {isSaving ? (<><Loader2 className="w-5 h-5 mr-2 animate-spin" />Saving...</>) : (<><Save className="w-5 h-5 mr-2" />Save Interview</>)}
