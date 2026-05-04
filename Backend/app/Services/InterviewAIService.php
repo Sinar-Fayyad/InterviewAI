@@ -17,7 +17,7 @@ class InterviewAIService
             throw new \Exception("User not found", 404);
         }
 
-        $profile = UserService::getUser($user_id);
+        $profile = ProfileService::getProfile($user_id);
 
         if (!$profile) {
             throw new \Exception("User profile not found", 404);
@@ -93,7 +93,7 @@ class InterviewAIService
         }
 
         $parsed = self::parseTranscript($transcript);
-        $profile = UserService::getUser($interview->user_id);
+        $profile = ProfileService::getProfile($interview->user_id);
 
         if (!$profile) {
             throw new \Exception("User profile not found", 404);
