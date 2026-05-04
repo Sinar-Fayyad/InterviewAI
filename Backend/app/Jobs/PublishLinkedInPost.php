@@ -14,48 +14,37 @@ class PublishLinkedInPost implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $post;
+    protected Post $post;
 
     public function __construct(Post $post)
     {
         $this->post = $post;
     }
 
-    public function handle()
+    public function handle(): void
     {
-        $user = $this->post->user;
+        $post = Post::find($this->post->id);
 
-        if (!$user || !$user->linkedin_token) {
-            $this->post->update(['status' => 'failed', 'error' => 'Missing LinkedIn token']);
+        if (!$post) {
             return;
         }
 
-        if ($user->linkedinexpired) {
-            $this->post->update(['status' => 'failed', 'error' => 'LinkedIn token expired']);
-            return;
-        }
+        try {
+            LinkedinService::postToLinkedIn([
+                'text' => $post->body,
+               // 'media' => $post->media,
+            ], $post->user_id);
 
-        $response = Http::withToken($user->linkedin_token)
-            ->post('http://api.linkedin.com/v2/ugcPosts', [
-                'author' => 'urn:li:person:' . $user->linkedin_id,
-                'lifecycleState' => 'PUBLISHED',
-                'specificContent' => [
-                    'com.linkedin.ugc.ShareContent' => [
-                        'shareCommentary' => [
-                            'text' => $this->post->content
-                        ],
-                        'shareMediaCategory' => 'NONE'
-                    ]
-                ],
-                'visibility' => [
-                    'com.linkedin.ugc.MemberNetworkVisibility' => 'PUBLIC'
-                ]
+            $post->update([
+                'status' => 'published',
+                'published_at' => now(),
+                'error' => null,
             ]);
-
-        if ($response->json('code') !== 200) {
-            $this->post->update(['status' => 'published', 'published_at' => now()]);
-        } else {
-            $this->post->update(['status' => 'failed', 'error' => $response->json('error')]);
+        } catch (\Throwable $e) {
+            $post->update([
+                'status' => 'failed',
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }

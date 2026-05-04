@@ -16,8 +16,12 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->text('body');
-            $table->text('media');
+           // $table->longText('media')->nullable();
             $table->dateTime('scheduled_at');
+            // For scheduled publishing status
+            $table->string('status')->default('scheduled');
+            $table->timestamp('published_at')->nullable();
+            $table->text('error')->nullable();
             $table->timestamps();
         });
     }

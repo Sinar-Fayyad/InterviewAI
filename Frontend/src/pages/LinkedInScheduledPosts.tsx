@@ -333,7 +333,7 @@ export default function LinkedInScheduledPosts() {
     try {
       await postToLinkedin(userId, {
         text: post.content,
-        media: post.image ?? null,
+       // media: post.image ?? null,
       });
 
       /*

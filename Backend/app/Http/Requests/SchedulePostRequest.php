@@ -17,7 +17,7 @@ class SchedulePostRequest extends ApiFormRequest
             'user_id'      => 'required|exists:users,id',
             'title'        => 'required|string|max:255',
             'body'         => 'required|string', 
-            'media'        => 'nullable|url',
+            //'media'        => 'nullable|string',
             'scheduled_at' => 'required|date_format:Y-m-d H:i:s', 
         ];
     }

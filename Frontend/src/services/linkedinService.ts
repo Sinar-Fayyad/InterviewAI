@@ -49,12 +49,14 @@ export const createLinkedinPost = async (params: {
     message: data?.message || "",
   };
 };
+
+
 // POST /post_to_linkedin/{user_id}
 export const postToLinkedin = async (
   userId: string,
   params: {
     text: string;
-    media?: string | null;
+    //media?: string | null;
   }
 ) => {
   const { data } = await api.post(
@@ -75,20 +77,20 @@ export const schedulePost = async (
     text?: string;
     content?: string;
     scheduled_at: string;
-    media?: string | null;
+//media?: string | null;
   }
 ) => {
-  const mediaUrl =
-    params.media && params.media.startsWith("http")
-      ? params.media
-      : "https://placehold.co/1200x627/png?text=LinkedIn+Post";
+  //const mediaUrl =
+   // params.media && params.media.startsWith("http")
+    //  ? params.media
+    //  : "https://placehold.co/1200x627/png?text=LinkedIn+Post";
 
   const payload = {
     user_id: userId,
     title: params.title,
     body: params.body ?? params.text ?? params.content ?? "",
     scheduled_at: params.scheduled_at,
-    media: mediaUrl,
+   // media: mediaUrl,
   };
 
   console.log("Final schedulePost payload:", payload);

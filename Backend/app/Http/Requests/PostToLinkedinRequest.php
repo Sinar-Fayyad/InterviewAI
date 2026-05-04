@@ -21,6 +21,7 @@ class PostToLinkedinRequest extends ApiFormRequest
     {
         return [
             'text' => 'required|string|max:3000',
+            //'media' => 'nullable|string',
         ];
     }
 

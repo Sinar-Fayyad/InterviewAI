@@ -16,7 +16,7 @@ class PostService
         $post->user_id = $data["user_id"];
         $post->title = $data["title"];
         $post->body = $data["body"];
-        $post->media = $data["media"];
+       // $post->media = $data["media"];
         $post->scheduled_at = $data["scheduled_at"];
 
         $post->save();

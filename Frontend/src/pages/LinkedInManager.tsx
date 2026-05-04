@@ -257,7 +257,7 @@ export default function LinkedInManager() {
     try {
       await postToLinkedin(userId, {
         text: generatedPost,
-        media: uploadedImage || null,
+       // media: uploadedImage || null,
       });
 
       toast({
@@ -312,7 +312,7 @@ export default function LinkedInManager() {
         title: topic || "LinkedIn Post",
         body: generatedPost,
         scheduled_at: scheduledAt,
-        media: uploadedImage,
+       // media: uploadedImage,
       });
 
       const dateObj = new Date(scheduleDateTime);

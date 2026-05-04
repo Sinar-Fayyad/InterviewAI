@@ -113,7 +113,7 @@ class LinkedinService
                 'author' => "urn:li:person:{$user->linkedin_id}",
                 'lifecycleState' => 'PUBLISHED',
                 'visibility' => 'PUBLIC',
-                'commentary' => $request->text
+                'commentary' => is_array($request) ? $request['text'] : $request->text
             ]);
 
         if (!$response->successful()) {

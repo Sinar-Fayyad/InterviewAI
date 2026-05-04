@@ -13,8 +13,11 @@ class Post extends Model
         'user_id',
         'title',
         'body',
-        'media',
+        //'media',
         'scheduled_at',
+        'status',
+        'published_at',
+        'error',
     ];
 
     public function user()
