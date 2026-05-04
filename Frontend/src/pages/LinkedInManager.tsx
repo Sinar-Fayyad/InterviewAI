@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { useErrorHandler } from "@/hooks/useErrorHandler";
 import {
   Linkedin,
   Sparkles,
@@ -67,16 +66,10 @@ const imageTextOptions = [
 
 const formatScheduledAtForBackend = (dateTime: string) => {
   if (!dateTime) return "";
-
-  // datetime-local gives: 2026-05-03T20:30
   const [date, time] = dateTime.split("T");
-
   if (!date || !time) return dateTime;
-
   const cleanTime = time.slice(0, 8);
   const normalizedTime = cleanTime.length === 5 ? `${cleanTime}:00` : cleanTime;
-
-  // Laravel-friendly format: 2026-05-03 20:30:00
   return `${date} ${normalizedTime}`;
 };
 
@@ -84,7 +77,6 @@ export default function LinkedInManager() {
   const navigate = useNavigate();
   const { userId } = useAuth();
   const { toast } = useToast();
-  const { handleError } = useErrorHandler();
 
   const [topic, setTopic] = useState("");
   const [description, setDescription] = useState("");
@@ -104,7 +96,7 @@ export default function LinkedInManager() {
   const [isScheduling, setIsScheduling] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
+  const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [scheduleDateTime, setScheduleDateTime] = useState("");
 
@@ -114,12 +106,11 @@ const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
     setGeneratedPost("");
     setTopic("");
     setDescription("");
-   setUploadedImage(null);
-  setUploadedImageFile(null);
+    setUploadedImage(null);
+    setUploadedImageFile(null);
     setScheduleDateTime("");
     setShowSchedulePicker(false);
     setIsEditing(false);
-
     setImageDescription("");
     setImageStyle("illustration");
     setImageMood("professional");
@@ -128,7 +119,6 @@ const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
     setImagePeople("no_people");
     setImageTextOption("no_text");
     setImageText("");
-
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -136,11 +126,7 @@ const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
 
   const normalizeImage = (image?: string) => {
     if (!image) return null;
-
-    if (image.startsWith("data:image")) {
-      return image;
-    }
-
+    if (image.startsWith("data:image")) return image;
     return `data:image/png;base64,${image}`;
   };
 
@@ -179,7 +165,6 @@ const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
       const result = await createLinkedinPost({
         title: topic.trim(),
         description: description.trim() || topic.trim(),
-
         image_description: imageDescription.trim(),
         image_style: imageStyle,
         image_mood: imageMood,
@@ -193,7 +178,6 @@ const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
       setGeneratedPost(result.content || "");
 
       const finalImage = normalizeImage(result.image);
-
       if (finalImage) {
         setUploadedImage(finalImage);
       }
@@ -205,56 +189,49 @@ const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
         description: "Review your AI-generated LinkedIn post and image below.",
       });
     } catch (err: any) {
-      console.error("Create LinkedIn post error:", err);
-      console.error("Status:", err?.response?.status);
-      console.error("Response:", err?.response?.data);
-
-      handleError(err, "Failed to generate post. Please try again.");
+      toast({
+        title: "Generation Failed",
+        description: err?.response?.data?.message || "Failed to generate post. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsGenerating(false);
     }
   };
 
-const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-  const file = event.target.files?.[0];
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-  if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  if (file.size > 5 * 1024 * 1024) {
-    toast({
-      title: "File too large",
-      description: "Please upload an image smaller than 5MB.",
-      variant: "destructive",
-    });
-    return;
-  }
+    setUploadedImageFile(file);
 
-  setUploadedImageFile(file);
-
-  const reader = new FileReader();
-
-  reader.onload = (e) => {
-    setUploadedImage(e.target?.result as string);
-
-    toast({
-      title: "Image uploaded",
-      description: "Your image has been added to the post.",
-    });
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setUploadedImage(e.target?.result as string);
+      toast({
+        title: "Image uploaded",
+        description: "Your image has been added to the post.",
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
-  reader.readAsDataURL(file);
-};
-
-const handleRemoveImage = () => {
-  setUploadedImage(null);
-  setUploadedImageFile(null);
-
-  if (fileInputRef.current) {
-    fileInputRef.current.value = "";
-  }
-};
-
-
+  const handleRemoveImage = () => {
+    setUploadedImage(null);
+    setUploadedImageFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handlePostNow = async () => {
     if (!generatedPost.trim()) {
@@ -289,8 +266,12 @@ const handleRemoveImage = () => {
       });
 
       resetForm();
-    } catch (err) {
-      handleError(err, "Failed to post. Please try again.");
+    } catch (err: any) {
+      toast({
+        title: "Posting Failed",
+        description: err?.response?.data?.message || "Failed to post. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsPosting(false);
     }
@@ -310,69 +291,59 @@ const handleRemoveImage = () => {
   };
 
   const handleScheduleConfirm = async () => {
-  if (!scheduleDateTime) {
-    toast({
-      title: "Select date and time",
-      description: "Please choose when to schedule your post.",
-      variant: "destructive",
-    });
-    return;
-  }
+    if (!scheduleDateTime) {
+      toast({
+        title: "Select date and time",
+        description: "Please choose when to schedule your post.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  if (!userId) return;
+    if (!userId) return;
 
-  setIsScheduling(true);
-  setShowSchedulePicker(false);
+    setIsScheduling(true);
+    setShowSchedulePicker(false);
 
-  try {
-  const scheduledAt = formatScheduledAtForBackend(scheduleDateTime);
+    try {
+      const scheduledAt = formatScheduledAtForBackend(scheduleDateTime);
 
-  console.log("Scheduling payload:", {
-    user_id: userId,
-    title: topic || "LinkedIn Post",
-    body: generatedPost,
-    scheduled_at: scheduledAt,
-    media: uploadedImage || "",
-  });
+      await schedulePost(userId, {
+        title: topic || "LinkedIn Post",
+        body: generatedPost,
+        scheduled_at: scheduledAt,
+        media: uploadedImage,
+      });
 
-  await schedulePost(userId, {
-  title: topic || "LinkedIn Post",
-  body: generatedPost,
-  scheduled_at: scheduledAt,
-  media: uploadedImage,
-});
-  const dateObj = new Date(scheduleDateTime);
+      const dateObj = new Date(scheduleDateTime);
+      const scheduledDate = dateObj.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+      const scheduledTime = dateObj.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 
-  const scheduledDate = dateObj.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+      toast({
+        title: "Scheduled Successfully!",
+        description: `Your post will be published on ${scheduledDate} at ${scheduledTime}.`,
+      });
 
-  const scheduledTime = dateObj.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  toast({
-    title: "Scheduled Successfully!",
-    description: `Your post will be published on ${scheduledDate} at ${scheduledTime}.`,
-  });
-
-  resetForm();
-}catch (err: any) {
-  console.error("Schedule error full:", err?.response?.data);
-  console.error("Schedule media error:", err?.response?.data?.errors?.media);
-
-  handleError(
-    err,
-    err?.response?.data?.errors?.media?.[0] ||
-      err?.response?.data?.message ||
-      "Failed to schedule. Please try again."
-  );
-}finally {
-    setIsScheduling(false);
-  }
-};
+      resetForm();
+    } catch (err: any) {
+      toast({
+        title: "Scheduling Failed",
+        description:
+          err?.response?.data?.errors?.media?.[0] ||
+          err?.response?.data?.message ||
+          "Failed to schedule. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsScheduling(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -425,7 +396,6 @@ const handleRemoveImage = () => {
                   <div className="space-y-4">
                     <div>
                       <h4 className="font-medium mb-1">Post Details</h4>
-
                       <p className="text-sm text-muted-foreground">
                         Tell us what the LinkedIn post should be about.
                       </p>
@@ -435,7 +405,6 @@ const handleRemoveImage = () => {
                       <label className="text-sm font-medium mb-2 block">
                         Post Topic
                       </label>
-
                       <Input
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
@@ -447,7 +416,6 @@ const handleRemoveImage = () => {
                       <label className="text-sm font-medium mb-2 block">
                         Additional Post Details
                       </label>
-
                       <Textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
@@ -462,10 +430,8 @@ const handleRemoveImage = () => {
                       <div className="mt-1">
                         <ImageIcon className="w-5 h-5 text-accent" />
                       </div>
-
                       <div>
                         <h4 className="font-medium mb-1">Image Details</h4>
-
                         <p className="text-sm text-muted-foreground">
                           Optional: guide the AI image so it looks more relevant
                           and less random.
@@ -477,7 +443,6 @@ const handleRemoveImage = () => {
                       <label className="text-sm font-medium mb-2 block">
                         Image Description
                       </label>
-
                       <Textarea
                         value={imageDescription}
                         onChange={(e) => setImageDescription(e.target.value)}
@@ -491,7 +456,6 @@ const handleRemoveImage = () => {
                         <label className="text-sm font-medium mb-2 block">
                           Image Style
                         </label>
-
                         <select
                           value={imageStyle}
                           onChange={(e) => setImageStyle(e.target.value)}
@@ -509,7 +473,6 @@ const handleRemoveImage = () => {
                         <label className="text-sm font-medium mb-2 block">
                           Mood
                         </label>
-
                         <select
                           value={imageMood}
                           onChange={(e) => setImageMood(e.target.value)}
@@ -527,7 +490,6 @@ const handleRemoveImage = () => {
                         <label className="text-sm font-medium mb-2 block">
                           Color Theme
                         </label>
-
                         <select
                           value={imageColors}
                           onChange={(e) => setImageColors(e.target.value)}
@@ -545,7 +507,6 @@ const handleRemoveImage = () => {
                         <label className="text-sm font-medium mb-2 block">
                           People in Image
                         </label>
-
                         <select
                           value={imagePeople}
                           onChange={(e) => setImagePeople(e.target.value)}
@@ -563,7 +524,6 @@ const handleRemoveImage = () => {
                         <label className="text-sm font-medium mb-2 block">
                           Text in Image
                         </label>
-
                         <select
                           value={imageTextOption}
                           onChange={(e) => setImageTextOption(e.target.value)}
@@ -583,12 +543,9 @@ const handleRemoveImage = () => {
                         <label className="text-sm font-medium mb-2 block">
                           Custom Color Theme
                         </label>
-
                         <Input
                           value={customImageColors}
-                          onChange={(e) =>
-                            setCustomImageColors(e.target.value)
-                          }
+                          onChange={(e) => setCustomImageColors(e.target.value)}
                           placeholder="Example: dark green and gold"
                         />
                       </div>
@@ -599,7 +556,6 @@ const handleRemoveImage = () => {
                         <label className="text-sm font-medium mb-2 block">
                           Custom Image Text
                         </label>
-
                         <Input
                           value={imageText}
                           onChange={(e) => setImageText(e.target.value)}
@@ -671,7 +627,6 @@ const handleRemoveImage = () => {
                         alt="Generated post visual"
                         className="w-full h-auto object-contain rounded-lg border border-border"
                       />
-
                       <Button
                         variant="destructive"
                         size="sm"
@@ -741,25 +696,20 @@ const handleRemoveImage = () => {
                       <label className="text-sm font-medium mb-2 block">
                         Select Date & Time
                       </label>
-
                       <div className="flex gap-3">
                         <Input
                           type="datetime-local"
                           value={scheduleDateTime}
-                          onChange={(e) =>
-                            setScheduleDateTime(e.target.value)
-                          }
+                          onChange={(e) => setScheduleDateTime(e.target.value)}
                           className="flex-1"
                           min={new Date().toISOString().slice(0, 16)}
                         />
-
                         <Button
                           onClick={handleScheduleConfirm}
                           disabled={isScheduling}
                         >
                           Confirm
                         </Button>
-
                         <Button
                           variant="ghost"
                           onClick={() => setShowSchedulePicker(false)}
@@ -777,23 +727,19 @@ const handleRemoveImage = () => {
             <div className="space-y-6">
               <Card className="gradient-card border-border shadow-card p-6">
                 <h3 className="font-semibold mb-4">Posting Tips</h3>
-
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex gap-2">
                     <span className="text-accent">•</span>
                     <span>Use a clear topic so the post stays focused.</span>
                   </li>
-
                   <li className="flex gap-2">
                     <span className="text-accent">•</span>
                     <span>Add image details to avoid random visuals.</span>
                   </li>
-
                   <li className="flex gap-2">
                     <span className="text-accent">•</span>
                     <span>Choose a professional mood for career content.</span>
                   </li>
-
                   <li className="flex gap-2">
                     <span className="text-accent">•</span>
                     <span>Use 3-5 relevant hashtags.</span>
@@ -804,7 +750,6 @@ const handleRemoveImage = () => {
           </div>
         </div>
       </main>
-      <ErrorPopup isOpen={error.isOpen} onClose={hideError} title={error.title} message={error.message} onRetry={error.onRetry} />
     </div>
   );
 }
