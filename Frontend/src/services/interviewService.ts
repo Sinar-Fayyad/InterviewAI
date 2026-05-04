@@ -1,7 +1,10 @@
 import api from "@/services/api";
 
 // POST /research
-export const researchCompany = async (companyName: string, jobTitle: string) => {
+export const researchCompany = async (
+  companyName: string,
+  jobTitle: string,
+) => {
   const { data } = await api.post("/research", {
     company_name: companyName,
     job_title: jobTitle,
@@ -40,10 +43,11 @@ export const startInterview = async (
 };
 
 // POST /submit_answer/{id}
-export const submitAnswer = async (interviewId: string, formData: FormData) => {
-  const { data } = await api.post(`/submit_answer/${interviewId}`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+export const submitAnswer = async (
+  interviewId: string,
+  payload: { answer_text: string; emotion: string; end_now: number },
+) => {
+  const { data } = await api.post(`/submit_answer/${interviewId}`, payload);
   return data?.payload;
 };
 

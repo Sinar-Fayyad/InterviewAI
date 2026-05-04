@@ -7,24 +7,27 @@ import { Play, Loader2, AlertCircle, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useMediaRecorder } from "@/hooks/useMediaRecorder";
-import { useSilenceDetection } from "@/hooks/useSilenceDetection";
 import { useFaceEmotion } from "@/hooks/useFaceEmotion";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
-import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { useSilenceDetection } from "@/hooks/useSilenceDetection";
 import { InterviewMode } from "@/components/interview/InterviewMode";
-import {
-  startInterview,
-  submitAnswer,
-  endInterview,
-} from "@/services/interviewService";
+import { startInterview, submitAnswer } from "@/services/interviewService";
 
 interface LocationState {
   companyName?: string;
   jobTitle?: string;
   contextSummary?: string;
-  interviewId?: string | null;
-  previewMode?: boolean;
 }
+
+const ALLOWED_EMOTIONS = [
+  "happy", "sad", "neutral", "excited", "anxious",
+  "angry", "fearful", "disgusted", "surprised",
+];
+
+const getSafeEmotion = (emotion: string): string => {
+  return ALLOWED_EMOTIONS.includes(emotion) ? emotion : "neutral";
+};
 
 export default function MockInterview() {
   const location = useLocation();
@@ -36,326 +39,255 @@ export default function MockInterview() {
   const companyName = state?.companyName || "";
   const jobTitle = state?.jobTitle || "";
   const contextSummary = state?.contextSummary || "";
-  const initialInterviewId = state?.interviewId || null;
 
-  // This makes the page work even when backend interview creation failed.
-  const previewMode = state?.previewMode === true || !initialInterviewId;
-
-  const {
-    isRecording,
-    stream,
-    videoRef,
-    startRecording,
-    stopRecording,
-    error: mediaError,
-  } = useMediaRecorder();
-
+  const { isRecording, stream, videoRef, startRecording, stopRecording, error: mediaError } = useMediaRecorder();
+  const { initializeFaceApi, startEmotionDetection, stopEmotionDetection, getCurrentEmotion, isModelLoaded } = useFaceEmotion();
+  const { speak, stop: stopSpeaking, isSpeaking } = useTextToSpeech();
   const { startDetection, stopDetection } = useSilenceDetection();
-
   const {
-    initializeFaceApi,
-    startEmotionDetection,
-    stopEmotionDetection,
-    getCurrentEmotion,
-    isModelLoaded,
-  } = useFaceEmotion();
+    startListening: startSpeechRecognition,
+    stopListening: stopSpeechRecognition,
+    isListening: isSpeechListening,
+    interimTranscript,
+    isSupported: isSpeechSupported,
+  } = useSpeechRecognition();
 
-  const {
-    speak,
-    stop: stopSpeaking,
-    isSpeaking,
-  } = useTextToSpeech();
-
-  const {
-    startAudioRecording,
-    stopAudioRecording,
-  } = useAudioRecorder();
-
-  const [elapsedTime, setElapsedTime] = useState(0);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState("");
-  const [interviewId, setInterviewId] = useState<string | null>(initialInterviewId);
+  const [interviewId, setInterviewId] = useState<string | null>(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const [isStarting, setIsStarting] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const recordedBlobRef = useRef<Blob | null>(null);
   const submitAnswerRef = useRef<(endNow?: boolean) => Promise<void>>();
+  const interviewIdRef = useRef<string | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  const previewQuestions = [
-    `Tell me about yourself and why you are interested in the ${jobTitle || "role"}.`,
-    `What skills make you a good fit for ${companyName || "this company"}?`,
-    "Describe a challenge you faced and how you handled it.",
-    "What are your strengths and weaknesses?",
-    "Why should we hire you?",
-  ];
+  useEffect(() => { interviewIdRef.current = interviewId; }, [interviewId]);
+  useEffect(() => { streamRef.current = stream; }, [stream]);
+  useEffect(() => { initializeFaceApi(); }, [initializeFaceApi]);
 
-  const previewQuestionIndexRef = useRef(0);
-
-  const getNextPreviewQuestion = () => {
-    const question =
-      previewQuestions[previewQuestionIndexRef.current] ||
-      "Thank you. That completes the preview interview.";
-
-    previewQuestionIndexRef.current += 1;
-    return question;
-  };
-
-  useEffect(() => {
-    initializeFaceApi();
-  }, [initializeFaceApi]);
-
+  // Timer
   useEffect(() => {
     if (isRecording && sessionStarted) {
-      timerRef.current = setInterval(() => {
-        setElapsedTime((prev) => prev + 1);
-      }, 1000);
+      timerRef.current = setInterval(() => setElapsedTime((prev) => prev + 1), 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
     }
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isRecording, sessionStarted]);
 
+  // Re-attach stream to video element when InterviewMode mounts
+  useEffect(() => {
+    if (sessionStarted && stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [sessionStarted, stream, videoRef]);
+
   const startListening = useCallback(() => {
-    if (!stream) return;
+    const currentStream = streamRef.current;
+    if (!currentStream) return;
 
     setIsListening(true);
-    startAudioRecording(stream);
+    startSpeechRecognition();
 
-    startDetection(stream, () => {
-      submitAnswerRef.current?.(false);
-    });
-  }, [stream, startAudioRecording, startDetection]);
+    setTimeout(() => {
+      startDetection(currentStream, () => {
+        submitAnswerRef.current?.(false);
+      });
+    }, 1500);
+  }, [startSpeechRecognition, startDetection]);
 
-  const playQuestionAndListen = useCallback(
-    async (question: string) => {
-      try {
-        await speak(question);
-        startListening();
-      } catch (error) {
-        console.error("Text-to-speech failed:", error);
-        startListening();
-      }
-    },
-    [speak, startListening]
-  );
+  const playQuestionAndListen = useCallback(async (question: string) => {
+    try {
+      await speak(question);
+    } catch {
+      // TTS failed, continue anyway
+    }
+    await new Promise((r) => setTimeout(r, 500));
+    startListening();
+  }, [speak, startListening]);
 
   const handleInterviewComplete = useCallback(async () => {
     stopDetection();
     stopEmotionDetection();
     stopSpeaking();
-
-    const blob = await stopRecording();
-    recordedBlobRef.current = blob;
+    setIsListening(false);
     setSessionStarted(false);
 
-    if (previewMode || !interviewId) {
-      toast({
-        title: "Preview Interview Ended",
-        description: "Backend saving is skipped because this is preview mode.",
-      });
+    const blob = await stopRecording();
 
-      navigate("/prepare");
-      return;
-    }
-
-    navigate(`/save-interview?id=${interviewId}`, {
+    navigate(`/save-interview?id=${interviewIdRef.current}`, {
       state: {
         videoBlob: blob,
-        interviewId,
+        interviewId: interviewIdRef.current,
         companyName,
         jobTitle,
         duration: elapsedTime,
       },
     });
   }, [
-    previewMode,
-    interviewId,
-    companyName,
-    jobTitle,
-    elapsedTime,
-    navigate,
-    stopDetection,
-    stopEmotionDetection,
-    stopSpeaking,
-    stopRecording,
-    toast,
+    companyName, jobTitle, elapsedTime, navigate,
+    stopDetection, stopEmotionDetection, stopSpeaking, stopRecording,
   ]);
 
-  const handleAnswerSubmit = useCallback(
-    async (endNow: boolean = false) => {
-      if (isProcessing) return;
+  const handleAnswerSubmit = useCallback(async (endNow: boolean = false) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+    setIsListening(false);
+    stopDetection();
 
-      setIsProcessing(true);
-      setIsListening(false);
-      stopDetection();
+    try {
+      const answerText = await stopSpeechRecognition();
+
+      // No answer detected — speak goodbye then end
+      if (!answerText && !endNow) {
+        await speak("Okay, let's stop here for today. Thank you for your time!");
+        await submitAnswer(interviewIdRef.current!, {
+          answer_text: "",
+          emotion: getSafeEmotion(getCurrentEmotion()),
+          end_now: 1,
+        });
+        await handleInterviewComplete();
+        return;
+      }
+
+      const emotion = getSafeEmotion(getCurrentEmotion());
+
+      const data = await submitAnswer(interviewIdRef.current!, {
+        answer_text: answerText || "",
+        emotion,
+        end_now: endNow ? 1 : 0,
+      });
+
+      // Interview finished (10 questions done)
+      if (data?.finished) {
+        await speak("That's all for today. Thank you so much for your time. We'll be in touch soon!");
+        await handleInterviewComplete();
+        return;
+      }
+
+      if (endNow) {
+        await handleInterviewComplete();
+        return;
+      }
+
+      const nextQuestion = data?.question;
+      if (!nextQuestion) {
+        throw new Error("No question received from server.");
+      }
+
+      setCurrentQuestion(nextQuestion);
+      await playQuestionAndListen(nextQuestion);
+    } catch (error: any) {
+      console.error("Error submitting answer:", error);
+
+      toast({
+        title: "Connection Error",
+        description: "Saving your interview progress...",
+        variant: "destructive",
+      });
 
       try {
-        await stopAudioRecording();
-
-        // Preview mode: do not call backend submitAnswer.
-        if (previewMode || !interviewId) {
-          if (endNow || previewQuestionIndexRef.current >= previewQuestions.length) {
-            await handleInterviewComplete();
-            return;
-          }
-
-          const nextQuestion = getNextPreviewQuestion();
-          setCurrentQuestion(nextQuestion);
-          await playQuestionAndListen(nextQuestion);
-          return;
+        if (interviewIdRef.current) {
+          await submitAnswer(interviewIdRef.current, {
+            answer_text: "",
+            emotion: getSafeEmotion(getCurrentEmotion()),
+            end_now: 1,
+          });
         }
-
-        const emotion = getCurrentEmotion();
-
-        const formData = new FormData();
-        formData.append("interview_id", interviewId);
-        formData.append("emotion", emotion);
-        formData.append("end_now", String(endNow));
-
-        const data = await submitAnswer(interviewId, formData);
-
-        if (data?.finished) {
-          await handleInterviewComplete();
-        } else if (data?.question) {
-          setCurrentQuestion(data.question);
-          await playQuestionAndListen(data.question);
-        }
-      } catch (error) {
-        console.error("Error submitting answer:", error);
-
-        toast({
-          title: "Error",
-          description: "Failed to process your answer. Continuing...",
-          variant: "destructive",
-        });
-
-        if (stream) startListening();
-      } finally {
-        setIsProcessing(false);
+      } catch {
+        // Ignore secondary error
       }
-    },
-    [
-      isProcessing,
-      previewMode,
-      interviewId,
-      previewQuestions.length,
-      stopDetection,
-      stopAudioRecording,
-      getCurrentEmotion,
-      handleInterviewComplete,
-      playQuestionAndListen,
-      toast,
-      stream,
-      startListening,
-    ]
-  );
+
+      await handleInterviewComplete();
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [
+    isProcessing, stopDetection, stopSpeechRecognition, speak,
+    getCurrentEmotion, handleInterviewComplete, playQuestionAndListen, toast,
+  ]);
 
   useEffect(() => {
     submitAnswerRef.current = handleAnswerSubmit;
   }, [handleAnswerSubmit]);
 
   const handleEndInterview = useCallback(async () => {
+    if (isProcessing) return;
     setIsListening(false);
     stopDetection();
+    stopSpeaking();
+    setIsProcessing(true);
 
     try {
-      await stopAudioRecording();
+      const answerText = await stopSpeechRecognition();
 
-      // Preview mode: skip backend endInterview.
-      if (previewMode || !interviewId) {
-        await handleInterviewComplete();
-        return;
+      // Speak goodbye before ending
+      await speak("Alright, let's stop here. It was great speaking with you, see you next time!");
+
+      if (interviewIdRef.current) {
+        await submitAnswer(interviewIdRef.current, {
+          answer_text: answerText || "",
+          emotion: getSafeEmotion(getCurrentEmotion()),
+          end_now: 1,
+        });
       }
-
-      const emotion = getCurrentEmotion();
-
-      const formData = new FormData();
-      formData.append("interview_id", interviewId);
-      formData.append("emotion", emotion);
-      formData.append("end_now", "true");
-
-      try {
-        await endInterview(interviewId, formData);
-      } catch (error) {
-        console.error("Error ending interview:", error);
-      }
-
-      await handleInterviewComplete();
     } catch (error) {
-      console.error("Error stopping interview:", error);
-      await handleInterviewComplete();
+      console.error("Error ending interview:", error);
+    } finally {
+      setIsProcessing(false);
     }
+
+    await handleInterviewComplete();
   }, [
-    previewMode,
-    interviewId,
-    stopDetection,
-    stopAudioRecording,
-    getCurrentEmotion,
-    handleInterviewComplete,
+    isProcessing, stopDetection, stopSpeaking, stopSpeechRecognition,
+    speak, getCurrentEmotion, handleInterviewComplete,
   ]);
 
-  const startPreviewInterview = async () => {
-    const firstQuestion = getNextPreviewQuestion();
-
-    setInterviewId(null);
-    setCurrentQuestion(firstQuestion);
-
-    await startRecording();
-
-    if (videoRef.current && isModelLoaded) {
-      startEmotionDetection(videoRef.current);
+  const handleStart = async () => {
+    if (!userId) {
+      toast({
+        title: "Not logged in",
+        description: "Please log in to start an interview.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    setElapsedTime(0);
-    setSessionStarted(true);
+    if (!isSpeechSupported) {
+      toast({
+        title: "Browser Not Supported",
+        description: "Please use Chrome or Edge for speech recognition.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    toast({
-      title: "Preview Interview Started",
-      description: "Backend is skipped. You can now view and test the interview page.",
-    });
-
-    await playQuestionAndListen(firstQuestion);
-  };
-
-  const handleStart = async () => {
     setIsStarting(true);
 
     try {
-      // Main fix: if no backend interview ID exists, start locally instead of calling API.
-      if (previewMode) {
-        await startPreviewInterview();
-        return;
-      }
-
-      if (!userId) {
-        toast({
-          title: "Missing User",
-          description: "User ID was not found.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const data = await startInterview(userId, {
         company_name: companyName,
         job_title: jobTitle,
         context_summary: contextSummary,
       });
 
-      const createdInterviewId = data?.interview_id || data?.id || null;
-      const firstQuestion =
-        data?.question ||
-        `Tell me about yourself and why you are interested in the ${jobTitle || "role"}.`;
+      const createdId = data?.id || data?.interview_id;
+      const firstQuestion = data?.message || data?.question;
 
-      setInterviewId(createdInterviewId);
-      setCurrentQuestion(firstQuestion);
+      if (!createdId || !firstQuestion) {
+        throw new Error("Invalid response from server.");
+      }
 
       await startRecording();
+
+      setInterviewId(createdId);
+      setCurrentQuestion(firstQuestion);
 
       if (videoRef.current && isModelLoaded) {
         startEmotionDetection(videoRef.current);
@@ -372,14 +304,12 @@ export default function MockInterview() {
       await playQuestionAndListen(firstQuestion);
     } catch (error) {
       console.error("Error starting interview:", error);
-
-      // Fallback: even if backend fails here, open the interview page anyway.
+      await stopRecording();
       toast({
-        title: "Preview Mode",
-        description: "Backend failed, so the interview is starting without saving.",
+        title: "Failed to Start",
+        description: "Could not connect to the interview server. Please try again.",
+        variant: "destructive",
       });
-
-      await startPreviewInterview();
     } finally {
       setIsStarting(false);
     }
@@ -397,6 +327,7 @@ export default function MockInterview() {
           onEndInterview={handleEndInterview}
           isSpeaking={isSpeaking}
           isListening={isListening}
+          interimTranscript={interimTranscript}
         />
       </ProtectedRoute>
     );
@@ -411,9 +342,7 @@ export default function MockInterview() {
               <div className="flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 text-destructive" />
                 <div>
-                  <p className="font-medium text-destructive">
-                    Camera/Microphone Access Required
-                  </p>
+                  <p className="font-medium text-destructive">Camera/Microphone Access Required</p>
                   <p className="text-sm text-muted-foreground">{mediaError}</p>
                 </div>
               </div>
@@ -426,16 +355,8 @@ export default function MockInterview() {
             </div>
 
             <h1 className="text-3xl font-bold mb-4">
-              {companyName && jobTitle
-                ? `${jobTitle} at ${companyName}`
-                : "Mock Interview"}
+              {companyName && jobTitle ? `${jobTitle} at ${companyName}` : "Mock Interview"}
             </h1>
-
-            {previewMode && (
-              <div className="mb-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 p-3 text-sm text-yellow-700 dark:text-yellow-300">
-                Preview mode is enabled. The backend interview API will be skipped.
-              </div>
-            )}
 
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">
               The AI will ask you questions and analyze your responses in real-time.
@@ -479,11 +400,7 @@ export default function MockInterview() {
               )}
             </Button>
 
-            <Button
-              variant="ghost"
-              className="mt-4 block mx-auto"
-              onClick={() => navigate(-1)}
-            >
+            <Button variant="ghost" className="mt-4 block mx-auto" onClick={() => navigate(-1)}>
               Go Back
             </Button>
           </Card>
