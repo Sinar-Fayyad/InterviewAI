@@ -12,6 +12,7 @@ interface InterviewModeProps {
   onEndInterview: () => void;
   isSpeaking: boolean;
   isListening: boolean;
+  interimTranscript?: string;
 }
 
 export const InterviewMode = ({
@@ -23,6 +24,7 @@ export const InterviewMode = ({
   onEndInterview,
   isSpeaking,
   isListening,
+  interimTranscript = "",
 }: InterviewModeProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showCaption, setShowCaption] = useState(true);
@@ -60,7 +62,7 @@ export const InterviewMode = ({
         console.log("Fullscreen not supported or denied:", error);
       }
     };
-    
+
     const timer = setTimeout(launchFullscreen, 100);
     return () => clearTimeout(timer);
   }, []);
@@ -76,7 +78,7 @@ export const InterviewMode = ({
   if (isFullscreen) {
     // Full Screen Mode - Camera full screen with caption overlay
     return (
-      <div 
+      <div
         ref={containerRef}
         className="fixed inset-0 bg-black z-50 flex flex-col"
       >
@@ -87,7 +89,7 @@ export const InterviewMode = ({
             className="absolute inset-0 w-full h-full object-cover"
             playsInline
           />
-          
+
           {/* Top overlay - recording status */}
           <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
             <div className="flex gap-2">
@@ -136,11 +138,18 @@ export const InterviewMode = ({
                 <p className="text-white text-2xl md:text-3xl font-medium leading-relaxed text-center mb-6">
                   {currentQuestion}
                 </p>
-                
+
+                {/* Live transcript while user is speaking */}
+                {isListening && interimTranscript && (
+                  <p className="text-white/70 text-lg italic text-center mb-4">
+                    🎤 {interimTranscript}
+                  </p>
+                )}
+
                 {/* Controls */}
                 <div className="flex items-center justify-center gap-4">
-                  <Button 
-                    variant="destructive" 
+                  <Button
+                    variant="destructive"
                     size="lg"
                     onClick={onEndInterview}
                   >
@@ -155,8 +164,8 @@ export const InterviewMode = ({
           {/* End button when caption hidden */}
           {!showCaption && (
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 size="lg"
                 onClick={onEndInterview}
               >
@@ -172,7 +181,7 @@ export const InterviewMode = ({
 
   // Split Screen Mode - Camera left, question right
   return (
-    <div 
+    <div
       ref={containerRef}
       className="fixed inset-0 grid grid-cols-1 lg:grid-cols-2 gap-0 bg-background z-50"
     >
@@ -180,10 +189,10 @@ export const InterviewMode = ({
       <div className="relative bg-muted flex items-center justify-center">
         <video
           ref={videoRef}
-          className={`w-full h-full object-cover ${stream ? 'block' : 'hidden'}`}
+          className={`w-full h-full object-cover ${stream ? "block" : "hidden"}`}
           playsInline
         />
-        
+
         {!stream && (
           <div className="text-center text-muted-foreground">
             <Video className="w-16 h-16 mx-auto mb-4" />
@@ -218,8 +227,8 @@ export const InterviewMode = ({
 
         {/* Controls overlay */}
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-4 z-10">
-          <Button 
-            variant="destructive" 
+          <Button
+            variant="destructive"
             size="lg"
             onClick={onEndInterview}
           >
@@ -267,6 +276,13 @@ export const InterviewMode = ({
               <h2 className="text-2xl md:text-3xl font-semibold mb-6 leading-relaxed">
                 {currentQuestion}
               </h2>
+
+              {/* Live transcript while user is speaking */}
+              {isListening && interimTranscript && (
+                <p className="text-muted-foreground italic text-lg mt-2">
+                  🎤 {interimTranscript}
+                </p>
+              )}
             </>
           ) : (
             <div className="text-center text-muted-foreground">
