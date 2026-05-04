@@ -101,7 +101,7 @@ class InterviewAIService
 
         $response = Http::withHeaders([
             'X-N8N-KEY' => config('services.n8n.auth_key'),
-        ])->timeout(120)->post('http://localhost:5678/webhook-test/interview_maker', [
+        ])->timeout(120)->post('http://localhost:5678/webhook/Interview_maker', [
             'profile' => $profile,
             'context_summary' => $interview->context_summary,
             'conversation' => $parsed['conversation'],
