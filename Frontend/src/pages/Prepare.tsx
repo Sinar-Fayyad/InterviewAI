@@ -37,7 +37,8 @@ export default function Prepare() {
     if (!companyName.trim() || !jobTitle.trim()) {
       toast({
         title: "Missing information",
-        description: "Please provide both company name and job title to continue.",
+        description:
+          "Please provide both company name and job title to continue.",
         variant: "destructive",
       });
       return false;
@@ -116,7 +117,9 @@ export default function Prepare() {
               <div className="flex items-center justify-center gap-4 mb-6">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-card/50 backdrop-blur-sm">
                   <Sparkles className="w-4 h-4 text-accent" />
-                  <span className="text-sm font-medium">Interview Preparation</span>
+                  <span className="text-sm font-medium">
+                    Interview Preparation
+                  </span>
                 </div>
                 <Button
                   variant="outline"
@@ -128,9 +131,12 @@ export default function Prepare() {
                   History
                 </Button>
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">Interview Preparation</h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                Interview Preparation
+              </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Enter company details to research and generate tailored interview questions.
+                Enter company details to research and generate tailored
+                interview questions.
               </p>
             </div>
 
@@ -227,9 +233,9 @@ export default function Prepare() {
                       </Button>
 
                       <Button
-                        variant="outline"
+                        variant="hero"
                         size="lg"
-                        className="w-full group border-primary/30 hover:bg-primary hover:text-primary-foreground"
+                        className="w-full group"
                         onClick={handleStartMockInterview}
                         disabled={isGenerating}
                       >
@@ -246,9 +252,21 @@ export default function Prepare() {
             {/* Info Cards */}
             <div className="grid md:grid-cols-3 gap-6 mt-12">
               {[
-                { icon: "🎯", title: "Personalized", desc: "Questions tailored to your specific role" },
-                { icon: "🎥", title: "Mock Practice", desc: "AI-powered interview simulation" },
-                { icon: "⚡", title: "Instant", desc: "Get results in seconds" },
+                {
+                  icon: "🎯",
+                  title: "Personalized",
+                  desc: "Questions tailored to your specific role",
+                },
+                {
+                  icon: "🎥",
+                  title: "Mock Practice",
+                  desc: "AI-powered interview simulation",
+                },
+                {
+                  icon: "⚡",
+                  title: "Instant",
+                  desc: "Get results in seconds",
+                },
               ].map((item, i) => (
                 <Card
                   key={i}
