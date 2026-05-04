@@ -53,9 +53,7 @@ export default function Onboarding() {
     category: "technical" as SkillCategory,
     proficiency_level: 3,
   });
-  const [selectedCategory, setSelectedCategory] = useState<
-    SkillCategory | "all"
-  >("all");
+  const [selectedCategory, setSelectedCategory] = useState<SkillCategory | "all">("all");
 
   useEffect(() => {
     const checkProfile = async () => {
@@ -83,20 +81,18 @@ export default function Onboarding() {
           setLocation(userInfo.location || "");
           setSummary(userInfo.summary || "");
 
-          // Transform backend education data to frontend format
           setEducation(
             (data.education || []).map((edu: any) => ({
               id: crypto.randomUUID(),
               school: edu.institution_name || "",
               degree: edu.degree || "",
               field: edu.field_of_study || "",
-              startDate: edu.start_date ? edu.start_date.substring(0, 7) : "", // YYYY-MM-DD -> YYYY-MM
+              startDate: edu.start_date ? edu.start_date.substring(0, 7) : "",
               endDate: edu.end_date ? edu.end_date.substring(0, 7) : "",
               description: edu.description || "",
             })),
           );
 
-          // Transform backend experience data to frontend format
           setExperience(
             (data.experience || []).map((exp: any) => ({
               id: crypto.randomUUID(),
@@ -108,7 +104,6 @@ export default function Onboarding() {
             })),
           );
 
-          // Transform backend certifications data to frontend format
           setCertifications(
             (data.certifications || []).map((cert: any) => ({
               id: crypto.randomUUID(),
@@ -121,7 +116,6 @@ export default function Onboarding() {
             })),
           );
 
-          // Transform backend skills data to frontend format
           setSkills(
             (data.skills || []).map((skill: any) => ({
               id: crypto.randomUUID(),
@@ -222,17 +216,13 @@ export default function Onboarding() {
 
   const handleBack = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
-  // Helper function to convert YYYY-MM to YYYY-MM-01 format for backend
   const formatDateForBackend = (dateStr: string): string => {
     if (!dateStr) return "";
-    // If already in YYYY-MM-DD format, return as is
     if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) return dateStr;
-    // If in YYYY-MM format (from month input), add -01 day
     if (dateStr.match(/^\d{4}-\d{2}$/)) return `${dateStr}-01`;
     return dateStr;
   };
 
-  // Transform frontend data to backend expected format
   const transformDataForBackend = () => {
     const transformEducation = education.map((edu) => ({
       institution_name: edu.school,
@@ -299,9 +289,7 @@ export default function Onboarding() {
     setLoading(true);
     try {
       const profileData = transformDataForBackend();
-
       await saveProfile(userId, profileData);
-
       toast({
         title: "Welcome!",
         description: "Your profile is complete. Let's get started!",
@@ -334,11 +322,7 @@ export default function Onboarding() {
   };
   const removeEducation = (id: string) =>
     setEducation(education.filter((e) => e.id !== id));
-  const updateEducation = (
-    id: string,
-    field: keyof Education,
-    value: string,
-  ) => {
+  const updateEducation = (id: string, field: keyof Education, value: string) => {
     setEducation(
       education.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
     );
@@ -359,11 +343,7 @@ export default function Onboarding() {
   };
   const removeExperience = (id: string) =>
     setExperience(experience.filter((e) => e.id !== id));
-  const updateExperience = (
-    id: string,
-    field: keyof Experience,
-    value: string,
-  ) => {
+  const updateExperience = (id: string, field: keyof Experience, value: string) => {
     setExperience(
       experience.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
     );
@@ -377,11 +357,7 @@ export default function Onboarding() {
   };
   const removeCertification = (id: string) =>
     setCertifications(certifications.filter((c) => c.id !== id));
-  const updateCertification = (
-    id: string,
-    field: keyof Certification,
-    value: string,
-  ) => {
+  const updateCertification = (id: string, field: keyof Certification, value: string) => {
     setCertifications(
       certifications.map((c) => (c.id === id ? { ...c, [field]: value } : c)),
     );
@@ -439,34 +415,22 @@ export default function Onboarding() {
         <div className="mb-8">
           <Progress value={progress} className="h-2" />
           <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-            <span
-              className={currentStep >= 1 ? "text-primary font-semibold" : ""}
-            >
+            <span className={currentStep >= 1 ? "text-primary font-semibold" : ""}>
               Connect
             </span>
-            <span
-              className={currentStep >= 2 ? "text-primary font-semibold" : ""}
-            >
+            <span className={currentStep >= 2 ? "text-primary font-semibold" : ""}>
               Basic Info
             </span>
-            <span
-              className={currentStep >= 3 ? "text-primary font-semibold" : ""}
-            >
+            <span className={currentStep >= 3 ? "text-primary font-semibold" : ""}>
               Education
             </span>
-            <span
-              className={currentStep >= 4 ? "text-primary font-semibold" : ""}
-            >
+            <span className={currentStep >= 4 ? "text-primary font-semibold" : ""}>
               Experience
             </span>
-            <span
-              className={currentStep >= 5 ? "text-primary font-semibold" : ""}
-            >
+            <span className={currentStep >= 5 ? "text-primary font-semibold" : ""}>
               Certifications
             </span>
-            <span
-              className={currentStep >= 6 ? "text-primary font-semibold" : ""}
-            >
+            <span className={currentStep >= 6 ? "text-primary font-semibold" : ""}>
               Skills
             </span>
           </div>
@@ -535,6 +499,7 @@ export default function Onboarding() {
               selectedCategory={selectedCategory}
               setSelectedCategory={setSelectedCategory}
               filteredSkills={filteredSkills}
+              onUpdateList={setSkills}
             />
           )}
 
