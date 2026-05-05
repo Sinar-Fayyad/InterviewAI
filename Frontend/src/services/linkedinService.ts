@@ -43,22 +43,50 @@ export interface LinkedInProfile {
   certifications: LinkedInCertification[];
   skills: LinkedInSkill[];
 }
-
-// GET /linkedin_profile/{user_id}
 export const fetchLinkedinProfile = async (userId: string): Promise<LinkedInProfile> => {
   const { data } = await api.get(`/linkedin_profile/${userId}`);
+
   const payload = data?.payload || data || {};
+  // ↓ Capital "P" and space in "Full name"
+  const profile = payload["Profile_info"] || payload["profile_info"] || {};
 
   return {
-    full_name: payload.full_name || null,
-    headline: payload.headline || null,
+    full_name: payload["Full name"] || payload.full_name || null,
+    headline: profile.headline || null,
     email: payload.email || null,
-    location: payload.location || null,
-    summary: payload.summary || null,
-    experiences: payload.experiences || payload.experience || [],
-    educations: payload.educations || payload.education || [],
-    certifications: payload.certifications || [],
-    skills: payload.skills || payload.user_skills || [],
+    location: profile.location || null,
+    summary: profile.about || profile.summary || null,
+
+    experiences: (profile.experiences || []).map((exp: any) => ({
+      id: exp.id || crypto.randomUUID(),
+      position: exp.role || exp.position,
+      company_name: exp.company || exp.company_name,
+      start_date: exp.start_date || null,
+      end_date: exp.end_date || null,
+      description: exp.description || null,
+    })),
+
+    educations: (profile.education || profile.educations || []).map((edu: any) => ({
+      id: edu.id || crypto.randomUUID(),
+      institution_name: edu.institution || edu.institution_name,
+      degree: edu.degree || null,
+      field_of_study: edu.field_of_study || null,
+      start_date: edu.start_date || null,
+      end_date: edu.end_date || null,
+    })),
+
+    certifications: (profile.certifications || []).map((cert: any) => ({
+      id: cert.id || crypto.randomUUID(),
+      certification_name: cert.name || cert.certification_name,
+      organization_name: cert.organization || cert.organization_name || null,
+      date_obtained: cert.date || cert.date_obtained || null,
+    })),
+
+    skills: (profile.skills || []).map((skill: any) =>
+      typeof skill === "string"
+        ? { id: crypto.randomUUID(), name: skill }
+        : skill
+    ),
   };
 };
 
