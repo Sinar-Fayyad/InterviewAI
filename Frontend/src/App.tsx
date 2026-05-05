@@ -23,7 +23,6 @@ import CVOutput from "./pages/CVOutput";
 import CoverLetter from "./pages/CoverLetter";
 import LinkedInHub from "./pages/LinkedInHub";
 import LinkedInPosts from "./pages/LinkedInManager";
-import LinkedInScheduledPosts from "./pages/LinkedInScheduledPosts";
 import Inbox from "./pages/Inbox";
 import NotFound from "./pages/NotFound";
 import InterviewsLibrary from "./pages/InterviewsLibrary";
@@ -67,7 +66,6 @@ const App = () => (
             <Route path="/mock-interview" element={<ProfileGuard><MockInterview /></ProfileGuard>} />
             <Route path="/save-interview" element={<ProfileGuard><SaveInterview /></ProfileGuard>} />
             <Route path="/linkedin-hub" element={<ProfileGuard><LinkedInHub /></ProfileGuard>} />
-            <Route path="/linkedin-scheduled-posts" element={<ProfileGuard><LinkedInScheduledPosts /></ProfileGuard>} />
             <Route path="/inbox" element={<ProfileGuard><Inbox /></ProfileGuard>} />
             <Route path="/interviews-library" element={<ProfileGuard><InterviewsLibrary /></ProfileGuard>} />
             <Route path="/applications" element={<ProfileGuard><ApplicationTracker /></ProfileGuard>} />

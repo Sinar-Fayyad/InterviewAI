@@ -9,7 +9,6 @@ import {
   disconnectLinkedin,
 } from "@/services/profileService";
 import { ComponentMode } from "./types";
-import api from "@/services/api";
 
 interface ConnectAccountsStepProps {
   loading?: boolean;

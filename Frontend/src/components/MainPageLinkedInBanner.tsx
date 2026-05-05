@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { checkLinkedinExpiry, disconnectLinkedin } from "@/services/linkedinService";
-
+import { checkLinkedinExpiry } from "@/services/linkedinService";
+import { disconnectLinkedin } from "@/services/profileService";
 
 
 export const MainPageLinkedInBanner = () => {

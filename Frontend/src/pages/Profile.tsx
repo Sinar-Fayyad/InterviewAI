@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchProfile, saveProfile } from "@/services/profileService";
+import { fetchProfile } from "@/services/profileService";
 import { Navigation } from "@/components/layout/Navigation";
 import { BackButton } from "@/components/layout/BackButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
