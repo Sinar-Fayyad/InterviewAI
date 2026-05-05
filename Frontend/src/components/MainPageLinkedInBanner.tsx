@@ -4,32 +4,23 @@ import { useAuth } from "@/hooks/useAuth";
 import { checkLinkedinExpiry } from "@/services/linkedinService";
 import { disconnectLinkedin } from "@/services/profileService";
 
-
 export const MainPageLinkedInBanner = () => {
   const { user } = useAuth();
   const [showBanner, setShowBanner] = useState(false);
   const [isDismissing, setIsDismissing] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       checkLinkedInExpiry();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const checkLinkedInExpiry = async () => {
     try {
       if (!user?.id) return;
-      
-      // Clear previous session state for fresh check
       sessionStorage.removeItem("linkedin_banner_dismissed");
-      
       const result = await checkLinkedinExpiry(user.id);
-      
-      if (result?.is_expired) {
-        setShowBanner(true);
-      } else {
-        setShowBanner(false);
-      }
+      setShowBanner(result?.is_expired ?? false);
     } catch (error) {
       setShowBanner(false);
     }
@@ -40,7 +31,6 @@ export const MainPageLinkedInBanner = () => {
     try {
       if (!user?.id) return;
       await disconnectLinkedin(user.id);
-      // Mark as dismissed for this session
       sessionStorage.setItem("linkedin_banner_dismissed", "true");
       setShowBanner(false);
     } catch (error) {
@@ -53,17 +43,17 @@ export const MainPageLinkedInBanner = () => {
   if (!showBanner) return null;
 
   return (
-    <div 
+    <div
       className="fixed top-16 left-0 right-0 z-40"
-      style={{ 
+      style={{
         background: "linear-gradient(90deg, #7C3AED, #4F46E5)",
         padding: "12px 20px",
-        borderRadius: "0"
       }}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <span className="text-white text-sm font-medium">
-          Your LinkedIn session has expired. Please connect again to restore access.
+          Your LinkedIn session has expired. Please connect again to restore
+          access.
         </span>
         <button
           onClick={handleDismiss}
