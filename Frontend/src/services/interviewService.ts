@@ -59,6 +59,11 @@ export const endInterview = async (interviewId: string, formData: FormData) => {
   return data;
 };
 
+export const getAnalysisFeedback = async (userId: string) => {
+  const { data } = await api.get(`/analysis_feedback/${userId}`);
+  return data; // { feedback_over_time: Array<{ date: string; score: number }>, emotion_distribution: Record<string, number> }
+}
+
 // GET /get_interviews/{user_id}
 export const getInterviews = async (userId: string) => {
   const { data } = await api.get(`/get_interviews/${userId}`);
@@ -76,3 +81,4 @@ export const deleteInterview = async (id: string) => {
   const { data } = await api.post(`/delete_interview/${id}`);
   return data;
 };
+
