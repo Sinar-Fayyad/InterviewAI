@@ -47,26 +47,6 @@ const getPriority = (subject: string, body: string): "high" | "medium" | "low" =
 
 export const getJobEmails = async (userId: string): Promise<Message[]> => {
   const { data } = await api.get(`/get_job_emails/${userId}`);
-
-  /*
-    Supports both backend response shapes:
-
-    1. Production:
-       {
-         payload: [
-           { id, from, subject, snippet, body, date, time, url }
-         ]
-       }
-
-    2. Debug:
-       {
-         payload: {
-           totalFetchedFromGmail: 50,
-           totalJobEmails: 5,
-           emails: [...]
-         }
-       }
-  */
   const payload = data?.payload ?? data;
 
   const emails = Array.isArray(payload)
@@ -121,69 +101,4 @@ export const filterMessages = (
   }
 
   return filtered;
-};
-
-
-
-export const saveStarredToStorage = (starredIds: string[]): void => {
-  localStorage.setItem("starredMessages", JSON.stringify(starredIds));
-};
-
-export const applyStarredState = (messages: Message[]): Message[] => {
-  const starredIds = loadStarredFromStorage();
-
-  return messages.map(message => ({
-    ...message,
-    isStarred: starredIds.includes(message.id),
-  }));
-};
-
-export const generateAIReply = async (message: Message): Promise<string> => {
-  await new Promise(resolve => setTimeout(resolve, 1500));
-
-  if (message.type === "linkedin") {
-    return `Hi ${message.from.split(" ")[0]},
-
-Thank you for reaching out and for your kind words about my profile. I appreciate you taking the time to connect.
-
-I would be happy to discuss potential collaboration opportunities and learn more about your work.
-
-Best regards`;
-  }
-
-  const subject = message.subject.toLowerCase();
-  const content = message.fullContent.toLowerCase();
-
-  if (subject.includes("interview") || content.includes("interview")) {
-    return `Dear Hiring Team,
-
-Thank you for reaching out regarding the interview opportunity. I am excited about the possibility of joining your team.
-
-I am available for an interview at your convenience. Please let me know what times work best.
-
-Best regards`;
-  }
-
-  if (
-    subject.includes("application") ||
-    content.includes("application") ||
-    subject.includes("recruiter") ||
-    content.includes("recruiter")
-  ) {
-    return `Dear Hiring Team,
-
-Thank you for your message and for the update regarding my application.
-
-I appreciate the opportunity and look forward to hearing more about the next steps.
-
-Best regards`;
-  }
-
-  return `Dear ${message.from.split("@")[0]},
-
-Thank you for your message. I have received it and will review the details carefully.
-
-I will get back to you as soon as possible.
-
-Best regards`;
 };
