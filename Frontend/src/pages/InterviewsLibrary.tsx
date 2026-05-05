@@ -16,6 +16,11 @@ import {
   ChevronDown,
   ChevronUp,
   Trash2,
+  MessageSquare,
+  CheckCircle,
+  XCircle,
+  Lightbulb,
+  FileText,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -50,10 +55,16 @@ interface InterviewArchive {
   created_at: string;
   feedback: string | Feedback | null;
 
+  user_id?: string | number;
+  context_summary?: string | null;
   transcript?: string | null;
+
+  recording_url?: string | null;
   video_path?: string | null;
   video_url?: string | null;
+
   question_count?: number | null;
+  updated_at?: string | null;
 }
 
 const parseFeedback = (feedback: string | Feedback | null): Feedback | null => {
@@ -69,6 +80,12 @@ const parseFeedback = (feedback: string | Feedback | null): Feedback | null => {
     console.error("Invalid feedback JSON:", error);
     return null;
   }
+};
+
+const scoreColor = (score: number) => {
+  if (score >= 80) return "text-green-500";
+  if (score >= 50) return "text-yellow-500";
+  return "text-red-500";
 };
 
 const InterviewsLibrary = () => {
@@ -93,7 +110,20 @@ const InterviewsLibrary = () => {
 
     try {
       const data = await getInterviews(userId);
-      setInterviews(Array.isArray(data) ? data : []);
+
+      const normalizedData = Array.isArray(data)
+        ? data.map((interview) => ({
+            ...interview,
+            id: String(interview.id),
+            recording_url:
+              interview.recording_url ||
+              interview.video_url ||
+              interview.video_path ||
+              null,
+          }))
+        : [];
+
+      setInterviews(normalizedData);
     } catch (error) {
       console.error("Error fetching interviews:", error);
 
@@ -119,7 +149,11 @@ const InterviewsLibrary = () => {
       (interview) => String(interview.id) === String(interviewId)
     );
 
-    if (existingInterview?.video_url || existingInterview?.transcript) {
+    if (
+      existingInterview?.recording_url ||
+      existingInterview?.video_url ||
+      existingInterview?.transcript
+    ) {
       return;
     }
 
@@ -135,6 +169,20 @@ const InterviewsLibrary = () => {
                 ...interview,
                 ...detailedInterview,
                 id: String(detailedInterview.id),
+                recording_url:
+                  detailedInterview.video_url ||
+                  detailedInterview.recording_url ||
+                  detailedInterview.video_path ||
+                  interview.recording_url ||
+                  null,
+                video_url:
+                  detailedInterview.video_url ||
+                  interview.video_url ||
+                  null,
+                video_path:
+                  detailedInterview.video_path ||
+                  interview.video_path ||
+                  null,
               }
             : interview
         )
@@ -160,6 +208,10 @@ const InterviewsLibrary = () => {
         prev.filter((interview) => String(interview.id) !== String(id))
       );
 
+      if (expandedId === id) {
+        setExpandedId(null);
+      }
+
       toast({
         title: "Deleted",
         description: "Interview removed from library",
@@ -175,106 +227,259 @@ const InterviewsLibrary = () => {
     }
   };
 
-  const renderFeedback = (feedback: string | Feedback | null) => {
-    const parsedFeedback = parseFeedback(feedback);
-
-    if (!parsedFeedback) {
-      return (
-        <p className="text-sm text-muted-foreground">No feedback available</p>
-      );
-    }
-
-    return (
-      <div className="space-y-4">
-        {parsedFeedback.score !== undefined && (
-          <div>
-            <span className="text-sm font-medium">Score:</span>
-            <p className="text-sm text-muted-foreground">
-              {parsedFeedback.score}/100
-            </p>
-          </div>
-        )}
-
-        {parsedFeedback.summary && (
-          <div>
-            <span className="text-sm font-medium">Summary:</span>
-            <p className="text-sm text-muted-foreground">
-              {parsedFeedback.summary}
-            </p>
-          </div>
-        )}
-
-        {parsedFeedback.strengths && parsedFeedback.strengths.length > 0 && (
-          <div>
-            <span className="text-sm font-medium">Strengths:</span>
-            <ul className="list-disc list-inside text-sm text-muted-foreground">
-              {parsedFeedback.strengths.map((item, index) => (
-                <li key={index}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {parsedFeedback.weaknesses && parsedFeedback.weaknesses.length > 0 && (
-          <div>
-            <span className="text-sm font-medium">Weaknesses:</span>
-            <ul className="list-disc list-inside text-sm text-muted-foreground">
-              {parsedFeedback.weaknesses.map((item, index) => (
-                <li key={index}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {parsedFeedback.suggestions && parsedFeedback.suggestions.length > 0 && (
-          <div>
-            <span className="text-sm font-medium">Suggestions:</span>
-            <ul className="list-disc list-inside text-sm text-muted-foreground">
-              {parsedFeedback.suggestions.map((item, index) => (
-                <li key={index}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderEmotionAnalysis = (transcript?: string | null) => {
-    if (!transcript) {
-      return (
-        <p className="text-sm text-muted-foreground">
-          No emotion data available
-        </p>
-      );
-    }
-
-    const emotionLines = transcript
-      .split("\n")
-      .filter((line) => line.toLowerCase().startsWith("emotion"));
-
-    if (emotionLines.length === 0) {
-      return (
-        <p className="text-sm text-muted-foreground">
-          No emotion data available
-        </p>
-      );
-    }
-
-    return (
-      <div className="space-y-2">
-        {emotionLines.map((line, index) => (
-          <div key={index} className="text-sm text-muted-foreground">
-            {line}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   const getScore = (feedback: string | Feedback | null) => {
     const parsedFeedback = parseFeedback(feedback);
     return parsedFeedback?.score;
+  };
+
+  const getVideoSource = (interview: InterviewArchive) => {
+    return (
+      interview.recording_url ||
+      interview.video_url ||
+      interview.video_path ||
+      null
+    );
+  };
+
+  const renderTranscript = (transcript?: string | null) => {
+    if (!transcript) return null;
+
+    const lines = transcript
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    if (lines.length === 0) return null;
+
+    return (
+      <Card className="bg-secondary/80 border-primary/20 shadow-card p-5">
+        <h4 className="font-semibold mb-4 flex items-center gap-2">
+          <FileText className="w-4 h-4 text-primary" />
+          Transcript
+        </h4>
+
+        <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
+          {lines.map((line, index) => {
+            const lower = line.toLowerCase();
+
+            if (lower.startsWith("question")) {
+              return (
+                <div
+                  key={index}
+                  className="rounded-lg bg-primary/5 border border-primary/10 p-3"
+                >
+                  <p className="text-xs font-semibold text-primary mb-1">
+                    Question
+                  </p>
+                  <p className="text-sm text-foreground">
+                    {line.replace(/^question\d*:\s*/i, "")}
+                  </p>
+                </div>
+              );
+            }
+
+            if (lower.startsWith("answer")) {
+              const answerText = line.replace(/^answer\d*:\s*/i, "");
+
+              return (
+                <div
+                  key={index}
+                  className="rounded-lg bg-background/70 border border-border p-3"
+                >
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">
+                    Answer
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {answerText || "No answer provided"}
+                  </p>
+                </div>
+              );
+            }
+
+            if (lower.startsWith("emotion")) {
+              return null;
+            }
+
+            return (
+              <p key={index} className="text-sm text-muted-foreground">
+                {line}
+              </p>
+            );
+          })}
+        </div>
+      </Card>
+    );
+  };
+
+  const renderExpandedContent = (interview: InterviewArchive) => {
+    const parsedFeedback = parseFeedback(interview.feedback);
+    const score = parsedFeedback?.score || 0;
+    const videoSource = getVideoSource(interview);
+
+    return (
+      <div className="mt-6 space-y-6 animate-slide-up">
+        {loadingDetailsId === String(interview.id) ? (
+          <div className="flex items-center justify-center py-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          </div>
+        ) : (
+          <>
+            {/* Video section - old working style */}
+            {videoSource ? (
+              <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                <video
+                  src={videoSource}
+                  controls
+                  preload="metadata"
+                  className="w-full h-full"
+                />
+              </div>
+            ) : (
+              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <Play className="w-12 h-12 mx-auto mb-2" />
+                  <p>Recording not available</p>
+                </div>
+              </div>
+            )}
+
+            {!parsedFeedback ? (
+              <Card className="bg-secondary/80 border-primary/20 shadow-card p-5">
+                <p className="text-sm text-muted-foreground">
+                  No feedback available
+                </p>
+              </Card>
+            ) : (
+              <>
+                {/* Score + Summary full width */}
+                <Card className="bg-secondary/80 border-primary/20 shadow-card p-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                    <div className="relative w-28 h-28 shrink-0">
+                      <svg className="w-full h-full transform -rotate-90">
+                        <circle
+                          cx="56"
+                          cy="56"
+                          r="48"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="10"
+                          className="text-muted"
+                        />
+                        <circle
+                          cx="56"
+                          cy="56"
+                          r="48"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="10"
+                          strokeLinecap="round"
+                          className={scoreColor(score)}
+                          strokeDasharray={`${score * 3.015} 301.5`}
+                        />
+                      </svg>
+
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span
+                          className={`text-3xl font-bold ${scoreColor(score)}`}
+                        >
+                          {score}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          Score
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex-1">
+                      <h4 className="font-semibold mb-2 flex items-center gap-2 text-base">
+                        <MessageSquare className="w-4 h-4 text-blue-500" />
+                        Overall Summary
+                      </h4>
+
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {parsedFeedback.summary || "No summary available"}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Strengths + Weaknesses */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  {parsedFeedback.strengths &&
+                    parsedFeedback.strengths.length > 0 && (
+                      <Card className="bg-secondary/80 border-green-500/20 shadow-card p-5">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2 text-green-500">
+                          <CheckCircle className="w-4 h-4" />
+                          Strengths
+                        </h4>
+
+                        <ul className="space-y-2">
+                          {parsedFeedback.strengths.map((item, index) => (
+                            <li
+                              key={index}
+                              className="flex items-start gap-2 text-sm text-muted-foreground"
+                            >
+                              <span className="text-green-500 mt-0.5">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </Card>
+                    )}
+
+                  {parsedFeedback.weaknesses &&
+                    parsedFeedback.weaknesses.length > 0 && (
+                      <Card className="bg-secondary/80 border-red-500/20 shadow-card p-5">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2 text-red-500">
+                          <XCircle className="w-4 h-4" />
+                          Areas for Improvement
+                        </h4>
+
+                        <ul className="space-y-2">
+                          {parsedFeedback.weaknesses.map((item, index) => (
+                            <li
+                              key={index}
+                              className="flex items-start gap-2 text-sm text-muted-foreground"
+                            >
+                              <span className="text-red-500 mt-0.5">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </Card>
+                    )}
+                </div>
+
+                {/* Suggestions */}
+                {parsedFeedback.suggestions &&
+                  parsedFeedback.suggestions.length > 0 && (
+                    <Card className="bg-secondary/80 border-yellow-500/20 shadow-card p-5">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2 text-yellow-500">
+                        <Lightbulb className="w-4 h-4" />
+                        Suggestions
+                      </h4>
+
+                      <ul className="grid md:grid-cols-2 gap-2">
+                        {parsedFeedback.suggestions.map((item, index) => (
+                          <li
+                            key={index}
+                            className="flex items-start gap-2 text-sm text-muted-foreground"
+                          >
+                            <span className="text-yellow-500 mt-0.5">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </Card>
+                  )}
+              </>
+            )}
+
+            {renderTranscript(interview.transcript)}
+          </>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -288,8 +493,7 @@ const InterviewsLibrary = () => {
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Interviews Library</h1>
             <p className="text-muted-foreground">
-              Review your past mock interviews, recordings, AI feedback, and
-              emotion analysis
+              Review your past mock interviews, recordings, and AI feedback
             </p>
           </div>
 
@@ -328,9 +532,9 @@ const InterviewsLibrary = () => {
                     className="bg-secondary/80 border-primary/20 shadow-card overflow-hidden"
                   >
                     <div className="p-6">
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
+                          <div className="flex flex-wrap items-center gap-3 mb-2">
                             <h3 className="text-lg font-semibold">
                               {interview.interview_title || "Mock Interview"}
                             </h3>
@@ -355,10 +559,14 @@ const InterviewsLibrary = () => {
                               <span>@ {interview.company_name}</span>
                             )}
 
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              {new Date(interview.created_at).toLocaleDateString()}
-                            </span>
+                            {interview.created_at && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {new Date(
+                                  interview.created_at
+                                ).toLocaleDateString()}
+                              </span>
+                            )}
 
                             {interview.question_count && (
                               <span className="flex items-center gap-1">
@@ -419,71 +627,7 @@ const InterviewsLibrary = () => {
                         </div>
                       </div>
 
-                      {isExpanded && (
-                        <div className="mt-6 space-y-6 animate-slide-up">
-                          {loadingDetailsId === String(interview.id) ? (
-                            <div className="flex items-center justify-center py-10">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                            </div>
-                          ) : (
-                            <>
-                              {interview.video_url ? (
-                                <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                                  <video
-                                    src={interview.video_url}
-                                    controls
-                                    preload="metadata"
-                                    className="w-full h-full object-contain"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                                  <div className="text-center text-muted-foreground">
-                                    <Play className="w-12 h-12 mx-auto mb-2" />
-                                    <p>Recording not available</p>
-                                  </div>
-                                </div>
-                              )}
-
-                              <div className="grid md:grid-cols-2 gap-6">
-                                <div>
-                                  <h4 className="font-semibold mb-3">
-                                    AI Feedback
-                                  </h4>
-
-                                  <div className="bg-muted/50 rounded-lg p-4 min-h-[120px]">
-                                    {renderFeedback(interview.feedback)}
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <h4 className="font-semibold mb-3">
-                                    Emotion Analysis
-                                  </h4>
-
-                                  <div className="bg-muted/50 rounded-lg p-4 min-h-[120px]">
-                                    {renderEmotionAnalysis(interview.transcript)}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {interview.transcript && (
-                                <div>
-                                  <h4 className="font-semibold mb-3">
-                                    Transcript
-                                  </h4>
-
-                                  <div className="bg-muted/50 rounded-lg p-4 max-h-64 overflow-y-auto">
-                                    <p className="text-sm whitespace-pre-wrap">
-                                      {interview.transcript}
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
+                      {isExpanded && renderExpandedContent(interview)}
                     </div>
                   </Card>
                 );
