@@ -23,13 +23,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const url = error.config?.url || "";
-    const ignoredPaths = [
-      "/get_linkedin_messages",
-      "/get_job_emails",
-    ];
-    const isIgnored = ignoredPaths.some(path => url.includes(path));
 
-    if (error.response?.status === 401 && !isIgnored && window.location.pathname !== '/auth') {
+    if (error.response?.status === 401 && window.location.pathname !== '/auth') {
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("user_id");
       window.location.href = "/auth";

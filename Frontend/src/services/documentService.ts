@@ -148,7 +148,6 @@ export const optimizeResume = async (
   });
 
   const payload = extractCVPayload(data);
-
   return mapPayloadToCVData(payload);
 };
 
@@ -166,9 +165,6 @@ export const generateCoverLetter = async (
   }
 ) => {
   const { data } = await api.post(`/cover_letter_generation/${userId}`, params);
-
-  
-
   return data?.payload;
 };
 
@@ -182,6 +178,5 @@ export const optimizeCoverLetter = async (
   }
 ) => {
   const { data } = await api.post(`/cover_letter_optimization/${userId}`, params);
-
   return data?.payload;
 };

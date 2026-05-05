@@ -30,7 +30,8 @@ import {
   Clock,
   ArrowDown,
 } from "lucide-react";
-import { getJobEmails, replyToEmail, sendEmail } from "@/services/emailService";
+import { getJobEmails } from "@/services/inboxService";
+import { replyToEmail, sendEmail } from "@/services/emailService";
 import { socialiteRedirect } from "@/services/profileService";
 import api from "@/services/api";
 

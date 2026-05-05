@@ -30,9 +30,3 @@ export const sendEmail = async (userId: string, params: { to: string; subject: s
   const { data } = await api.post(`/send_email/${userId}`, params);
   return data;
 };
-
-// GET /get_job_emails/{user_id}
-export const getJobEmails = async (userId: string) => {
-  const { data } = await api.get(`/get_job_emails/${userId}`);
-  return data?.payload || [];
-};

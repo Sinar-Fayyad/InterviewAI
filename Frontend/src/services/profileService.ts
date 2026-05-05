@@ -105,11 +105,3 @@ export const socialiteRedirect = async (provider: string, userId: string, return
   });
   return data.payload;
 };
-
-// export const getSocialConnections = async (userId: string) => {
-//   const { data } = await api.get(`auth/profile/${userId}`);
-//   return {
-//     linkedin_connected: data?.payload?.linkedin_connected || false,
-//     google_connected: data?.payload?.google_connected || false
-//   };
-// };
