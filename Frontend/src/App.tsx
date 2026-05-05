@@ -7,7 +7,6 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ProfileGuard } from "@/components/auth/ProfileGuard";
 import { Chatbot } from "@/components/Chatbot";
-import Footer from "@/components/Footer";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -77,7 +76,6 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Chatbot />
-          <Footer />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
