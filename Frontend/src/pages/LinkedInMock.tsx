@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchProfile } from "@/services/profileService";
+import { fetchLinkedinProfile, LinkedInProfile } from "@/services/linkedinService";
 import { BackButton } from "@/components/layout/BackButton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,53 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Copy, MapPin, Mail, Briefcase, GraduationCap, Award, Linkedin, AlertCircle, BadgeCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-interface Experience {
-  id: string;
-  position: string;
-  company_name: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  description: string | null;
-}
-
-interface Education {
-  id: string;
-  institution_name: string;
-  degree: string | null;
-  field_of_study: string | null;
-  start_date: string | null;
-  end_date: string | null;
-}
-
-interface Skill {
-  id: string;
-  name: string;
-  category: string | null;
-}
-
-interface Certification {
-  id: string;
-  certification_name: string;
-  organization_name: string | null;
-  date_obtained: string | null;
-}
-
-interface ProfileData {
-  full_name: string | null;
-  email: string | null;
-  location: string | null;
-  summary: string | null;
-}
-
 export default function LinkedInMock() {
   const { userId } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [experiences, setExperiences] = useState<Experience[]>([]);
-  const [educations, setEducations] = useState<Education[]>([]);
-  const [certifications, setCertifications] = useState<Certification[]>([]);
-  const [skills, setSkills] = useState<Skill[]>([]);
+  const [profile, setProfile] = useState<LinkedInProfile | null>(null);
   const [completionPercentage, setCompletionPercentage] = useState(0);
 
   useEffect(() => {
@@ -67,27 +25,21 @@ export default function LinkedInMock() {
   const fetchAllData = async () => {
     if (!userId) return;
     try {
-      const data = await fetchProfile(userId);
-      if (data) {
-        setProfile(data);
-        setExperiences(data.experiences || data.experience || []);
-        setEducations(data.educations || data.education || []);
-        setCertifications(data.certifications || []);
-        setSkills(data.user_skills || data.skills || []);
-      }
+      const data = await fetchLinkedinProfile(userId);
+      setProfile(data);
 
       let completedSections = 0;
       const totalSections = 6;
-      if (data?.full_name) completedSections++;
-      if (data?.summary) completedSections++;
-      if ((data?.experiences || data?.experience || []).length > 0) completedSections++;
-      if ((data?.educations || data?.education || []).length > 0) completedSections++;
-      if ((data?.certifications || []).length > 0) completedSections++;
-      if ((data?.user_skills || data?.skills || []).length > 0) completedSections++;
+      if (data.full_name) completedSections++;
+      if (data.summary) completedSections++;
+      if (data.experiences.length > 0) completedSections++;
+      if (data.educations.length > 0) completedSections++;
+      if (data.certifications.length > 0) completedSections++;
+      if (data.skills.length > 0) completedSections++;
       setCompletionPercentage(Math.round((completedSections / totalSections) * 100));
     } catch (error) {
-      console.error("Error fetching data:", error);
-      toast({ title: "Error", description: "Failed to load profile data", variant: "destructive" });
+      console.error("Error fetching LinkedIn profile:", error);
+      toast({ title: "Error", description: "Failed to load LinkedIn profile data", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -103,6 +55,12 @@ export default function LinkedInMock() {
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
   };
+
+  // Derived cleanly from profile — no separate state needed
+  const experiences = profile?.experiences || [];
+  const educations = profile?.educations || [];
+  const certifications = profile?.certifications || [];
+  const skills = profile?.skills || [];
 
   if (loading) {
     return (
@@ -127,10 +85,13 @@ export default function LinkedInMock() {
           </div>
         </div>
 
+        {/* Profile Completion */}
         <Card className="rounded-xl p-6 mb-6 bg-card border-border">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold">Profile Completion</h3>
-            <span className={`text-sm font-medium ${completionPercentage === 100 ? 'text-green-500' : 'text-muted-foreground'}`}>{completionPercentage}%</span>
+            <span className={`text-sm font-medium ${completionPercentage === 100 ? 'text-green-500' : 'text-muted-foreground'}`}>
+              {completionPercentage}%
+            </span>
           </div>
           <Progress value={completionPercentage} className="h-2 mb-4" />
           {completionPercentage < 100 && (
@@ -147,6 +108,7 @@ export default function LinkedInMock() {
           )}
         </Card>
 
+        {/* Header */}
         <Card className="rounded-xl overflow-hidden mb-4 bg-card border-border">
           <div className="h-28 bg-gradient-to-r from-[#0A66C2] to-[#0073b1]" />
           <div className="p-6 pt-0 relative">
@@ -156,29 +118,52 @@ export default function LinkedInMock() {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-2xl font-bold">{profile?.full_name || "Your Name"}</h1>
-                <p className="text-muted-foreground mt-1">Add your headline here</p>
+                <p className="text-muted-foreground mt-1">{profile?.headline || "Add your headline here"}</p>
                 <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
-                  {profile?.location && (<span className="flex items-center gap-1"><MapPin className="w-4 h-4" />{profile.location}</span>)}
-                  {profile?.email && (<span className="flex items-center gap-1"><Mail className="w-4 h-4" />{profile.email}</span>)}
+                  {profile?.location && (
+                    <span className="flex items-center gap-1"><MapPin className="w-4 h-4" />{profile.location}</span>
+                  )}
+                  {profile?.email && (
+                    <span className="flex items-center gap-1"><Mail className="w-4 h-4" />{profile.email}</span>
+                  )}
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={() => copyToClipboard(`${profile?.full_name || ""}\n${profile?.location || ""}\n${profile?.email || ""}`, "Header info")}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => copyToClipboard(
+                  `${profile?.full_name || ""}\n${profile?.headline || ""}\n${profile?.location || ""}\n${profile?.email || ""}`,
+                  "Header info"
+                )}
+              >
                 <Copy className="w-4 h-4 mr-2" />Copy
               </Button>
             </div>
           </div>
         </Card>
 
+        {/* About */}
         <Card className="rounded-xl p-6 mb-4 bg-card border-border">
           <div className="flex items-start justify-between mb-4">
             <h2 className="text-xl font-semibold">About</h2>
-            {profile?.summary && (<Button variant="ghost" size="sm" onClick={() => copyToClipboard(profile.summary || "", "About section")}><Copy className="w-4 h-4" /></Button>)}
+            {profile?.summary && (
+              <Button variant="ghost" size="sm" onClick={() => copyToClipboard(profile.summary || "", "About section")}>
+                <Copy className="w-4 h-4" />
+              </Button>
+            )}
           </div>
-          {profile?.summary ? (<p className="text-foreground whitespace-pre-wrap">{profile.summary}</p>) : (<p className="text-muted-foreground italic">No summary added yet. Add one in your profile.</p>)}
+          {profile?.summary
+            ? <p className="text-foreground whitespace-pre-wrap">{profile.summary}</p>
+            : <p className="text-muted-foreground italic">No summary added yet. Add one in your profile.</p>
+          }
         </Card>
 
+        {/* Experience */}
         <Card className="rounded-xl p-6 mb-4 bg-card border-border">
-          <div className="flex items-center gap-2 mb-6"><Briefcase className="w-5 h-5" /><h2 className="text-xl font-semibold">Experience</h2></div>
+          <div className="flex items-center gap-2 mb-6">
+            <Briefcase className="w-5 h-5" />
+            <h2 className="text-xl font-semibold">Experience</h2>
+          </div>
           {experiences.length > 0 ? (
             <div className="space-y-6">
               {experiences.map((exp) => (
@@ -187,37 +172,82 @@ export default function LinkedInMock() {
                     <h3 className="font-semibold">{exp.position}</h3>
                     <p className="text-muted-foreground">{exp.company_name || "Company"}</p>
                     <p className="text-sm text-muted-foreground mt-1">{formatDate(exp.start_date)} - {formatDate(exp.end_date)}</p>
-                    {exp.description && (<p className="mt-3 text-sm">{exp.description}</p>)}
+                    {exp.description && <p className="mt-3 text-sm">{exp.description}</p>}
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(`${exp.position}\n${exp.company_name || ""}\n${formatDate(exp.start_date)} - ${formatDate(exp.end_date)}\n${exp.description || ""}`, "Experience")}><Copy className="w-4 h-4" /></Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard(
+                      `${exp.position}\n${exp.company_name || ""}\n${formatDate(exp.start_date)} - ${formatDate(exp.end_date)}\n${exp.description || ""}`,
+                      "Experience"
+                    )}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
             </div>
-          ) : (<p className="text-muted-foreground italic">No experience added yet.</p>)}
+          ) : (
+            <p className="text-muted-foreground italic">No experience added yet.</p>
+          )}
         </Card>
 
+        {/* Education */}
         <Card className="rounded-xl p-6 mb-4 bg-card border-border">
-          <div className="flex items-center gap-2 mb-6"><GraduationCap className="w-5 h-5" /><h2 className="text-xl font-semibold">Education</h2></div>
+          <div className="flex items-center gap-2 mb-6">
+            <GraduationCap className="w-5 h-5" />
+            <h2 className="text-xl font-semibold">Education</h2>
+          </div>
           {educations.length > 0 ? (
             <div className="space-y-6">
               {educations.map((edu) => (
                 <div key={edu.id} className="flex items-start justify-between border-b border-border pb-6 last:border-0 last:pb-0">
                   <div className="flex-1">
                     <h3 className="font-semibold">{edu.institution_name}</h3>
-                    {(edu.degree || edu.field_of_study) && (<p className="text-muted-foreground">{edu.degree}{edu.degree && edu.field_of_study ? ", " : ""}{edu.field_of_study}</p>)}
+                    {(edu.degree || edu.field_of_study) && (
+                      <p className="text-muted-foreground">
+                        {edu.degree}{edu.degree && edu.field_of_study ? ", " : ""}{edu.field_of_study}
+                      </p>
+                    )}
                     <p className="text-sm text-muted-foreground mt-1">{formatDate(edu.start_date)} - {formatDate(edu.end_date)}</p>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(`${edu.institution_name}\n${edu.degree || ""} ${edu.field_of_study || ""}\n${formatDate(edu.start_date)} - ${formatDate(edu.end_date)}`, "Education")}><Copy className="w-4 h-4" /></Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard(
+                      `${edu.institution_name}\n${edu.degree || ""} ${edu.field_of_study || ""}\n${formatDate(edu.start_date)} - ${formatDate(edu.end_date)}`,
+                      "Education"
+                    )}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
             </div>
-          ) : (<p className="text-muted-foreground italic">No education added yet.</p>)}
+          ) : (
+            <p className="text-muted-foreground italic">No education added yet.</p>
+          )}
         </Card>
 
+        {/* Certifications */}
         <Card className="rounded-xl p-6 mb-4 bg-card border-border">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2"><BadgeCheck className="w-5 h-5" /><h2 className="text-xl font-semibold">Licenses & Certifications</h2></div>
-            {certifications.length > 0 && (<Button variant="ghost" size="sm" onClick={() => copyToClipboard(certifications.map(c => `${c.certification_name} - ${c.organization_name || "N/A"}`).join("\n"), "Certifications")}><Copy className="w-4 h-4 mr-2" />Copy All</Button>)}
+            <div className="flex items-center gap-2">
+              <BadgeCheck className="w-5 h-5" />
+              <h2 className="text-xl font-semibold">Licenses & Certifications</h2>
+            </div>
+            {certifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(
+                  certifications.map(c => `${c.certification_name} - ${c.organization_name || "N/A"}`).join("\n"),
+                  "Certifications"
+                )}
+              >
+                <Copy className="w-4 h-4 mr-2" />Copy All
+              </Button>
+            )}
           </div>
           {certifications.length > 0 ? (
             <div className="space-y-6">
@@ -225,27 +255,62 @@ export default function LinkedInMock() {
                 <div key={cert.id} className="flex items-start justify-between border-b border-border pb-6 last:border-0 last:pb-0">
                   <div className="flex-1">
                     <h3 className="font-semibold">{cert.certification_name}</h3>
-                    {cert.organization_name && (<p className="text-muted-foreground">{cert.organization_name}</p>)}
-                    {cert.date_obtained && (<p className="text-sm text-muted-foreground mt-1">Issued {formatDate(cert.date_obtained)}</p>)}
+                    {cert.organization_name && <p className="text-muted-foreground">{cert.organization_name}</p>}
+                    {cert.date_obtained && <p className="text-sm text-muted-foreground mt-1">Issued {formatDate(cert.date_obtained)}</p>}
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(`${cert.certification_name}\n${cert.organization_name || ""}\nIssued: ${formatDate(cert.date_obtained)}`, "Certification")}><Copy className="w-4 h-4" /></Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard(
+                      `${cert.certification_name}\n${cert.organization_name || ""}\nIssued: ${formatDate(cert.date_obtained)}`,
+                      "Certification"
+                    )}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
             </div>
-          ) : (<p className="text-muted-foreground italic">No certifications added yet.</p>)}
+          ) : (
+            <p className="text-muted-foreground italic">No certifications added yet.</p>
+          )}
         </Card>
 
+        {/* Skills */}
         <Card className="rounded-xl p-6 bg-card border-border">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2"><Award className="w-5 h-5" /><h2 className="text-xl font-semibold">Skills</h2></div>
-            {skills.length > 0 && (<Button variant="ghost" size="sm" onClick={() => copyToClipboard(skills.map(s => s.name).join(", "), "Skills")}><Copy className="w-4 h-4 mr-2" />Copy All</Button>)}
+            <div className="flex items-center gap-2">
+              <Award className="w-5 h-5" />
+              <h2 className="text-xl font-semibold">Skills</h2>
+            </div>
+            {skills.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(skills.map(s => s.name).join(", "), "Skills")}
+              >
+                <Copy className="w-4 h-4 mr-2" />Copy All
+              </Button>
+            )}
           </div>
           {skills.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {skills.map((skill) => (<Badge key={skill.id} variant="secondary" className="cursor-pointer hover:bg-secondary/80" onClick={() => copyToClipboard(skill.name, skill.name)}>{skill.name}</Badge>))}
+              {skills.map((skill) => (
+                <Badge
+                  key={skill.id}
+                  variant="secondary"
+                  className="cursor-pointer hover:bg-secondary/80"
+                  onClick={() => copyToClipboard(skill.name, skill.name)}
+                >
+                  {skill.name}
+                </Badge>
+              ))}
             </div>
-          ) : (<p className="text-muted-foreground italic">No skills added yet.</p>)}
+          ) : (
+            <p className="text-muted-foreground italic">No skills added yet.</p>
+          )}
         </Card>
+
       </div>
     </div>
   );
