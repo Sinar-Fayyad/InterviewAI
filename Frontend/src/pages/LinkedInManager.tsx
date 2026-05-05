@@ -13,7 +13,7 @@ import {
   X,
   Edit2,
   Loader2,
-  CalendarDays,
+  Download,
   Image as ImageIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -212,6 +212,13 @@ export default function LinkedInManager() {
     }
   };
 
+  const handleDownloadImage = () => {
+    if (!uploadedImage) return;
+    const link = document.createElement("a");
+    link.href = uploadedImage;
+    link.download = `linkedin-post-image-${Date.now()}.png`;
+    link.click();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -229,15 +236,6 @@ export default function LinkedInManager() {
                   LinkedIn Content Manager
                 </span>
               </div>
-
-              <Button
-                variant="outline"
-                onClick={() => navigate("/linkedin-scheduled-posts")}
-                className="gap-2"
-              >
-                <CalendarDays className="w-4 h-4" />
-                Scheduled Posts
-              </Button>
             </div>
 
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -485,6 +483,17 @@ export default function LinkedInManager() {
                         <Upload className="w-4 h-4 mr-2" />
                         Upload Image
                       </Button>
+
+                      {uploadedImage && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleDownloadImage}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download Image
+                        </Button>
+                      )}
                     </div>
                   </div>
 
@@ -518,8 +527,6 @@ export default function LinkedInManager() {
                       <p className="whitespace-pre-wrap">{generatedPost}</p>
                     </div>
                   )}
-
-
                 </Card>
               )}
             </div>
