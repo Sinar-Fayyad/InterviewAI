@@ -13,6 +13,7 @@ interface InterviewModeProps {
   isSpeaking: boolean;
   isListening: boolean;
   interimTranscript?: string;
+  emotion?: string; 
 }
 
 export const InterviewMode = ({
@@ -25,6 +26,7 @@ export const InterviewMode = ({
   isSpeaking,
   isListening,
   interimTranscript = "",
+  emotion,
 }: InterviewModeProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showCaption, setShowCaption] = useState(true);
@@ -100,6 +102,11 @@ export const InterviewMode = ({
               <Badge variant="secondary" className="bg-black/60 text-white border-0">
                 {formatTime(elapsedTime)}
               </Badge>
+              {emotion && (
+                <Badge variant="secondary" className="bg-purple-600 text-white border-0">
+                  😊 {emotion}
+                </Badge>
+              )}
               {isSpeaking && (
                 <Badge variant="secondary" className="bg-blue-600 text-white border-0">
                   🔊 Speaking
