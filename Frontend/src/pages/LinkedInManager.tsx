@@ -9,8 +9,6 @@ import { Input } from "@/components/ui/input";
 import {
   Linkedin,
   Sparkles,
-  Calendar,
-  Send,
   Upload,
   X,
   Edit2,
@@ -60,15 +58,6 @@ const imageTextOptions = [
   { label: "Custom text", value: "custom_text" },
 ];
 
-const formatScheduledAtForBackend = (dateTime: string) => {
-  if (!dateTime) return "";
-  const [date, time] = dateTime.split("T");
-  if (!date || !time) return dateTime;
-  const cleanTime = time.slice(0, 8);
-  const normalizedTime = cleanTime.length === 5 ? `${cleanTime}:00` : cleanTime;
-  return `${date} ${normalizedTime}`;
-};
-
 export default function LinkedInManager() {
   const navigate = useNavigate();
   const { userId } = useAuth();
@@ -88,13 +77,9 @@ export default function LinkedInManager() {
 
   const [generatedPost, setGeneratedPost] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isPosting, setIsPosting] = useState(false);
-  const [isScheduling, setIsScheduling] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
-  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
-  const [scheduleDateTime, setScheduleDateTime] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -104,8 +89,6 @@ export default function LinkedInManager() {
     setDescription("");
     setUploadedImage(null);
     setUploadedImageFile(null);
-    setScheduleDateTime("");
-    setShowSchedulePicker(false);
     setIsEditing(false);
     setImageDescription("");
     setImageStyle("illustration");
@@ -536,75 +519,7 @@ export default function LinkedInManager() {
                     </div>
                   )}
 
-                  <div className="flex gap-3">
-                    <Button
-                      variant="accent"
-                      className="flex-1"
-                      onClick={handlePostNow}
-                      disabled={isPosting || isScheduling}
-                    >
-                      {isPosting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Posting...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4 mr-2" />
-                          Post Now
-                        </>
-                      )}
-                    </Button>
 
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={handleScheduleClick}
-                      disabled={isPosting || isScheduling}
-                    >
-                      {isScheduling ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Scheduling...
-                        </>
-                      ) : (
-                        <>
-                          <Calendar className="w-4 h-4 mr-2" />
-                          Schedule
-                        </>
-                      )}
-                    </Button>
-                  </div>
-
-                  {showSchedulePicker && (
-                    <div className="mt-4 p-4 border border-border rounded-lg bg-muted/20">
-                      <label className="text-sm font-medium mb-2 block">
-                        Select Date & Time
-                      </label>
-                      <div className="flex gap-3">
-                        <Input
-                          type="datetime-local"
-                          value={scheduleDateTime}
-                          onChange={(e) => setScheduleDateTime(e.target.value)}
-                          className="flex-1"
-                          min={new Date().toISOString().slice(0, 16)}
-                        />
-                        <Button
-                          onClick={handleScheduleConfirm}
-                          disabled={isScheduling}
-                        >
-                          Confirm
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          onClick={() => setShowSchedulePicker(false)}
-                          disabled={isScheduling}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  )}
                 </Card>
               )}
             </div>
