@@ -59,10 +59,32 @@ export const endInterview = async (interviewId: string, formData: FormData) => {
   return data;
 };
 
-export const getAnalysisFeedback = async (userId: string) => {
+export type FeedbackTrait = {
+  trait: string;
+  score: number;
+};
+
+export type AnalysisFeedbackResponse = {
+  code: number;
+  strengths: FeedbackTrait[];
+  weaknesses: FeedbackTrait[];
+  suggestions: string[];
+};
+
+export const getAnalysisFeedback = async (
+  userId: string
+): Promise<AnalysisFeedbackResponse> => {
   const { data } = await api.get(`/analysis_feedback/${userId}`);
-  return data; // { feedback_over_time: Array<{ date: string; score: number }>, emotion_distribution: Record<string, number> }
-}
+
+  const payload = data?.payload;
+
+  return {
+    code: payload?.code ?? 200,
+    strengths: Array.isArray(payload?.strengths) ? payload.strengths : [],
+    weaknesses: Array.isArray(payload?.weaknesses) ? payload.weaknesses : [],
+    suggestions: Array.isArray(payload?.suggestions) ? payload.suggestions : [],
+  };
+};
 
 // GET /get_interviews/{user_id}
 export const getInterviews = async (userId: string) => {
