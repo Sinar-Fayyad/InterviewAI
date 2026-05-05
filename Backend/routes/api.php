@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\PostController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\CareerController;
@@ -102,13 +101,6 @@ Route::group(["prefix" => "v0.1"], function () {
         Route::get('/get_applications/{user_id}', [ApplicationController::class, 'getApplications']);
         Route::get('/get_application/{id}', [ApplicationController::class, 'getApplication']);
         Route::post('/delete_application/{id}', [ApplicationController::class, 'deleteApplication']);
-
-        // Posts Routes
-        Route::post('/add_post/{user_id}', [PostController::class, 'addPost']);
-        Route::post('/update_post/{id}', [PostController::class, 'updatePost']);
-        Route::get('/get_posts/{user_id}', [PostController::class, 'getPosts']);
-        Route::get('/get_post/{id}', [PostController::class, 'getPost']);
-        Route::post('/delete_post/{id}', [PostController::class, 'deletePost']);
 
         // Email Routes
         Route::post('/reply_to_email', [EmailController::class, 'replyToEmail']); // AI call
