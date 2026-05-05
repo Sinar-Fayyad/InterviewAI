@@ -459,17 +459,17 @@ const InterviewsLibrary = () => {
                         Suggestions
                       </h4>
 
-                      <ul className="grid md:grid-cols-2 gap-2">
-                        {parsedFeedback.suggestions.map((item, index) => (
-                          <li
-                            key={index}
-                            className="flex items-start gap-2 text-sm text-muted-foreground"
-                          >
-                            <span className="text-yellow-500 mt-0.5">•</span>
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
+                    <ul className="space-y-2">
+  {parsedFeedback.suggestions.map((item, index) => (
+    <li
+      key={index}
+      className="flex items-start gap-2 text-sm text-muted-foreground"
+    >
+      <span className="text-yellow-500 mt-0.5 shrink-0">•</span>
+      <span>{item}</span>
+    </li>
+  ))}
+</ul>
                     </Card>
                   )}
               </>

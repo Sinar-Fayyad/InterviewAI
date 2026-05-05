@@ -217,13 +217,18 @@ export default function SaveInterview() {
                   <h4 className="font-semibold mb-3 flex items-center gap-2 text-yellow-500">
                     <Lightbulb className="w-4 h-4" />Suggestions
                   </h4>
-                  <ul className="grid md:grid-cols-2 gap-2">
-                    {feedback.suggestions.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <span className="text-yellow-500 mt-0.5">•</span>{item}
-                      </li>
-                    ))}
-                  </ul>
+                 
+    <ul className="space-y-2">
+      {feedback.suggestions.map((item, idx) => (
+        <li
+          key={idx}
+          className="flex items-start gap-2 text-sm text-muted-foreground"
+        >
+          <span className="text-yellow-500 mt-0.5 shrink-0">•</span>
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
                 </Card>
               )}
             </>
