@@ -20,11 +20,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  createLinkedinPost,
-  postToLinkedin,
-  schedulePost,
-} from "@/services/linkedinService";
+import { createLinkedinPost} from "@/services/linkedinService";
 
 const imageStyleOptions = [
   { label: "Realistic", value: "realistic" },
@@ -233,117 +229,6 @@ export default function LinkedInManager() {
     }
   };
 
-  const handlePostNow = async () => {
-    if (!generatedPost.trim()) {
-      toast({
-        title: "No content",
-        description: "Please generate a post first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!userId) {
-      toast({
-        title: "User not found",
-        description: "Please log in again before posting.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsPosting(true);
-
-    try {
-      await postToLinkedin(userId, {
-        text: generatedPost,
-       // media: uploadedImage || null,
-      });
-
-      toast({
-        title: "Posted Successfully!",
-        description: "Your post has been published to LinkedIn.",
-      });
-
-      resetForm();
-    } catch (err: any) {
-      toast({
-        title: "Posting Failed",
-        description: err?.response?.data?.message || "Failed to post. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsPosting(false);
-    }
-  };
-
-  const handleScheduleClick = () => {
-    if (!generatedPost.trim()) {
-      toast({
-        title: "No content",
-        description: "Please generate a post first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setShowSchedulePicker(true);
-  };
-
-  const handleScheduleConfirm = async () => {
-    if (!scheduleDateTime) {
-      toast({
-        title: "Select date and time",
-        description: "Please choose when to schedule your post.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!userId) return;
-
-    setIsScheduling(true);
-    setShowSchedulePicker(false);
-
-    try {
-      const scheduledAt = formatScheduledAtForBackend(scheduleDateTime);
-
-      await schedulePost(userId, {
-        title: topic || "LinkedIn Post",
-        body: generatedPost,
-        scheduled_at: scheduledAt,
-       // media: uploadedImage,
-      });
-
-      const dateObj = new Date(scheduleDateTime);
-      const scheduledDate = dateObj.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-      const scheduledTime = dateObj.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      toast({
-        title: "Scheduled Successfully!",
-        description: `Your post will be published on ${scheduledDate} at ${scheduledTime}.`,
-      });
-
-      resetForm();
-    } catch (err: any) {
-      toast({
-        title: "Scheduling Failed",
-        description:
-          err?.response?.data?.errors?.media?.[0] ||
-          err?.response?.data?.message ||
-          "Failed to schedule. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsScheduling(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">

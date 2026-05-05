@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/layout/Navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { BackButton } from "@/components/layout/BackButton";
