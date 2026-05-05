@@ -76,7 +76,7 @@ class InterviewService
             throw new \Exception("Interview video not found", 404);
         }
 
-        $interview->video_url = Storage::url($interview->video_path);
+       $interview->video_url = asset(Storage::url($interview->video_path));
         return $interview;
     }
 
