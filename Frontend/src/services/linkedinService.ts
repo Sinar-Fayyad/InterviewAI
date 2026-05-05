@@ -50,9 +50,3 @@ export const checkLinkedinExpiry = async (userId: string) => {
   const { data } = await api.get(`/check_linkedin_expiry/${userId}`);
   return data?.payload;
 };
-
-// POST /disconnect_linkedin/{user_id}
-export const disconnectLinkedin = async (userId: string) => {
-  const { data } = await api.post(`/disconnect_linkedin/${userId}`);
-  return data;
-};

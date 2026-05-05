@@ -27,12 +27,6 @@ export const researchCompany = async (
   };
 };
 
-// GET /analysis_feedback/{user_id}
-export const getAnalysisFeedback = async (userId: string) => {
-  const { data } = await api.get(`/analysis_feedback/${userId}`);
-  return data?.payload;
-};
-
 // POST /start_interview/{user_id}
 export const startInterview = async (
   userId: string,
