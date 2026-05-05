@@ -26,21 +26,6 @@ export const protectedApiCall = async <T>(
   }
 };
 
-// Scheduled Posts API
-export interface ScheduledPost {
-  id: string;
-  content: string;
-  scheduledDate: string;
-  scheduledTime: string;
-  status: "pending" | "published" | "failed";
-  platform: "linkedin";
-}
-
-export const fetchScheduledPosts = async (): Promise<ScheduledPost[]> => {
-  const { data } = await api.get("/scheduled-posts");
-  return data;
-};
-
 // Inbox Messages API
 export interface InboxMessage {
   id: number;
