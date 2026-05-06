@@ -42,12 +42,12 @@ class CareerService
 
     static function resumeGeneration($input,$user_id)
     {
-        return self::handleCareerWorkflow($input , 'http://127.0.0.1:5678/webhook/Resume_generation', $user_id);
+        return self::handleCareerWorkflow($input , 'http://127.0.0.1:5678/webhook-test/Resume_generation', $user_id);
     }
 
     static function resumeOptimization($input, $user_id)
     {
-        return self::handleCareerWorkflow($input, 'http://127.0.0.1:5678/webhook/Resume_optimization', $user_id);
+        return self::handleCareerWorkflow($input, 'http://127.0.0.1:5678/webhook-test/Resume_optimization', $user_id);
     }
 
     static function coverLetterGeneration($input, $user_id)

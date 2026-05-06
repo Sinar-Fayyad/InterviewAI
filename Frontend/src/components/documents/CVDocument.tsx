@@ -1,12 +1,5 @@
-import { Document, Page, Text, View, StyleSheet, Font, pdf } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
 
-// Register a standard font
-Font.register({
-  family: 'Helvetica',
-  src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxP.ttf',
-});
-
-// ATS-friendly styles
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
@@ -20,45 +13,62 @@ const styles = StyleSheet.create({
     paddingBottom: 15,
   },
   name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#1a1a1a',
+    fontSize: 22,
+    fontFamily: 'Helvetica-Bold',
+    marginBottom: 6,
+    color: '#111111',
+  },
+  contactRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
   },
   contactInfo: {
     fontSize: 10,
-    color: '#555',
-    marginBottom: 2,
+    color: '#555555',
   },
   section: {
-    marginBottom: 15,
+    marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#1a1a1a',
+    fontSize: 11,
+    fontFamily: 'Helvetica-Bold',
+    color: '#111111',
     textTransform: 'uppercase',
-    borderBottom: '1 solid #ddd',
+    letterSpacing: 0.8,
+    borderBottom: '1 solid #cccccc',
     paddingBottom: 3,
+    marginBottom: 8,
   },
   itemContainer: {
-    marginBottom: 10,
+    marginBottom: 8,
   },
   itemTitle: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 11,
+    fontFamily: 'Helvetica-Bold',
+    color: '#111111',
   },
   itemSubtitle: {
     fontSize: 10,
-    color: '#555',
+    color: '#555555',
     marginBottom: 3,
   },
-  itemDescription: {
+  bulletRow: {
+    flexDirection: 'row',
+    marginTop: 2,
+    paddingLeft: 10,
+  },
+  bullet: {
     fontSize: 10,
-    color: '#444',
+    color: '#444444',
+    marginRight: 4,
     lineHeight: 1.4,
+  },
+  bulletText: {
+    fontSize: 10,
+    color: '#444444',
+    lineHeight: 1.4,
+    flex: 1,
   },
   skillsContainer: {
     flexDirection: 'row',
@@ -67,7 +77,7 @@ const styles = StyleSheet.create({
   },
   skill: {
     fontSize: 10,
-    color: '#333',
+    color: '#333333',
     backgroundColor: '#f0f0f0',
     padding: '3 8',
     borderRadius: 3,
@@ -76,10 +86,25 @@ const styles = StyleSheet.create({
   },
   summary: {
     fontSize: 10,
-    color: '#444',
+    color: '#444444',
     lineHeight: 1.5,
   },
 });
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const toBullets = (description: string[] | string): string[] => {
+  if (Array.isArray(description)) {
+    return description.map((d) => d.trim()).filter(Boolean);
+  }
+  return description
+    .split(".")
+    .map((d) => d.trim())
+    .filter(Boolean);
+};
+
+const ensurePeriod = (text: string) =>
+  text.endsWith(".") ? text : `${text}.`;
+// ─────────────────────────────────────────────────────────────────────────────
 
 export interface CVData {
   fullName: string;
@@ -87,7 +112,6 @@ export interface CVData {
   phone: string;
   location: string;
   summary: string;
-
   experience: {
     position: string;
     company: string;
@@ -95,7 +119,6 @@ export interface CVData {
     endDate: string;
     description: string[] | string;
   }[];
-
   education: {
     school: string;
     degree: string;
@@ -103,9 +126,7 @@ export interface CVData {
     startDate: string;
     endDate: string;
   }[];
-
   skills: string[];
-
   certifications: {
     name: string;
     issuer: string;
@@ -121,24 +142,27 @@ interface CVDocumentProps {
 export const CVDocument = ({ data }: CVDocumentProps) => (
   <Document>
     <Page size="A4" style={styles.page}>
-      {/* Header */}
+
+      {/* ── Header ── */}
       <View style={styles.header}>
         <Text style={styles.name}>{data.fullName || 'Your Name'}</Text>
-        {data.email && <Text style={styles.contactInfo}>{data.email}</Text>}
-        {data.phone && <Text style={styles.contactInfo}>{data.phone}</Text>}
-        {data.location && <Text style={styles.contactInfo}>{data.location}</Text>}
+        <View style={styles.contactRow}>
+          {data.email ? <Text style={styles.contactInfo}>{data.email}</Text> : null}
+          {data.phone ? <Text style={styles.contactInfo}>• {data.phone}</Text> : null}
+          {data.location ? <Text style={styles.contactInfo}>• {data.location}</Text> : null}
+        </View>
       </View>
 
-      {/* Summary */}
-      {data.summary && (
+      {/* ── Summary ── */}
+      {data.summary ? (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Professional Summary</Text>
           <Text style={styles.summary}>{data.summary}</Text>
         </View>
-      )}
+      ) : null}
 
-      {/* Experience */}
-      {data.experience && data.experience.length > 0 && (
+      {/* ── Experience ── */}
+      {data.experience && data.experience.length > 0 ? (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Work Experience</Text>
           {data.experience.map((exp, index) => (
@@ -147,33 +171,42 @@ export const CVDocument = ({ data }: CVDocumentProps) => (
               <Text style={styles.itemSubtitle}>
                 {exp.company} | {exp.startDate} - {exp.endDate || 'Present'}
               </Text>
-              {exp.description && (
-                <Text style={styles.itemDescription}>{exp.description}</Text>
-              )}
+              {exp.description
+                ? toBullets(exp.description).map((item, i) => (
+                    <View key={i} style={styles.bulletRow}>
+                      <Text style={styles.bullet}>•</Text>
+                      <Text style={styles.bulletText}>{ensurePeriod(item)}</Text>
+                    </View>
+                  ))
+                : null}
             </View>
           ))}
         </View>
-      )}
+      ) : null}
 
-      {/* Education */}
-      {data.education && data.education.length > 0 && (
+      {/* ── Education ── */}
+      {data.education && data.education.length > 0 ? (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Education</Text>
           {data.education.map((edu, index) => (
             <View key={index} style={styles.itemContainer}>
-              <Text style={styles.itemTitle}>
-                {edu.degree} {edu.field && `in ${edu.field}`}
-              </Text>
+              {(edu.degree || edu.field) ? (
+                <Text style={styles.itemTitle}>
+                  {[edu.degree, edu.field].filter(Boolean).join(' in ')}
+                </Text>
+              ) : null}
               <Text style={styles.itemSubtitle}>
-                {edu.school} | {edu.startDate} - {edu.endDate || 'Present'}
+                {[edu.school, `${edu.startDate} - ${edu.endDate || 'Present'}`]
+                  .filter(Boolean)
+                  .join(' | ')}
               </Text>
             </View>
           ))}
         </View>
-      )}
+      ) : null}
 
-      {/* Skills */}
-      {data.skills && data.skills.length > 0 && (
+      {/* ── Skills ── */}
+      {data.skills && data.skills.length > 0 ? (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Skills</Text>
           <View style={styles.skillsContainer}>
@@ -182,22 +215,43 @@ export const CVDocument = ({ data }: CVDocumentProps) => (
             ))}
           </View>
         </View>
-      )}
+      ) : null}
 
-      {/* Certifications */}
-      {data.certifications && data.certifications.length > 0 && (
+      {/* ── Certifications ── */}
+      {data.certifications && data.certifications.length > 0 ? (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Certifications</Text>
           {data.certifications.map((cert, index) => (
             <View key={index} style={styles.itemContainer}>
-              <Text style={styles.itemTitle}>{cert.name}</Text>
-              <Text style={styles.itemSubtitle}>
-                {cert.issuer} {cert.date && `| ${cert.date}`}
-              </Text>
+              {(cert.name || cert.issuer || cert.date) ? (
+                <>
+                  {cert.name ? (
+                    <Text style={styles.itemTitle}>{cert.name}</Text>
+                  ) : null}
+                  {(cert.issuer || cert.date) ? (
+                    <Text style={styles.itemSubtitle}>
+                      {[cert.issuer, cert.date].filter(Boolean).join(' | ')}
+                    </Text>
+                  ) : null}
+                </>
+              ) : null}
+              {cert.description
+                ? cert.description
+                    .split(".")
+                    .map((d) => d.trim())
+                    .filter(Boolean)
+                    .map((item, i) => (
+                      <View key={i} style={styles.bulletRow}>
+                        <Text style={styles.bullet}>•</Text>
+                        <Text style={styles.bulletText}>{item}.</Text>
+                      </View>
+                    ))
+                : null}
             </View>
           ))}
         </View>
-      )}
+      ) : null}
+
     </Page>
   </Document>
 );
@@ -207,7 +261,10 @@ export const generateCVPdf = async (data: CVData): Promise<Blob> => {
   return blob;
 };
 
-export const downloadCVPdf = async (data: CVData, filename: string = 'resume.pdf') => {
+export const downloadCVPdf = async (
+  data: CVData,
+  filename: string = 'resume.pdf'
+) => {
   const blob = await generateCVPdf(data);
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
