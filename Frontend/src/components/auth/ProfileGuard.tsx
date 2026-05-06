@@ -1,10 +1,9 @@
 import { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 export const ProfileGuard = ({ children }: { children: ReactNode }) => {
   const { token, userId, loading } = useAuth();
-  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -15,8 +14,7 @@ export const ProfileGuard = ({ children }: { children: ReactNode }) => {
   }
 
   if (!token || !userId) {
-    navigate("/auth");
-    return null;
+    return <Navigate to="/auth" replace />;
   }
 
   return <>{children}</>;

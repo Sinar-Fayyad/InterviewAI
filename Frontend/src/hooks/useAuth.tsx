@@ -43,8 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     return { token: null, userId: null, user: null, loading: false };
   });
-
-  console.log("AuthProvider rendered — userId:", authState.userId, "loading:", authState.loading);
+  
   const navigate = useNavigate();
 
   const signIn = async (email: string, password: string) => {
