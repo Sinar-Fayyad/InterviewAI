@@ -198,7 +198,11 @@ const EmailGenerator = () => {
         <BackButton className="mb-6" />
         <div className="max-w-3xl mx-auto">
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold mb-2">Email Generator</h1>
+            <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-card/50 backdrop-blur-sm mb-4 mx-auto">
+              <Mail className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium">Email Generator</span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-2">Email Generator</h1>
             <p className="text-muted-foreground">Generate polished application emails using your profile</p>
           </div>
 

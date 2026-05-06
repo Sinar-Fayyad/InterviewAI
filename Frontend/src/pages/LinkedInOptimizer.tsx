@@ -89,8 +89,12 @@ const LinkedInOptimizer = () => {
       <Navigation />
       <main className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
         <BackButton className="mb-6" />
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-card/50 backdrop-blur-sm mb-4 mx-auto">
+            <Linkedin className="w-4 h-4 text-[#0A66C2]" />
+            <span className="text-sm font-medium">LinkedIn Optimizer</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-2 flex items-center justify-center gap-3">
             <Linkedin className="w-8 h-8 text-[#0A66C2]" /> LinkedIn Optimizer
           </h1>
           <p className="text-muted-foreground">Generate optimized LinkedIn profile sections or copy your existing profile data</p>

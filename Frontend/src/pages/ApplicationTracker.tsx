@@ -181,6 +181,7 @@ const resetForm = () => {
         <main className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <BackButton className="mb-6" />
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+              <span className="text-sm font-medium">Application Tracker</span>
             <div>
               <h1 className="text-3xl font-bold mb-2">Application Tracker</h1>
               <p className="text-muted-foreground">Manage and track your job applications</p>
