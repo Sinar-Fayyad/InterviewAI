@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { extractTextFromPdf } from "@/utils/pdfTextExtract";
 import { downloadCoverLetterPdf } from "@/components/documents/CoverLetterDocument";
+import { CoverLetterPreview } from "@/components/documents/CoverLetterPreview"; // ← added
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -48,53 +49,6 @@ const sanitizeCoverLetter = (text: string): string => {
     .filter((line) => line.trim().toLowerCase() !== "null")
     .join("\n");
 };
-
-// ─── Cover Letter Preview Renderer ───────────────────────────────────────────
-// Parses the first line into name + contact info and renders them
-// with proper styling. Everything after the first line is plain text.
-const CoverLetterPreview = ({ content }: { content: string }) => {
-  const lines = content.split("\n");
-  const firstLine = lines[0] || "";
-  const rest = lines.slice(1).join("\n");
-
-  // Split first line by pipe — first token is the name, rest is contact info
-  const parts = firstLine
-    .split("|")
-    .map((p) => p.trim())
-    .filter(Boolean);
-
-  const name = parts[0] || "";
-  const contactInfo = parts.slice(1).join(" | ");
-
-  return (
-    <div className="bg-muted/50 rounded-lg p-6 min-h-[400px]">
-      {/* ── Name ── */}
-      {name && (
-        <p className="text-center text-xl font-bold text-foreground mb-1">
-          {name}
-        </p>
-      )}
-
-      {/* ── Contact info ── */}
-      {contactInfo && (
-        <p className="text-center text-xs text-muted-foreground mb-4">
-          {contactInfo}
-        </p>
-      )}
-
-      {/* ── Divider ── */}
-      {(name || contactInfo) && (
-        <hr className="border-border mb-4" />
-      )}
-
-      {/* ── Rest of the letter ── */}
-      <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-        {rest}
-      </pre>
-    </div>
-  );
-};
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function CoverLetter() {
   const [mode, setMode] = useState<"choose" | "generate" | "optimize">("choose");
@@ -559,7 +513,7 @@ export default function CoverLetter() {
                       className="min-h-[400px] resize-none"
                     />
                   ) : (
-                    <CoverLetterPreview content={generatedCoverLetter} />
+                    <CoverLetterPreview data={{ content: generatedCoverLetter }} /> // ← swapped
                   )}
 
                   <div className="flex flex-wrap gap-3 mt-4">
@@ -777,7 +731,7 @@ export default function CoverLetter() {
                   className="min-h-[400px] resize-none"
                 />
               ) : (
-                <CoverLetterPreview content={generatedCoverLetter} />
+                <CoverLetterPreview data={{ content: generatedCoverLetter }} /> // ← swapped
               )}
 
               <div className="flex flex-wrap gap-3 mt-4">
