@@ -37,7 +37,7 @@ const ApplicationTracker = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingApp, setEditingApp] = useState<JobApplication | null>(null);
   const [filterStatus, setFilterStatus] = useState<ApplicationStatus | "all">("all");
-const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     job_title: "",
     company_name: "",
     job_description: "",
@@ -68,7 +68,7 @@ const [formData, setFormData] = useState({
     }
   };
 
-const getAppliedAt = () => {
+  const getAppliedAt = () => {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -85,7 +85,7 @@ const getAppliedAt = () => {
       return;
     }
 
-const appliedAt = formData.applied_at || getAppliedAt();
+    const appliedAt = formData.applied_at || getAppliedAt();
     const backendData = {
       job_title: formData.job_title,
       company_name: formData.company_name,
@@ -119,7 +119,7 @@ const appliedAt = formData.applied_at || getAppliedAt();
     }
   };
 
-const handleEdit = (app: JobApplication) => {
+  const handleEdit = (app: JobApplication) => {
     setEditingApp(app);
     setFormData({
       job_title: app.job_title,
@@ -147,7 +147,7 @@ const handleEdit = (app: JobApplication) => {
     }
   };
 
-const resetForm = () => {
+  const resetForm = () => {
     setFormData({
       job_title: "",
       company_name: "",
@@ -180,149 +180,161 @@ const resetForm = () => {
         <Navigation />
         <main className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <BackButton className="mb-6" />
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+
+          {/* Header section */}
+          <div className="mb-8">
+            {/* Badge */}
+            <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-card/50 backdrop-blur-sm mb-4">
+              <Briefcase className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium">Application Tracker</span>
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Application Tracker</h1>
-              <p className="text-muted-foreground">Manage and track your job applications</p>
             </div>
-            <Dialog open={dialogOpen} onOpenChange={(open) => {
-              setDialogOpen(open);
-              if (!open) {
-                setEditingApp(null);
-                resetForm();
-              }
-            }}>
-              <DialogTrigger asChild>
-                <Button variant="hero">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Application
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>{editingApp ? "Edit Application" : "Add New Application"}</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 gap-4">
+
+            {/* Title row */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">Application Tracker</h1>
+                <p className="text-muted-foreground">Manage and track your job applications</p>
+              </div>
+
+              {/* Add Application button — level with title/description, not with badge */}
+              <Dialog open={dialogOpen} onOpenChange={(open) => {
+                setDialogOpen(open);
+                if (!open) {
+                  setEditingApp(null);
+                  resetForm();
+                }
+              }}>
+                <DialogTrigger asChild>
+                  <Button variant="hero">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Application
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{editingApp ? "Edit Application" : "Add New Application"}</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Job Title *</Label>
+                        <Input
+                          value={formData.job_title}
+                          onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Company *</Label>
+                        <Input
+                          value={formData.company_name}
+                          onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Location</Label>
+                        <Input
+                          value={formData.location}
+                          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                          placeholder="Remote, NYC, etc."
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Salary Range</Label>
+                        <Input
+                          value={formData.salary_range}
+                          onChange={(e) => setFormData({ ...formData, salary_range: e.target.value })}
+                          placeholder="$100k - $150k"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Job URL</Label>
+                        <Input
+                          type="url"
+                          value={formData.job_url}
+                          onChange={(e) => setFormData({ ...formData, job_url: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Applied Date</Label>
+                        <Input
+                          type="date"
+                          value={formData.applied_at}
+                          onChange={(e) => setFormData({ ...formData, applied_at: e.target.value })}
+                          placeholder="YYYY-MM-DD"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Status</Label>
+                        <Select
+                          value={formData.status}
+                          onValueChange={(v) => setFormData({ ...formData, status: v as ApplicationStatus })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="saved">Saved</SelectItem>
+                            <SelectItem value="applied">Applied</SelectItem>
+                            <SelectItem value="interviewing">Interviewing</SelectItem>
+                            <SelectItem value="offered">Offer</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                     <div className="space-y-2">
-                      <Label>Job Title *</Label>
-                      <Input
-                        value={formData.job_title}
-                        onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
-                        required
+                      <Label>Job Description</Label>
+                      <Textarea
+                        value={formData.job_description}
+                        onChange={(e) => setFormData({ ...formData, job_description: e.target.value })}
+                        rows={3}
                       />
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Contact Name</Label>
+                        <Input
+                          value={formData.contact_name}
+                          onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Contact Email</Label>
+                        <Input
+                          type="email"
+                          value={formData.contact_email}
+                          onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
+                        />
+                      </div>
+                    </div>
                     <div className="space-y-2">
-                      <Label>Company *</Label>
-                      <Input
-                        value={formData.company_name}
-                        onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                        required
+                      <Label>Notes</Label>
+                      <Textarea
+                        value={formData.notes}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        rows={2}
                       />
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Location</Label>
-                      <Input
-                        value={formData.location}
-                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                        placeholder="Remote, NYC, etc."
-                      />
+                    <div className="flex justify-end gap-3 pt-4">
+                      <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit">
+                        {editingApp ? "Update" : "Add"} Application
+                      </Button>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Salary Range</Label>
-                      <Input
-                        value={formData.salary_range}
-                        onChange={(e) => setFormData({ ...formData, salary_range: e.target.value })}
-                        placeholder="$100k - $150k"
-                      />
-                    </div>
-                  </div>
-<div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Job URL</Label>
-                      <Input
-                        type="url"
-                        value={formData.job_url}
-                        onChange={(e) => setFormData({ ...formData, job_url: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-<Label>Applied Date</Label>
-                      <Input
-                        type="date"
-                        value={formData.applied_at}
-                        onChange={(e) => setFormData({ ...formData, applied_at: e.target.value })}
-                        placeholder="YYYY-MM-DD"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Status</Label>
-                      <Select
-                        value={formData.status}
-                        onValueChange={(v) => setFormData({ ...formData, status: v as ApplicationStatus })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="saved">Saved</SelectItem>
-                          <SelectItem value="applied">Applied</SelectItem>
-                          <SelectItem value="interviewing">Interviewing</SelectItem>
-                          <SelectItem value="offered">Offer</SelectItem>
-                          <SelectItem value="rejected">Rejected</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Job Description</Label>
-                    <Textarea
-                      value={formData.job_description}
-                      onChange={(e) => setFormData({ ...formData, job_description: e.target.value })}
-                      rows={3}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Contact Name</Label>
-                      <Input
-                        value={formData.contact_name}
-                        onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Contact Email</Label>
-                      <Input
-                        type="email"
-                        value={formData.contact_email}
-                        onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Notes</Label>
-                    <Textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      rows={2}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit">
-                      {editingApp ? "Update" : "Add"} Application
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
