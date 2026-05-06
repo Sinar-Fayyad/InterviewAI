@@ -59,7 +59,7 @@ const EmailGenerator = () => {
     if (emailOutput) {
       setSendFormData({
         to: "",
-        subject: emailOutput.subject,
+        subject: emailOutput.subject.replace(/\r?\n/g, ' '),
         body: emailOutput.body
       });
     }
