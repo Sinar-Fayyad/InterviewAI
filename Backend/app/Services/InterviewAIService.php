@@ -215,7 +215,6 @@ class InterviewAIService
             }
         });
 
-        // Push the last question
         if ($currentQ !== null) {
             $conversation[] = ['question' => $currentQ, 'answer' => $currentA];
         }

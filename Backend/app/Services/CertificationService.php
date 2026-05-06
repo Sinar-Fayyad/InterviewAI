@@ -48,10 +48,6 @@ class CertificationService
                      ->toArray();
     }
 
-    // static function getCertification($id){
-    //     return Certification::find($id);
-    // }
-
     static function deleteCertification($id)
     {
         $certification = Certification::find($id);

@@ -39,16 +39,4 @@ class CertificationController extends Controller
         }
     }
 
-    // function getCertification($id){
-    //     $certification = CertificationService::getCertification($id);
-    //     return $certification?  $this->responseJSON($certification):
-    //                     $this ->responseJSON (null , "Not found", 404);
-    // }
-
-    // function getCertifications($user_id){
-    //     $certifications = CertificationService::getCertifications($user_id);
-    //     return $certifications?  $this->responseJSON($certifications):
-    //                             $this ->responseJSON (null , "Not found", 404);
-    // }   
-
 }
