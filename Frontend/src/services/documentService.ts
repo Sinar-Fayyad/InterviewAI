@@ -113,15 +113,28 @@ const extractCVPayload = (data: any): any => {
   return data ?? {};
 };
 
+const normalizeUrl = (value?: string): string | undefined => {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+};
+
 // POST /resume_generation/{user_id}
 export const generateResume = async (
   userId: string,
   params: { linkedin_account?: string; github_account?: string }
 ) => {
-  console.log("Calling endpoint:", `/resume_generation/${userId}`);
-  console.log("Params sent to backend:", JSON.stringify(params, null, 2));
+  const body = {
+    linkedin_account: normalizeUrl(params.linkedin_account),
+    github_account: normalizeUrl(params.github_account),
+  };
 
-  const { data } = await api.post(`/resume_generation/${userId}`, params);
+  console.log("Calling endpoint:", `/resume_generation/${userId}`);
+  console.log("Params sent to backend:", JSON.stringify(body, null, 2));
+
+  const { data } = await api.post(`/resume_generation/${userId}`, body);
 
   console.log("RAW response from frontend call:", JSON.stringify(data, null, 2));
 
@@ -141,11 +154,13 @@ export const optimizeResume = async (
     github_account?: string;
   }
 ) => {
-  const { data } = await api.post(`/resume_optimization/${userId}`, {
+  const body = {
     old_resume: params.old_resume,
-    linkedin_account: params.linkedin_account || "",
-    github_account: params.github_account || "",
-  });
+    linkedin_account: normalizeUrl(params.linkedin_account),
+    github_account: normalizeUrl(params.github_account),
+  };
+
+  const { data } = await api.post(`/resume_optimization/${userId}`, body);
 
   const payload = extractCVPayload(data);
   return mapPayloadToCVData(payload);

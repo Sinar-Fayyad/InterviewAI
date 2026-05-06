@@ -56,8 +56,8 @@ export default function CVGenerator() {
 
   try {
     const result = await generateResume(userId, {
-     linkedin_account: linkedinUrl || "",
-  github_account: githubUrl || "",
+      linkedin_account: linkedinUrl || null,
+      github_account: githubUrl || null,
     });
 
     console.log("Mapped CV result:", result);
@@ -95,8 +95,8 @@ export default function CVGenerator() {
   try {
     const result = await optimizeResume(userId, {
       old_resume: cvText.trim(),
-      linkedin_account: linkedinUrl || undefined,
-      github_account: githubUrl || undefined,
+      linkedin_account: linkedinUrl || null,
+      github_account: githubUrl || null,
     });
 
     toast({
