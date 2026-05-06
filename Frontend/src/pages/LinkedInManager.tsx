@@ -256,7 +256,7 @@ export default function LinkedInManager() {
                     <Input
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
-                      placeholder="Example: AI-powered interview preparation"
+                      placeholder="e.g: AI-powered interview preparation"
                     />
                   </div>
 
@@ -267,7 +267,7 @@ export default function LinkedInManager() {
                     <Textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Example: Write about how AI helps students practice interview questions and build confidence."
+                      placeholder="e.g: Write about how AI helps students practice interview questions and build confidence."
                       className="min-h-[110px]"
                     />
                   </div>
@@ -294,7 +294,7 @@ export default function LinkedInManager() {
                     <Textarea
                       value={imageDescription}
                       onChange={(e) => setImageDescription(e.target.value)}
-                      placeholder="Example: A young professional practicing an online interview with an AI assistant on a laptop."
+                      placeholder="e.g: A young professional practicing an online interview with an AI assistant on a laptop."
                       className="min-h-[100px]"
                     />
                   </div>
@@ -394,7 +394,7 @@ export default function LinkedInManager() {
                       <Input
                         value={customImageColors}
                         onChange={(e) => setCustomImageColors(e.target.value)}
-                        placeholder="Example: dark green and gold"
+                        placeholder="e.g: dark green and gold"
                       />
                     </div>
                   )}
@@ -407,7 +407,7 @@ export default function LinkedInManager() {
                       <Input
                         value={imageText}
                         onChange={(e) => setImageText(e.target.value)}
-                        placeholder="Example: Prepare smarter with AI"
+                        placeholder="e.g: Prepare smarter with AI"
                       />
                     </div>
                   )}
