@@ -53,6 +53,12 @@ const styles = StyleSheet.create({
     color: '#555555',
     marginBottom: 3,
   },
+  itemTitlePlain: {
+    fontSize: 11,
+    fontFamily: 'Helvetica-Bold',
+    color: '#111111',
+    marginBottom: 3,
+  },
   bulletRow: {
     flexDirection: 'row',
     marginTop: 2,
@@ -97,7 +103,7 @@ const toBullets = (description: string[] | string): string[] => {
     return description.map((d) => d.trim()).filter(Boolean);
   }
   return description
-    .split(".")
+    .split("\n")
     .map((d) => d.trim())
     .filter(Boolean);
 };
@@ -195,7 +201,7 @@ export const CVDocument = ({ data }: CVDocumentProps) => (
                   {[edu.degree, edu.field].filter(Boolean).join(' in ')}
                 </Text>
               ) : null}
-              <Text style={styles.itemSubtitle}>
+              <Text style={(edu.degree || edu.field) ? styles.itemSubtitle : styles.itemTitlePlain}>
                 {[edu.school, `${edu.startDate} - ${edu.endDate || 'Present'}`]
                   .filter(Boolean)
                   .join(' | ')}
@@ -223,17 +229,16 @@ export const CVDocument = ({ data }: CVDocumentProps) => (
           <Text style={styles.sectionTitle}>Certifications</Text>
           {data.certifications.map((cert, index) => (
             <View key={index} style={styles.itemContainer}>
-              {(cert.name || cert.issuer || cert.date) ? (
-                <>
-                  {cert.name ? (
-                    <Text style={styles.itemTitle}>{cert.name}</Text>
-                  ) : null}
-                  {(cert.issuer || cert.date) ? (
-                    <Text style={styles.itemSubtitle}>
-                      {[cert.issuer, cert.date].filter(Boolean).join(' | ')}
-                    </Text>
-                  ) : null}
-                </>
+              {(cert.name || cert.issuer) ? (
+                <Text style={styles.itemTitle}>{cert.name || cert.issuer}</Text>
+              ) : null}
+              {cert.name && (cert.issuer || cert.date) ? (
+                <Text style={styles.itemSubtitle}>
+                  {[cert.issuer, cert.date].filter(Boolean).join(' | ')}
+                </Text>
+              ) : null}
+              {!cert.name && !cert.issuer && cert.date ? (
+                <Text style={styles.itemSubtitle}>{cert.date}</Text>
               ) : null}
               {cert.description
                 ? cert.description

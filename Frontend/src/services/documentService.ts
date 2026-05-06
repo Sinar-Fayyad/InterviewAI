@@ -10,14 +10,14 @@ const normalizeString = (value: any): string => {
 };
 
 const normalizeText = (value: any): string => {
-  if (Array.isArray(value)) 
+  if (Array.isArray(value))
     return value.map(normalizeString).filter(Boolean).join("\n");
   return normalizeString(value);
 };
 
 const extractSkillValues = (value: any): string[] => {
   if (!value) return [];
-  
+
   // If it's an object with skill categories (from N8N)
   if (typeof value === "object" && !Array.isArray(value)) {
     const categoryFields = [
@@ -33,21 +33,17 @@ const extractSkillValues = (value: any): string[] => {
     for (const field of categoryFields) {
       const fieldValue = value[field];
       if (Array.isArray(fieldValue)) {
-        result.push(
-          ...fieldValue
-            .map(normalizeString)
-            .filter(Boolean)
-        );
+        result.push(...fieldValue.map(normalizeString).filter(Boolean));
       }
     }
     return result.length > 0 ? result : [];
   }
-  
+
   // If it's already an array of skill strings
   if (Array.isArray(value)) {
     return value.map(normalizeString).filter(Boolean);
   }
-  
+
   return [];
 };
 
@@ -80,36 +76,53 @@ const mapPayloadToCVData = (payload: any): CVData => {
         : exp.description || "",
     })),
 
-  education: (payload.education || []).map((edu: any) => ({
-  school: edu.institution || edu.school || edu.university || "",
-  degree: edu.degree || edu.degree_name || "",
-  field: edu.field_of_study || edu.field || edu.major || "",
-  startDate: edu.start_date || "",
-  endDate: edu.end_date || "",
-})),
+    education: (payload.education || []).map((edu: any) => ({
+      school: edu.institution || edu.school || edu.university || "",
+      degree: edu.degree || edu.degree_name || "",
+      field: edu.field_of_study || edu.field || edu.major || "",
+      startDate: edu.start_date || "",
+      endDate: edu.end_date || "",
+    })),
 
-certifications: (payload.certifications || []).map((cert: any) => ({
-  name: cert.certification_name || cert.name || cert.title || cert.certificate_name || "",
-  issuer: cert.organization_name || cert.issuer || cert.organization || cert.provider || "",
-  date: cert.date_obtained || cert.date || cert.issue_date || cert.issued_date || "",
-  description: cert.description || "",
-})),
+    certifications: (payload.certifications || []).map((cert: any) => ({
+      name:
+        cert.certification_name ||
+        cert.name ||
+        cert.title ||
+        cert.certificate_name ||
+        "",
+      issuer:
+        cert.organization_name ||
+        cert.issuer ||
+        cert.organization ||
+        cert.provider ||
+        "",
+      date:
+        cert.date_obtained ||
+        cert.date ||
+        cert.issue_date ||
+        cert.issued_date ||
+        "",
+      description: cert.description || "",
+    })),
 
     skills: [
-      ...(payload.skills?.programming_languages || []),
-      ...(payload.skills?.frameworks || []),
-      ...(payload.skills?.tools || []),
-      ...(payload.skills?.soft_skills || []),
-    ],
+      ...(payload.skills?.["Programming Languages"] ||
+        payload.skills?.programming_languages ||
+        []),
+      ...(payload.skills?.["Frameworks"] || payload.skills?.frameworks || []),
+      ...(payload.skills?.["Tools"] || payload.skills?.tools || []),
+      ...(payload.skills?.["Soft Skills"] || payload.skills?.soft_skills || []),
+      ...(payload.skills?.["Languages"] || payload.skills?.languages || []),
+    ]
+      .map(normalizeString)
+      .filter(Boolean),
   };
 };
 
 const extractCVPayload = (data: any): any => {
-  // Standard API response: { payload: {...} }
-  if (data?.payload) {
-    return data.payload;
-  }
-  // Fallback: direct data if not wrapped
+  if (data?.payload?.cv_data) return data.payload.cv_data;
+  if (data?.payload) return data.payload;
   return data ?? {};
 };
 
@@ -124,11 +137,11 @@ const normalizeUrl = (value?: string): string | undefined => {
 // POST /resume_generation/{user_id}
 export const generateResume = async (
   userId: string,
-  params: { linkedin_account?: string; github_account?: string }
+  params: { linkedin_account?: string | null; github_account?: string | null },
 ) => {
   const body = {
-    linkedin_account: normalizeUrl(params.linkedin_account),
-    github_account: normalizeUrl(params.github_account),
+    linkedin_account: normalizeUrl(params.linkedin_account ?? undefined),
+    github_account: normalizeUrl(params.github_account ?? undefined),
   };
 
   console.log("Calling endpoint:", `/resume_generation/${userId}`);
@@ -136,9 +149,13 @@ export const generateResume = async (
 
   const { data } = await api.post(`/resume_generation/${userId}`, body);
 
-  console.log("RAW response from frontend call:", JSON.stringify(data, null, 2));
+  console.log(
+    "RAW response from frontend call:",
+    JSON.stringify(data, null, 2),
+  );
 
-  const mapped = mapPayloadToCVData(data.payload);
+  const payload = extractCVPayload(data); // ← same as optimizeResume
+  const mapped = mapPayloadToCVData(payload);
 
   console.log("Mapped response:", JSON.stringify(mapped, null, 2));
 
@@ -152,7 +169,7 @@ export const optimizeResume = async (
     old_resume: string;
     linkedin_account?: string;
     github_account?: string;
-  }
+  },
 ) => {
   const body = {
     old_resume: params.old_resume,
@@ -166,7 +183,6 @@ export const optimizeResume = async (
   return mapPayloadToCVData(payload);
 };
 
-
 // POST /cover_letter_generation/{user_id}
 export const generateCoverLetter = async (
   userId: string,
@@ -177,7 +193,7 @@ export const generateCoverLetter = async (
     platform?: string;
     job_description?: string;
     contact_name?: string;
-  }
+  },
 ) => {
   const { data } = await api.post(`/cover_letter_generation/${userId}`, params);
   return data?.payload;
@@ -190,8 +206,11 @@ export const optimizeCoverLetter = async (
     old_cover_letter: string;
     company_name: string;
     job_title: string;
-  }
+  },
 ) => {
-  const { data } = await api.post(`/cover_letter_optimization/${userId}`, params);
+  const { data } = await api.post(
+    `/cover_letter_optimization/${userId}`,
+    params,
+  );
   return data?.payload;
 };
