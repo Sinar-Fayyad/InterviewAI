@@ -226,11 +226,7 @@ export default function LinkedInManager() {
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex gap-2">
                     <span className="text-accent">•</span>
-                    <span>Choose a professional mood for career content.</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-accent">•</span>
-                    <span>Use 3-5 relevant hashtags.</span>
+                    <span>After generation, download the image and copy the post text to publish manually on LinkedIn.</span>
                   </li>
                 </ul>
               </div>
