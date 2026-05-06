@@ -31,6 +31,71 @@ import {
   type CoverLetterType,
 } from "@/services/documentService";
 
+// ─── Sanitizer ────────────────────────────────────────────────────────────────
+const sanitizeCoverLetter = (text: string): string => {
+  return text
+    .split("\n")
+    .map((line) => {
+      if (line.includes("|")) {
+        const parts = line
+          .split("|")
+          .map((p) => p.trim())
+          .filter((p) => p && p.toLowerCase() !== "null");
+        return parts.join(" | ");
+      }
+      return line;
+    })
+    .filter((line) => line.trim().toLowerCase() !== "null")
+    .join("\n");
+};
+
+// ─── Cover Letter Preview Renderer ───────────────────────────────────────────
+// Parses the first line into name + contact info and renders them
+// with proper styling. Everything after the first line is plain text.
+const CoverLetterPreview = ({ content }: { content: string }) => {
+  const lines = content.split("\n");
+  const firstLine = lines[0] || "";
+  const rest = lines.slice(1).join("\n");
+
+  // Split first line by pipe — first token is the name, rest is contact info
+  const parts = firstLine
+    .split("|")
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const name = parts[0] || "";
+  const contactInfo = parts.slice(1).join(" | ");
+
+  return (
+    <div className="bg-muted/50 rounded-lg p-6 min-h-[400px]">
+      {/* ── Name ── */}
+      {name && (
+        <p className="text-center text-xl font-bold text-foreground mb-1">
+          {name}
+        </p>
+      )}
+
+      {/* ── Contact info ── */}
+      {contactInfo && (
+        <p className="text-center text-xs text-muted-foreground mb-4">
+          {contactInfo}
+        </p>
+      )}
+
+      {/* ── Divider ── */}
+      {(name || contactInfo) && (
+        <hr className="border-border mb-4" />
+      )}
+
+      {/* ── Rest of the letter ── */}
+      <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+        {rest}
+      </pre>
+    </div>
+  );
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function CoverLetter() {
   const [mode, setMode] = useState<"choose" | "generate" | "optimize">("choose");
 
@@ -149,7 +214,7 @@ export default function CoverLetter() {
         contact_name: managerName.trim(),
       });
 
-      setGeneratedCoverLetter(result?.cover_letter || "");
+      setGeneratedCoverLetter(sanitizeCoverLetter(result?.cover_letter || ""));
       setIsEditing(false);
 
       toast({
@@ -168,58 +233,59 @@ export default function CoverLetter() {
   };
 
   const handleOptimizeCoverLetter = async () => {
-  if (!coverLetterText.trim()) {
-    toast({
-      title: "Missing Content",
-      description: "Please upload a PDF successfully or paste your cover letter text.",
-      variant: "destructive",
-    });
-    return;
-  }
+    if (!coverLetterText.trim()) {
+      toast({
+        title: "Missing Content",
+        description: "Please upload a PDF successfully or paste your cover letter text.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  if (!userId) {
-    toast({
-      title: "Authentication Required",
-      description: "Please log in before optimizing a cover letter.",
-      variant: "destructive",
-    });
-    return;
-  }
+    if (!userId) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in before optimizing a cover letter.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  setIsOptimizing(true);
+    setIsOptimizing(true);
 
-  try {
-    const result = await optimizeCoverLetter(userId, {
-      old_cover_letter: coverLetterText.trim(),
-      company_name: companyName.trim(),
-      job_title: jobTitle.trim(),
-    });
+    try {
+      const result = await optimizeCoverLetter(userId, {
+        old_cover_letter: coverLetterText.trim(),
+        company_name: companyName.trim(),
+        job_title: jobTitle.trim(),
+      });
 
-    setGeneratedCoverLetter(result?.cover_letter || "");
-    setIsEditing(false);
+      setGeneratedCoverLetter(sanitizeCoverLetter(result?.cover_letter || ""));
+      setIsEditing(false);
 
-    toast({
-      title: "Cover Letter Optimized",
-      description: "Your cover letter has been enhanced!",
-    });
-  } catch (error: any) {
-    console.error("Cover letter optimization error:", error);
-    console.error("Backend response:", error?.response?.data);
-    console.error("Status:", error?.response?.status);
+      toast({
+        title: "Cover Letter Optimized",
+        description: "Your cover letter has been enhanced!",
+      });
+    } catch (error: any) {
+      console.error("Cover letter optimization error:", error);
+      console.error("Backend response:", error?.response?.data);
+      console.error("Status:", error?.response?.status);
 
-    toast({
-      title: "Optimization Failed",
-      description:
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Failed to optimize cover letter.",
-      variant: "destructive",
-    });
-  } finally {
-    setIsOptimizing(false);
-  }
-};
+      toast({
+        title: "Optimization Failed",
+        description:
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          "Failed to optimize cover letter.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
   const handleDownloadPdf = async (filename: string) => {
     if (!generatedCoverLetter.trim()) {
       toast({
@@ -230,12 +296,7 @@ export default function CoverLetter() {
       return;
     }
 
-    await downloadCoverLetterPdf(
-      {
-        content: generatedCoverLetter,
-      },
-      filename
-    );
+    await downloadCoverLetterPdf({ content: generatedCoverLetter }, filename);
 
     toast({
       title: "Downloaded",
@@ -243,6 +304,7 @@ export default function CoverLetter() {
     });
   };
 
+  // ─── Choose Mode ──────────────────────────────────────────────────────────
   if (mode === "choose") {
     return (
       <div className="min-h-screen bg-background">
@@ -326,6 +388,7 @@ export default function CoverLetter() {
     );
   }
 
+  // ─── Generate Mode ────────────────────────────────────────────────────────
   if (mode === "generate") {
     return (
       <div className="min-h-screen bg-background">
@@ -342,9 +405,7 @@ export default function CoverLetter() {
             </Button>
 
             <div className="mb-12 text-center">
-              <h1 className="text-4xl font-bold mb-4">
-                Generate Cover Letter
-              </h1>
+              <h1 className="text-4xl font-bold mb-4">Generate Cover Letter</h1>
 
               <p className="text-xl text-muted-foreground">
                 Create a personalized cover letter for your target company
@@ -451,7 +512,7 @@ export default function CoverLetter() {
 
                   <div className="space-y-2">
                     <Label htmlFor="managerName">
-                      Hiring Manager Name / Contact Name Optional
+                      Hiring Manager Name / Contact Name (Optional)
                     </Label>
 
                     <Input
@@ -488,9 +549,7 @@ export default function CoverLetter() {
               {generatedCoverLetter && !isGenerating && (
                 <Card className="bg-secondary/80 border-primary/20 shadow-card p-6 max-w-3xl mx-auto w-full">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold">
-                      Generated Cover Letter
-                    </h3>
+                    <h3 className="text-xl font-semibold">Generated Cover Letter</h3>
                   </div>
 
                   {isEditing ? (
@@ -500,11 +559,7 @@ export default function CoverLetter() {
                       className="min-h-[400px] resize-none"
                     />
                   ) : (
-                    <div className="bg-muted/50 rounded-lg p-4 min-h-[400px]">
-                      <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                        {generatedCoverLetter}
-                      </pre>
-                    </div>
+                    <CoverLetterPreview content={generatedCoverLetter} />
                   )}
 
                   <div className="flex flex-wrap gap-3 mt-4">
@@ -539,7 +594,6 @@ export default function CoverLetter() {
                       size="sm"
                       onClick={() => {
                         navigator.clipboard.writeText(generatedCoverLetter);
-
                         toast({
                           title: "Copied",
                           description: "Cover letter copied to clipboard",
@@ -559,6 +613,7 @@ export default function CoverLetter() {
     );
   }
 
+  // ─── Optimize Mode ────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -708,12 +763,11 @@ export default function CoverLetter() {
             </div>
           </Card>
 
+          {/* ── Output card — max-w-3xl matches generate mode ── */}
           {generatedCoverLetter && (
-            <Card className="bg-secondary/80 border-primary/20 shadow-card p-6 max-w-2xl mx-auto mt-8">
+            <Card className="bg-secondary/80 border-primary/20 shadow-card p-6 max-w-3xl mx-auto mt-8">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold">
-                  Optimized Cover Letter
-                </h3>
+                <h3 className="text-xl font-semibold">Optimized Cover Letter</h3>
               </div>
 
               {isEditing ? (
@@ -723,11 +777,7 @@ export default function CoverLetter() {
                   className="min-h-[400px] resize-none"
                 />
               ) : (
-                <div className="bg-muted/50 rounded-lg p-4 min-h-[400px]">
-                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                    {generatedCoverLetter}
-                  </pre>
-                </div>
+                <CoverLetterPreview content={generatedCoverLetter} />
               )}
 
               <div className="flex flex-wrap gap-3 mt-4">
@@ -754,7 +804,6 @@ export default function CoverLetter() {
                   size="sm"
                   onClick={() => {
                     navigator.clipboard.writeText(generatedCoverLetter);
-
                     toast({
                       title: "Copied",
                       description: "Cover letter copied to clipboard",
