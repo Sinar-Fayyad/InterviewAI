@@ -190,10 +190,10 @@ export default function LinkedInManager() {
           <BackButton className="mb-6" />
 
           <div className="mb-12 animate-fade-in text-center">
-            <div className="flex items-center justify-start mb-6">
+            <div className="flex items-center justify-center mb-6">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-card/50 backdrop-blur-sm">
                 <Linkedin className="w-4 h-4 text-accent" />
-                <span className="text-sm font-medium text-center">
+                <span className="text-sm font-medium">
                   LinkedIn Content Manager
                 </span>
               </div>
