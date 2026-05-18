@@ -133,22 +133,6 @@ The `Backend/app/Services/` layer includes functionality for:
 
 ---
 
-## 🧪 Testing
-
-### Backend
-```bash
-cd Backend
-php artisan test
-# or
-phpunit
-```
-
-### Frontend
-Use scripts from:
-- `Frontend/package.json`
-
----
-
 ## 🔐 Security notes
 - Keep secrets in **Backend/.env** (do not commit keys)
 - If using JWT/auth, confirm keys/config match between frontend and backend
