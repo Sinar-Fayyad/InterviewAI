@@ -23,7 +23,7 @@ class AddApplicationRequest extends ApiFormRequest
             'location' => 'nullable|string|max:255',
             'salary_range' => 'nullable|string|max:50',
             'job_url' => 'nullable|url|max:500',
-            'job_description' => 'nullable|string|max:500',
+            'job_description' => 'nullable|string',
             'contact_name' => 'nullable|string|max:255',
             'contact_email' => 'nullable|email|max:255',
             'applied_at' => 'required|date',

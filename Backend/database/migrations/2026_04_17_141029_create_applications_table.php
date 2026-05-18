@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('location')->nullable();
             $table->string('salary_range')->nullable();
             $table->string('job_url')->nullable();
-            $table->string('job_description')->nullable();
+            $table->text('job_description')->nullable();
             $table->string('contact_name')->nullable();
             $table->string('contact_email')->nullable();
             $table->date('applied_at');
