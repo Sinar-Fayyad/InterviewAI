@@ -133,22 +133,6 @@ The `Backend/app/Services/` layer includes functionality for:
 
 ---
 
-## 🧪 Testing
-
-### Backend
-```bash
-cd Backend
-php artisan test
-# or
-phpunit
-```
-
-### Frontend
-Use scripts from:
-- `Frontend/package.json`
-
----
-
 ## 🔐 Security notes
 - Keep secrets in **Backend/.env** (do not commit keys)
 - If using JWT/auth, confirm keys/config match between frontend and backend
@@ -159,7 +143,6 @@ Use scripts from:
 ## 📚 Repo docs
 - `Backend/README.md`
 - `Backend/website_guide.md`
-- `Frontend/README.md`
 
 ---
 
@@ -169,9 +152,4 @@ Use scripts from:
 - `php artisan migrate`
 - `cd Frontend && npm i`
 - Start **Backend** + **Frontend**
-
----
-
-## 👀 Visual preview
-If you want, you can open this README in VSCode/GitHub to see the styled headers and section layout.
 
